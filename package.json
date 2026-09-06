@@ -7,6 +7,8 @@
     "build": "node scripts/build-simple.mjs",
     "start": "node scripts/start-server.mjs",
     "serve": "npx --yes serve dist -l 4173",
+    "test:odds": "node scripts/test-odds.mjs",
+    "test:exploits": "node scripts/test-exploits.mjs",
     "test:smoke": "node scripts/test-all-bets.mjs"
   },
   "devDependencies": {

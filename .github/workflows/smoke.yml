@@ -14,6 +14,8 @@ jobs:
         with:
           node-version: "22"
       - run: npm ci --omit=dev
+      # Pure odds math, no server needed — fails the build if any bet pays more than it takes.
+      - run: npm run test:odds
       - run: npm run build
       - name: Start server
         run: |
@@ -24,5 +26,8 @@ jobs:
           done
           exit 1
       - run: npm run test:smoke
+        env:
+          BASE: http://127.0.0.1:59617
+      - run: npm run test:exploits
         env:
           BASE: http://127.0.0.1:59617

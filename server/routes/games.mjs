@@ -1,5 +1,21 @@
 import { secureRandomInt, secureRandomFloat } from "../../lib/secure-random.mjs";
 import { crashMultiplier, generateCrashPoint } from "../../lib/crash-math.mjs";
+import {
+  pickWeighted,
+  COINFLIP_RATE,
+  HILO_RATES,
+  SLOT_RATES,
+  DRAGON_TIGER_RATES,
+  POKDENG_RATES,
+  WHEEL_SEGMENTS,
+  PLINKO_BUCKETS,
+  HORSES,
+  COIN_PUSHER_OUTCOMES,
+  DUCK_OUTCOMES,
+  MINES_TILES,
+  clampMinesBombs,
+  minesRate
+} from "../../lib/game-odds.mjs";
 
 /**
  * @param {import("express").Express} app
@@ -34,7 +50,7 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
     // Spin the coin
     const result = secureRandomFloat() < 0.5 ? "head" : "tail";
     const isWin = (betOn === result);
-    const rate = 1.92;
+    const rate = COINFLIP_RATE;
     const payout = isWin ? Math.floor(amt * rate) : 0;
   
     if (isWin) {
@@ -99,15 +115,8 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
       outcome = "low";
     }
 
-    let isWin = false;
-    let rate = 1.95;
-    if (betType === "triple") {
-      isWin = allSame;
-      rate = 40;
-    } else {
-      isWin = (betType === outcome);
-      rate = betType === "hilo11" ? 6.0 : 1.95;
-    }
+    const isWin = betType === "triple" ? allSame : (betType === outcome);
+    const rate = HILO_RATES[betType];
     const payout = isWin ? Math.floor(amt * rate) : 0;
   
     if (isWin) {
@@ -161,30 +170,8 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
   
     req.user.balance -= amt;
   
-    const segments = [
-      { label: "x0", rate: 0, weight: 20, color: "#64748b" },
-      { label: "x0.5", rate: 0.5, weight: 40, color: "#94a3b8" },
-      { label: "x1.0", rate: 1.0, weight: 22, color: "#38bdf8" },
-      { label: "x1.5", rate: 1.5, weight: 10, color: "#4ade80" },
-      { label: "x2.5", rate: 2.5, weight: 5, color: "#facc15" },
-      { label: "x5.0", rate: 5.0, weight: 2.5, color: "#fb923c" },
-      { label: "x15.0", rate: 15.0, weight: 0.5, color: "#d4af37" }
-    ];
-  
-    let rand = secureRandomFloat() * 100;
-    let accumulated = 0;
-    let chosen = segments[0];
-    let chosenIndex = 0;
-  
-    for (let i = 0; i < segments.length; i++) {
-      accumulated += segments[i].weight;
-      if (rand <= accumulated) {
-        chosen = segments[i];
-        chosenIndex = i;
-        break;
-      }
-    }
-  
+    const chosen = pickWeighted(WHEEL_SEGMENTS, secureRandomFloat());
+    const chosenIndex = WHEEL_SEGMENTS.indexOf(chosen);
     const payout = Math.floor(amt * chosen.rate);
     const isWin = (payout > amt);
   
@@ -250,7 +237,7 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
     else result = "tie";
   
     const isWin = (betType === result);
-    const rate = betType === "tie" ? 8.0 : 1.95;
+    const rate = betType === "tie" ? DRAGON_TIGER_RATES.tie : DRAGON_TIGER_RATES.side;
     const payout = isWin ? Math.floor(amt * rate) : 0;
   
     if (isWin) {
@@ -307,10 +294,10 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
     const reel3 = pick();
   
     let rate = 0;
-    if (reel1 === "7" && reel2 === "7" && reel3 === "7") rate = 40;
-    else if (reel1 === "DIA" && reel2 === "DIA" && reel3 === "DIA") rate = 20;
-    else if (reel1 === reel2 && reel2 === reel3) rate = 6;
-    else if (reel1 === reel2 || reel2 === reel3 || reel1 === reel3) rate = 1.4;
+    if (reel1 === "7" && reel2 === "7" && reel3 === "7") rate = SLOT_RATES.triple7;
+    else if (reel1 === "DIA" && reel2 === "DIA" && reel3 === "DIA") rate = SLOT_RATES.tripleDiamond;
+    else if (reel1 === reel2 && reel2 === reel3) rate = SLOT_RATES.tripleOther;
+    else if (reel1 === reel2 || reel2 === reel3 || reel1 === reel3) rate = SLOT_RATES.pair;
   
     const payout = Math.floor(amt * rate);
     const isWin = payout > 0;
@@ -348,7 +335,7 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
   
   // Mini Game: Mines Bomb Sweeper (à¹€à¸à¸¡à¸ªà¹à¸à¸™à¸£à¸°à¹€à¸šà¸´à¸” VIP)
   app.post("/api/games/mines", authenticate, async (req, res) => {
-    const { action, amount, bombsCount, tileIndex, revealedCount } = req.body;
+    const { action, amount, bombsCount, tileIndex } = req.body;
     
     if (action === "start") {
       const amt = Number(amount);
@@ -361,12 +348,11 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
   
       req.user.balance -= amt;
   
-      const bCount = Math.min(Math.max(parseInt(bombsCount) || 3, 1), 10);
-      // Generate 25 tiles (0 to 24), random bCount bombs
-      const grid = Array(25).fill("gem");
+      const bCount = clampMinesBombs(bombsCount);
+      const grid = Array(MINES_TILES).fill("gem");
       let placed = 0;
       while (placed < bCount) {
-        const idx = secureRandomInt(25);
+        const idx = secureRandomInt(MINES_TILES);
         if (grid[idx] !== "bomb") {
           grid[idx] = "bomb";
           placed++;
@@ -395,12 +381,16 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
       }
   
       const idx = parseInt(tileIndex);
-      if (isNaN(idx) || idx < 0 || idx > 24) {
+      if (isNaN(idx) || idx < 0 || idx >= MINES_TILES) {
         return res.status(400).json({ success: false, message: "Invalid tile" });
+      }
+      // Re-opening an already opened tile used to grow the multiplier again,
+      // which turned a 100 CR stake into any payout the caller wanted.
+      if (game.revealed.includes(idx)) {
+        return res.status(400).json({ success: false, message: "Tile already opened" });
       }
   
       const isBomb = (game.grid[idx] === "bomb");
-      game.revealed.push(idx);
   
       if (isBomb) {
         const lostAmt = game.amount;
@@ -430,9 +420,9 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
           newBalance: req.user.balance
         });
       } else {
-        // Calculation multiplier based on revealed count & bomb count
+        game.revealed.push(idx);
         const safeCount = game.revealed.length;
-        const rate = Number((1 + (safeCount * 0.25 * (game.bombsCount / 2))).toFixed(2));
+        const rate = minesRate(safeCount, game.bombsCount);
         const currentPayout = Math.floor(game.amount * rate);
   
         return res.json({
@@ -452,7 +442,7 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
       }
   
       const safeCount = game.revealed.length;
-      const rate = Number((1 + (safeCount * 0.25 * (game.bombsCount / 2))).toFixed(2));
+      const rate = minesRate(safeCount, game.bombsCount);
       const payout = Math.floor(game.amount * rate);
   
       req.user.balance += payout;
@@ -501,27 +491,7 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
   
     req.user.balance -= amt;
   
-    // Buckets tuned for ~0.92 EV (house edge ~8%)
-    const multipliers = [
-      { slot: 0, mult: 8.0, label: "x8" },
-      { slot: 1, mult: 2.0, label: "x2" },
-      { slot: 2, mult: 0.8, label: "x0.8" },
-      { slot: 3, mult: 0.3, label: "x0.3" },
-      { slot: 4, mult: 0.8, label: "x0.8" },
-      { slot: 5, mult: 2.0, label: "x2" },
-      { slot: 6, mult: 8.0, label: "x8" }
-    ];
-  
-    const rand = secureRandomFloat();
-    let chosen = multipliers[3];
-    if (rand < 0.005) chosen = multipliers[0];
-    else if (rand < 0.01) chosen = multipliers[6];
-    else if (rand < 0.05) chosen = multipliers[1];
-    else if (rand < 0.09) chosen = multipliers[5];
-    else if (rand < 0.27) chosen = multipliers[2];
-    else if (rand < 0.45) chosen = multipliers[4];
-    // else ~55% center x0.3
-  
+    const chosen = pickWeighted(PLINKO_BUCKETS, secureRandomFloat());
     const payout = Math.floor(amt * chosen.mult);
     req.user.balance += payout;
   
@@ -721,22 +691,7 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
     if (req.user.balance < amt) return res.status(400).json({ success: false, message: "Not enough CR" });
     req.user.balance -= amt;
   
-    const coinOutcomes = [
-      { label: "0 coins", mult: 0 },
-      { label: "1 coin", mult: 0.4 },
-      { label: "2 coins", mult: 0.9 },
-      { label: "4 coins", mult: 1.8 },
-      { label: "8 coins", mult: 4.0 },
-      { label: "Jackpot", mult: 12.0 }
-    ];
-    const rand = secureRandomFloat();
-    let chosen = coinOutcomes[0];
-    if (rand < 0.01) chosen = coinOutcomes[5];
-    else if (rand < 0.05) chosen = coinOutcomes[4];
-    else if (rand < 0.18) chosen = coinOutcomes[3];
-    else if (rand < 0.40) chosen = coinOutcomes[2];
-    else if (rand < 0.70) chosen = coinOutcomes[1];
-  
+    const chosen = pickWeighted(COIN_PUSHER_OUTCOMES, secureRandomFloat());
     const payout = Math.floor(amt * chosen.mult);
     if (payout > 0) req.user.balance += payout;
     db.bets.push({
@@ -777,7 +732,7 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
     let mult = 0;
     if (pScore > dScore) {
       isWin = true;
-      mult = pScore >= 8 ? 2.0 : 1.9;
+      mult = pScore >= 8 ? POKDENG_RATES.winPok : POKDENG_RATES.win;
     }
   
     const payout = isWin ? Math.floor(amt * mult) : 0;
@@ -808,20 +763,7 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
     if (req.user.balance < amt) return res.status(400).json({ success: false, message: "Not enough CR" });
     req.user.balance -= amt;
   
-    const horses = [
-      { id: 1, name: "Horse No.1", mult: 2.8, weight: 40 },
-      { id: 2, name: "Horse No.2", mult: 4.5, weight: 30 },
-      { id: 3, name: "Horse No.3", mult: 7.0, weight: 20 },
-      { id: 4, name: "Horse No.4", mult: 14.0, weight: 10 }
-    ];
-    let roll = secureRandomFloat() * 100;
-    let winner = horses[0];
-    let acc = 0;
-    for (const h of horses) {
-      acc += h.weight;
-      if (roll <= acc) { winner = h; break; }
-    }
-  
+    const winner = pickWeighted(HORSES, secureRandomFloat());
     const isWin = (Number(selectedHorse) === winner.id);
     const payout = isWin ? Math.floor(amt * winner.mult) : 0;
     if (isWin) req.user.balance += payout;
@@ -851,20 +793,7 @@ export function registerGameRoutes(app, { authenticate, getDb, saveDb }) {
     if (req.user.balance < amt) return res.status(400).json({ success: false, message: "Not enough CR" });
     req.user.balance -= amt;
   
-    const ducks = [
-      { label: "Miss", mult: 0 },
-      { label: "Bronze duck", mult: 0.5 },
-      { label: "Silver duck", mult: 1.5 },
-      { label: "Gold duck", mult: 3.5 },
-      { label: "Crystal duck", mult: 10.0 }
-    ];
-    const rand = secureRandomFloat();
-    let chosen = ducks[0];
-    if (rand < 0.01) chosen = ducks[4];
-    else if (rand < 0.08) chosen = ducks[3];
-    else if (rand < 0.28) chosen = ducks[2];
-    else if (rand < 0.55) chosen = ducks[1];
-  
+    const chosen = pickWeighted(DUCK_OUTCOMES, secureRandomFloat());
     const payout = Math.floor(amt * chosen.mult);
     if (payout > 0) req.user.balance += payout;
     db.bets.push({

@@ -134,15 +134,15 @@ function upgradeGameShells() {
 
 const GAME_GUIDE_MAP = {
   "game-coinflip": { odds: "×1.92", how: "how_coin", rates: ["rate_coin"] },
-  "game-hilo": { odds: "×1.95–40", how: "how_hilo", rates: ["rate_hilo_hi", "rate_hilo_11", "rate_hilo_tr"] },
+  "game-hilo": { odds: "×1.95–33", how: "how_hilo", rates: ["rate_hilo_hi", "rate_hilo_11", "rate_hilo_tr"] },
   "game-wheel": { odds: "×0–15", how: "how_wheel", rates: ["rate_wheel"] },
   "game-slot": { odds: "×1.4–40", how: "how_slot", rates: ["rate_slot"] },
   "game-mines": { odds: "×1+", how: "how_mines", rates: ["rate_mines"] },
   "game-crash": { odds: "×1.1–50", how: "how_crash", rates: ["rate_crash"] },
-  "game-plinko": { odds: "×0.3–8", how: "how_plinko", rates: ["rate_plinko"] },
+  "game-plinko": { odds: "×0.2–8", how: "how_plinko", rates: ["rate_plinko"] },
   "game-pokdeng": { odds: "×1.9–2", how: "how_pd", rates: ["rate_pd"] },
   "game-dragontiger": { odds: "×1.95 / 8", how: "how_dt", rates: ["rate_dt"] },
-  "game-horseracing": { odds: "×2.8–14", how: "how_horse", rates: ["rate_horse"] },
+  "game-horseracing": { odds: "×2.4–9.6", how: "how_horse", rates: ["rate_horse"] },
   "game-coinpusher": { odds: "×0–12", how: "how_pusher", rates: ["rate_pusher"] },
   "game-duckshooter": { odds: "×0–10", how: "how_duck", rates: ["rate_duck"] },
   "game-chest": { odds: "FREE", how: "how_chest", rates: ["rate_chest"] }
