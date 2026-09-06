@@ -109,7 +109,7 @@ const health = await send("Runtime.evaluate", {
     fonts: document.fonts.status,
     fa: [...document.fonts].some(f => /Font Awesome/i.test(f.family)),
     daily: document.querySelector("#btn-daily-claim span")?.textContent,
-    cache: !!document.querySelector('link[href*="1788669800"]'),
+    cache: !!document.querySelector('link[href*="1788675000"]'),
     guides: document.querySelectorAll(".game-guide").length,
     mgHow: document.querySelectorAll(".mg-how").length,
     playBg: getComputedStyle(document.querySelector("#view-game-pokdeng .play-area") || document.body).backgroundImage.slice(0, 80),

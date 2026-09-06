@@ -6408,3 +6408,120 @@ section[id^="view-game-"] .play-area {
   .hist-ticket-list { grid-template-columns: 1fr; }
   .hist-ticket-num { font-size: 1.35rem; }
 }
+
+.vn-prize-pending {
+  display: inline-block;
+  min-width: 48px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  letter-spacing: .28em;
+  color: #ffe082;
+  background: rgba(255, 213, 106, .12);
+  border: 1px dashed rgba(255, 213, 106, .4);
+  font-weight: 800;
+}
+.vn-prize-table tr.is-live-prize {
+  background: rgba(255, 213, 106, .14);
+  box-shadow: inset 0 0 0 1px rgba(255, 213, 106, .35);
+}
+.vn-prize-table tr.is-live-prize .vn-prize-label {
+  color: #ffe082;
+  font-weight: 800;
+}
+.vn-live-board {
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 213, 106, .45);
+  background: linear-gradient(180deg, rgba(255, 213, 106, .16), rgba(20, 14, 8, .55));
+  box-shadow: 0 0 24px rgba(255, 213, 106, .18);
+}
+.vn-live-now {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+}
+.vn-live-now span {
+  color: #ffe082;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-size: .78rem;
+}
+.vn-live-now b {
+  font-size: clamp(1.6rem, 7vw, 2.4rem);
+  letter-spacing: .08em;
+  color: #fff8e4;
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
+}
+@media (max-width: 768px) {
+  #view-vnlotto.is-vn-revealing .bet-steps,
+  #view-vnlotto.is-vn-revealing .bet-guide-banner,
+  #view-vnlotto.is-vn-revealing .bet-room-grid {
+    display: none !important;
+  }
+  #view-vnlotto.is-vn-revealing .vn-room-layout {
+    grid-template-columns: 1fr !important;
+  }
+  #view-vnlotto.is-vn-revealing .bet-hint-card {
+    display: none !important;
+  }
+}
+.lobby-site-note {
+  margin: 10px 0 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 213, 106, .28);
+  background: rgba(255, 213, 106, .08);
+  color: #fff4d4;
+  font-size: .88rem;
+  line-height: 1.45;
+}
+.room-pending-strip {
+  cursor: pointer;
+}
+.room-pending-strip:hover {
+  border-color: rgba(255, 213, 106, .5);
+}
+.result-empty {
+  padding: 10px 4px 4px;
+  color: rgba(255, 244, 212, .45);
+  font-size: .82rem;
+}
+.pwa-install-bar {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 213, 106, .45);
+  background: rgba(18, 12, 8, .94);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .45);
+}
+.pwa-install-bar[hidden] { display: none !important; }
+.pwa-install-btn {
+  flex: 1;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 800;
+  color: #1a1008;
+  background: linear-gradient(180deg, #ffe082, #d4a017);
+}
+.pwa-install-x {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #fff4d4;
+  font-size: 1.4rem;
+  line-height: 1;
+}

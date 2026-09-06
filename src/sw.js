@@ -3,19 +3,13 @@
    Advanced caching for PWA & offline support
    ======================================== */
 
-const CACHE_NAME = 'soklarp-cache-v5';
-const STATIC_CACHE = 'soklarp-static-v5';
-const IMAGE_CACHE = 'soklarp-images-v5';
+const CACHE_NAME = 'soklarp-cache-v7';
+const STATIC_CACHE = 'soklarp-static-v7';
+const IMAGE_CACHE = 'soklarp-images-v7';
 
-// Assets to pre-cache on install
 const PRECACHE_URLS = [
-  '/',
-  '/style.css',
-  '/main.js',
-  '/assets/fonts/fonts.css',
-  '/assets/libs/slick/slick.css',
-  '/assets/libs/slick/slick.min.js',
-  '/assets/libs/jquery/jquery.min.js'
+  '/assets/icon-192.png',
+  '/assets/icon-512.png'
 ];
 
 // Install: pre-cache critical assets

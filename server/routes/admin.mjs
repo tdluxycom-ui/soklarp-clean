@@ -414,7 +414,9 @@ export function registerAdminRoutes(app, {
     if (drawingLocks.has(lotteryType)) {
       return res.status(409).json({ success: false, message: "Kỳ này đang được chốt" });
     }
-    const prizes = generateVNPrizes();
+    const prizes = lottery.liveDraw?.prizes
+      ? JSON.parse(JSON.stringify(lottery.liveDraw.prizes))
+      : generateVNPrizes();
     if (dbNumber) {
       const digits = String(dbNumber).replace(/\D/g, "");
       if (digits.length < 2 || digits.length > 6) {

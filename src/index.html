@@ -2,7 +2,14 @@
 <html lang="lo">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#c9a227">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="SOKLARP">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icon-180.png">
   <title>SOKLARP.ORG — ແພລດຟອມເກມເຄຣດິດເສມືອນ</title>
   <meta name="description" content="SOKLARP.ORG ແພລດຟອມເກມເຄຣດິດເສມືອນ ສຳລັບຄວາມບັນເທີງ">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,9 +17,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;family=Noto+Sans+Lao:wght@400;600;700&amp;family=Be+Vietnam+Pro:wght@500;700&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="libs/fontawesome/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=1788669800">
-  <link rel="stylesheet" href="lobby-pro.css?v=1788669800">
-  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css?v=1788681000">
+  <link rel="stylesheet" href="lobby-pro.css?v=1788681000">
+  <link rel="manifest" href="manifest.json?v=7">
 </head>
 <body>
 <div class="glow-bg"></div>
@@ -229,6 +236,7 @@
     </div>
     <div class="rooms-clock-track" id="rooms-clock-track"></div>
   </div>
+  <p id="lobby-site-note" class="lobby-site-note" hidden></p>
 
   <div class="lobby-command" id="lobby-command">
     <button type="button" class="cmd-card" onclick="openVipRankModal()">
@@ -907,11 +915,27 @@
     </div>
   </div>
   <div class="draw-state-banner" id="vn-draw-state" hidden></div>
+  <div id="vn-live-board" class="vn-live-board" hidden>
+    <div class="vn-live-now">
+      <span id="vn-live-now-label"></span>
+      <b id="vn-live-now-num"></b>
+    </div>
+  </div>
   <div class="room-pending-strip" id="vn-my-pending" hidden></div>
   <div id="vn-sim-note" class="vn-sim-note" style="display:none;" data-i18n="vn_sim_note">This room uses simulated results — not live XSMN/XSMT draws</div>
   <div class="bet-last-card vn-last-db-card" id="vn-last-db-card">
     <span data-i18n="last_db">Special prize</span>
     <div class="bet-last-balls" id="vn-last-db-balls"></div>
+  </div>
+  <div class="bet-last-row vn-room-layout" id="vn-results-block">
+    <div class="bet-last-card vn-prize-card">
+      <h3><i class="fas fa-trophy"></i> <span data-i18n="latest_prizes">ຕາຕະລາງລາງວັນ</span></h3>
+      <div id="vn-prize-table-container"></div>
+    </div>
+    <div class="bet-hint-card">
+      <h3 data-i18n="history_short">ປະຫວັດງວດ</h3>
+      <div id="vn-results-history" class="vn-hist-list"></div>
+    </div>
   </div>
 
   <ol class="bet-steps">
@@ -997,17 +1021,6 @@
         <span class="gold-text">CR <span id="vn-slip-total">0</span></span>
       </div>
       <button class="btn-gold btn-slip-send" type="button" onclick="submitVNSlip()" data-i18n="send_slip">ສົ່ງໃບ</button>
-    </div>
-  </div>
-
-  <div class="bet-last-row vn-room-layout">
-    <div class="bet-last-card vn-prize-card">
-      <h3><i class="fas fa-trophy"></i> <span data-i18n="latest_prizes">ຕາຕະລາງລາງວັນ</span></h3>
-      <div id="vn-prize-table-container"></div>
-    </div>
-    <div class="bet-hint-card">
-      <h3 data-i18n="history_short">ປະຫວັດງວດ</h3>
-      <div id="vn-results-history" class="vn-hist-list"></div>
     </div>
   </div>
 </section>
@@ -1799,14 +1812,18 @@
 
 <!-- TOAST -->
 <div id="toast-container" class="toast-container"></div>
+<div id="pwa-install-bar" class="pwa-install-bar" hidden>
+  <button type="button" class="pwa-install-btn" id="pwa-install-btn" data-i18n="install_app">Add to Home Screen</button>
+  <button type="button" class="pwa-install-x" id="pwa-install-x" aria-label="Close">×</button>
+</div>
 
 <!-- Chat Toggle Button (Floating) -->
 <button class="lux-chat-fab" type="button" onclick="toggleChatDrawer()" title="Chat">
   <i class="fa-solid fa-comments"></i>
 </button>
 
-<script src="i18n.js?v=1788669800"></script>
-<script src="main.js?v=1788669800"></script>
+<script src="i18n.js?v=1788681000"></script>
+<script src="main.js?v=1788681000"></script>
 
 <!-- ID Compatibility Layer - maps old IDs to keep main.js working -->
 <div id="cart-potential-win" style="display:none"></div>

@@ -1,7 +1,9 @@
 import { createDbProxy } from "../db-proxy.mjs";
+import { publicVnLiveDraw } from "../../lib/vn-reveal.mjs";
 
 export function publicLotteryView(lottery) {
   if (!lottery) return null;
+  const liveDraw = publicVnLiveDraw(lottery.liveDraw);
   return {
     id: lottery.id,
     name: lottery.name,
@@ -12,6 +14,7 @@ export function publicLotteryView(lottery) {
     nextDrawId: lottery.nextDrawId,
     drawTimeOfDay: lottery.drawTimeOfDay,
     lastResults: lottery.lastResults,
+    liveDraw,
     settings: { autoDraw: !!lottery.settings?.autoDraw }
   };
 }
@@ -26,7 +29,8 @@ export function registerLotteryRoutes(app, { getDb, payoutRates, vnPayoutRates, 
       vn: { ...vnPayoutRates, ...(db.systemSettings?.vnRates || {}) },
       limits: db.systemSettings?.limits || { minBet: 10, maxBet: 50000 },
       currency: "CR",
-      platform: { mode: platformMode, cashFeaturesEnabled: false }
+      platform: { mode: platformMode, cashFeaturesEnabled: false },
+      siteNote: String(db.systemSettings?.siteNote || "")
     });
   });
 

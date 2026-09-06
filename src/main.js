@@ -114,6 +114,8 @@ window.setSoklarpLang = function(lang) {
   if (state.activeView === "betting") selectBetCategory(state.selectedBetCategory || "3top");
   if (state.activeView === "vnlotto") selectVNBetType(state.vnCurrentBetType || "lo");
   if (state.activeView === "history") loadHistory();
+  if (state.activeView === "admin") renderAdminDrawControls();
+  if (typeof refreshRateTabLabels === "function") refreshRateTabLabels();
 };
 
 function upgradeGameShells() {
@@ -439,6 +441,11 @@ window.switchView = function(viewName) {
   } catch (_) { /* ignore */ }
   if (sound && sound.playClick) sound.playClick();
   
+  if (viewName !== "vnlotto" && state.vnRefreshInterval) {
+    clearInterval(state.vnRefreshInterval);
+    state.vnRefreshInterval = null;
+    state._vnRefreshMs = 0;
+  }
   if (viewName === "lobby") loadLotteries();
   if (viewName === "history") loadHistory();
   if (viewName === "admin") loadAdminPanel();
@@ -924,13 +931,26 @@ window.openLiveDrawWaitingBoard = function(lottery, bets) {
   }
   if (state.waitingPoll) clearInterval(state.waitingPoll);
   let tries = 0;
+  const pollMs = isVn ? 1000 : 2000;
+  const maxTries = isVn ? 480 : 90;
   state.waitingPoll = setInterval(async () => {
     tries += 1;
     const live = await syncLotteryById(lottery.id);
     const timerText = document.getElementById("waiting-timer-count");
-    if (timerText && live) timerText.innerText = live.countdown > 0 ? formatTime(live.countdown) : t("drawing");
-    const latest = live?.lastResults?.[0];
     const resultLine = document.getElementById("waiting-result-line");
+    if (live?.liveDraw) {
+      const left = liveDrawRemainingSecs(live.liveDraw);
+      if (timerText) timerText.innerText = formatTime(left);
+      if (resultLine) {
+        const current = live.liveDraw.current;
+        const raw = current ? live.liveDraw.prizes?.[current] : null;
+        const shown = raw == null ? t("vn_wait_num") : (Array.isArray(raw) ? raw[0] : raw);
+        resultLine.innerHTML = `${escapeHtml(t("vn_draw_now"))} ${escapeHtml(vnPrizeLabel(current))} · <b class="gold-text">${escapeHtml(String(shown))}</b>`;
+      }
+    } else if (timerText && live) {
+      timerText.innerText = live.countdown > 0 ? formatTime(live.countdown) : t("drawing");
+    }
+    const latest = live?.lastResults?.[0];
     if (latest && latest.drawId === placedDrawId) {
       clearInterval(state.waitingPoll);
       state.waitingPoll = null;
@@ -948,12 +968,12 @@ window.openLiveDrawWaitingBoard = function(lottery, bets) {
       refreshRoomPendingStrip();
       return;
     }
-    if (tries > 90) {
+    if (tries > maxTries) {
       clearInterval(state.waitingPoll);
       state.waitingPoll = null;
       if (resultLine) resultLine.textContent = t("no_prizes");
     }
-  }, 2000);
+  }, pollMs);
 };
 
 window.closeWaitingBoard = function() {
@@ -1018,18 +1038,19 @@ function histTicketCard(b, kind) {
   const typeLine = kind === "game"
     ? escapeHtml(String(b.numbers || "—"))
     : `${escapeHtml(betTypeLabel(b.betType))} · ×${escapeHtml(rate || "—")}`;
-  return `<article class="hist-ticket hist-${escapeHtml(status)}" ${open}>
+  const drawTail = (b.drawId || "").split("-").pop();
+  return `<article class="hist-ticket hist-${escapeHtml(status)}">
     <div class="hist-ticket-top">
-      <button type="button" class="hist-open">${escapeHtml(title)}</button>
+      <button type="button" class="hist-open" ${open}>${escapeHtml(title)}</button>
       <span class="hist-pill hist-${escapeHtml(status)}">${escapeHtml(betStatusLabel(status))}</span>
     </div>
-    <div class="hist-ticket-num">${escapeHtml(String(kind === "game" ? (b.numbers || "—") : (b.numbers || "—")))}</div>
+    <div class="hist-ticket-num">${escapeHtml(String(b.numbers || "—"))}</div>
     <div class="hist-ticket-meta">
       <span>${typeLine}</span>
       <span>${escapeHtml(Number(b.amount || 0).toLocaleString())} CR</span>
       <b class="${status === "won" ? "win-text" : ""}">${escapeHtml(histPayoutText(b))}</b>
     </div>
-    <div class="hist-ticket-time">${escapeHtml(histTime(b.createdAt))}</div>
+    <div class="hist-ticket-time">${drawTail ? `${escapeHtml(t("draw_id"))} #${escapeHtml(drawTail)} · ` : ""}${escapeHtml(histTime(b.createdAt))}</div>
   </article>`;
 }
 
@@ -1040,6 +1061,9 @@ function renderHistoryTables() {
   const gameList = document.getElementById("hist-game-list");
   const bets = state.userBets || [];
   const filter = state.historyFilter || "all";
+  document.querySelectorAll(".hist-filter").forEach((btn) => {
+    btn.classList.toggle("active", btn.getAttribute("data-hist-filter") === filter);
+  });
   const pass = (b) => filter === "all" || (b.status || "pending") === filter;
   const allLotto = bets.filter((b) => !String(b.lotteryType || "").startsWith("game_"));
   const allGames = bets.filter((b) => String(b.lotteryType || "").startsWith("game_"));
@@ -1184,11 +1208,34 @@ async function loadLotteries() {
     if (rates.thai) Object.assign(THAI_RATES, rates.thai);
     if (rates.vn) Object.assign(VN_RATES, rates.vn);
     state.payoutRates = rates;
+    paintLobbySiteNote(rates.siteNote);
+    refreshRateTabLabels();
   }
   if (data && data.success) {
     state.lotteries = data.lotteries;
     renderLobby();
   }
+}
+
+function paintLobbySiteNote(note) {
+  const el = document.getElementById("lobby-site-note");
+  if (!el) return;
+  const text = String(note || "").trim();
+  el.hidden = !text;
+  el.textContent = text;
+}
+
+function refreshRateTabLabels() {
+  document.querySelectorAll("#bet-type-tabs .bet-cat-btn").forEach((btn) => {
+    const match = btn.getAttribute("onclick")?.match(/'([^']+)'/);
+    const small = btn.querySelector("small");
+    if (match && small && THAI_RATES[match[1]] != null) small.textContent = `×${THAI_RATES[match[1]]}`;
+  });
+  document.querySelectorAll(".vn-type-tabs .vn-tab-btn").forEach((btn) => {
+    const key = String(btn.id || "").replace("vn-tab-", "");
+    const small = btn.querySelector("small");
+    if (small && VN_RATES[key] != null) small.textContent = `×${VN_RATES[key]}`;
+  });
 }
 
 // Filter Lobby by Category
@@ -1220,15 +1267,19 @@ function formatTimeCompact(seconds) {
   return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
 }
 
+function roomUrgencyRank(lottery) {
+  if (isVnLiveDrawing(lottery)) return liveDrawRemainingSecs(lottery.liveDraw);
+  const secs = countdownSeconds(lottery);
+  if (secs > 0) return 100000 + secs;
+  return 1e9 + Math.abs(Number(lottery?.countdown) || 0);
+}
+
 function pickSoonestLiveRoom() {
   const list = state.lotteries || [];
   if (!list.length) return null;
   return [...list].sort((a, b) => {
-    const ac = Number(a.countdown);
-    const bc = Number(b.countdown);
-    const aRank = ac > 0 ? ac : 1e9 + Math.abs(ac || 0);
-    const bRank = bc > 0 ? bc : 1e9 + Math.abs(bc || 0);
-    return aRank - bRank;
+    const diff = roomUrgencyRank(a) - roomUrgencyRank(b);
+    return diff || String(a.id).localeCompare(String(b.id));
   })[0];
 }
 
@@ -1248,7 +1299,7 @@ window.enterSoonestLotteryRoom = function() {
 function isSelectedRoomClosed(kind) {
   if (kind === "vn") {
     const l = (state.lotteries || []).find((item) => item.id === state.vnCurrentLotteryId);
-    return countdownSeconds(l) <= 0;
+    return countdownSeconds(l) <= 0 || isVnLiveDrawing(l);
   }
   return countdownSeconds(state.selectedLottery) <= 0;
 }
@@ -1290,6 +1341,7 @@ function paintRoomPendingStrip(lotteryId, drawId, el) {
   if (!el) return;
   if (!lotteryId) {
     el.hidden = true;
+    el.onclick = null;
     el.innerHTML = "";
     return;
   }
@@ -1300,15 +1352,44 @@ function paintRoomPendingStrip(lotteryId, drawId, el) {
   );
   if (!bets.length) {
     el.hidden = true;
+    el.onclick = null;
     el.innerHTML = "";
     return;
   }
   const stake = bets.reduce((sum, b) => sum + Number(b.amount || 0), 0);
   el.hidden = false;
+  el.setAttribute("role", "button");
+  el.onclick = () => { switchView("history"); setHistoryFilter("pending"); };
   el.innerHTML = `<i class="fa-solid fa-ticket"></i> <span>${escapeHtml(t("your_tickets"))}</span>
     <b>${bets.length}</b>
     <span class="gold-text">${stake.toLocaleString()} CR</span>
     <div class="room-pending-nums">${bets.slice(0, 8).map((b) => `<span>${escapeHtml(String(b.numbers || ""))}</span>`).join("")}</div>`;
+}
+
+function vnPrizeLabel(key) {
+  const map = {
+    db: "prize_db",
+    nhat: "prize_g1",
+    nhi: "prize_g2",
+    ba: "prize_g3",
+    tu: "prize_g4",
+    nam: "prize_g5",
+    sau: "prize_g6",
+    bay: "prize_g7"
+  };
+  return t(map[key] || "prize_g1");
+}
+
+function liveDrawRemainingSecs(ld) {
+  if (!ld) return 0;
+  const started = Number(ld.startedAt) || 0;
+  const dur = Number(ld.durationMs) || 90000;
+  if (started) return Math.max(0, Math.ceil((started + dur - Date.now()) / 1000));
+  return Math.max(0, Math.ceil((Number(ld.remainingMs) || 0) / 1000));
+}
+
+function isVnLiveDrawing(lottery) {
+  return !!lottery?.liveDraw;
 }
 
 function applyCountdownClass(el, secs) {
@@ -1319,6 +1400,22 @@ function applyCountdownClass(el, secs) {
 
 function paintLotteryCountdown(lottery) {
   if (!lottery) return;
+  if (isVnLiveDrawing(lottery)) {
+    const left = liveDrawRemainingSecs(lottery.liveDraw);
+    const cd = document.getElementById(`cd-${lottery.id}`);
+    if (cd) {
+      cd.textContent = formatTime(left);
+      applyCountdownClass(cd, 0);
+    }
+    const strip = document.getElementById(`strip-cd-${lottery.id}`);
+    if (strip) {
+      strip.textContent = formatTimeCompact(left);
+      applyCountdownClass(strip, 0);
+    }
+    document.getElementById(`lotto-card-${lottery.id}`)?.classList.add("is-drawing");
+    document.getElementById(`room-chip-${lottery.id}`)?.classList.add("is-drawing");
+    return;
+  }
   const secs = countdownSeconds(lottery);
   const cd = document.getElementById(`cd-${lottery.id}`);
   if (cd) {
@@ -1369,20 +1466,19 @@ function renderRoomsClockStrip() {
   if (!track) return;
   const soonest = pickSoonestLiveRoom();
   const list = [...(state.lotteries || [])].sort((a, b) => {
-    const as = countdownSeconds(a);
-    const bs = countdownSeconds(b);
-    if (as !== bs) return as - bs;
-    return String(a.id).localeCompare(String(b.id));
+    const diff = roomUrgencyRank(a) - roomUrgencyRank(b);
+    return diff || String(a.id).localeCompare(String(b.id));
   });
   track.innerHTML = list.map((l) => {
-    const secs = countdownSeconds(l);
+    const drawing = isVnLiveDrawing(l);
+    const secs = drawing ? liveDrawRemainingSecs(l.liveDraw) : countdownSeconds(l);
     const cls = [
       "room-chip",
-      isUrgentCountdown(secs) ? "is-urgent" : "",
-      secs <= 0 ? "is-drawing" : "",
+      !drawing && isUrgentCountdown(secs) ? "is-urgent" : "",
+      drawing || secs <= 0 ? "is-drawing" : "",
       soonest?.id === l.id ? "is-soonest" : ""
     ].filter(Boolean).join(" ");
-    const label = secs > 0 ? formatTimeCompact(secs) : t("drawing");
+    const label = drawing ? formatTimeCompact(secs) : (secs > 0 ? formatTimeCompact(secs) : t("drawing"));
     const last = roomLastCompact(l);
     return `<button type="button" class="${cls}" id="room-chip-${l.id}" onclick="enterLotteryRoom('${l.id}')">
       <span class="room-chip-name">${escapeHtml(roomLabel(l.id))}</span>
@@ -1431,7 +1527,8 @@ function displayNickname(user) {
 function syncHeroLive() {
   const live = pickSoonestLiveRoom();
   if (!live) return;
-  const secs = countdownSeconds(live);
+  const drawing = isVnLiveDrawing(live);
+  const secs = drawing ? liveDrawRemainingSecs(live.liveDraw) : countdownSeconds(live);
   const name = document.getElementById("hero-live-name");
   const cd = document.getElementById("hero-live-cd");
   const go = document.querySelector(".hero-live-go");
@@ -1439,14 +1536,14 @@ function syncHeroLive() {
   if (name) name.textContent = roomLabel(live.id);
   if (cd) {
     cd.textContent = secs > 0 ? formatTime(secs) : t("drawing");
-    applyCountdownClass(cd, secs);
+    applyCountdownClass(cd, drawing ? 0 : secs);
   }
   if (go) go.setAttribute("onclick", `enterLotteryRoom('${live.id}')`);
   if (box) {
-    box.classList.toggle("is-urgent", isUrgentCountdown(secs));
-    box.classList.toggle("is-drawing", !(secs > 0));
+    box.classList.toggle("is-urgent", !drawing && isUrgentCountdown(secs));
+    box.classList.toggle("is-drawing", drawing || !(secs > 0));
     const tag = box.querySelector(".hero-live-tag");
-    if (tag) tag.textContent = secs > 0 ? (isUrgentCountdown(secs) ? t("closing_soon") : "LIVE") : t("drawing");
+    if (tag) tag.textContent = drawing ? t("vn_drawing") : (secs > 0 ? (isUrgentCountdown(secs) ? t("closing_soon") : "LIVE") : t("drawing"));
   }
 }
 
@@ -1513,6 +1610,8 @@ function renderLobby() {
             <div class="digit-spheres green-spheres">${String(latestDraw.numbers.bottom2 || "").split("").map(n => `<span class="sphere-digit">${escapeHtml(n)}</span>`).join("")}</div>
           </div>
         </div>`;
+    } else {
+      resultHTML += `<div class="result-empty">${escapeHtml(t("no_hist"))}</div>`;
     }
     resultHTML += "</div>";
     const thaiRates = [
@@ -1558,10 +1657,10 @@ function renderLobby() {
           </div>
         </div>
         <div class="vn-divider-rates">
-          <span class="vn-rate-badge">Lô ×3.8</span>
-          <span class="vn-rate-badge">Đề ×85</span>
-          <span class="vn-rate-badge">3 Càng ×800</span>
-          <span class="vn-rate-badge">Đầu/Đuôi ×6.5</span>
+          <span class="vn-rate-badge">Lô ×${VN_RATES.lo ?? 3.8}</span>
+          <span class="vn-rate-badge">Đề ×${VN_RATES.de ?? 85}</span>
+          <span class="vn-rate-badge">3 Càng ×${VN_RATES["3cang"] ?? 800}</span>
+          <span class="vn-rate-badge">Đầu/Đuôi ×${VN_RATES.dau ?? 6.5}</span>
         </div>
       </div>`;
     grid.appendChild(vnDivider);
@@ -1577,11 +1676,26 @@ function renderLobby() {
         + (secs <= 0 ? " is-drawing" : "");
       const lastRes = l.lastResults && l.lastResults[0];
       const prizes = lastRes && lastRes.prizes;
-      const timeHtml = isFast
+      const livePrizes = isVnLiveDrawing(l) ? (l.liveDraw.prizes || {}) : null;
+      const timeHtml = isVnLiveDrawing(l)
+        ? `<span class="vn-time-fast"><i class="fa-solid fa-bolt"></i> ${t("vn_drawing")} <b class="countdown-text is-drawing" id="cd-${l.id}">${formatTime(liveDrawRemainingSecs(l.liveDraw))}</b></span>`
+        : (isFast
         ? `<span class="vn-time-fast"><i class="fa-solid fa-bolt"></i> ${t("closes_in")} <b class="countdown-text${urgent ? " is-urgent" : ""}" id="cd-${l.id}">${formatTime(secs)}</b></span>`
-        : `<span class="vn-time-sched"><i class="fa-regular fa-clock"></i> ${t("next_draw")} <b>${escapeHtml(l.drawTimeOfDay || "--:--")}</b> · <b class="countdown-text${urgent ? " is-urgent" : ""}" id="cd-${l.id}">${formatTime(secs)}</b></span>`;
+        : `<span class="vn-time-sched"><i class="fa-regular fa-clock"></i> ${t("next_draw")} <b>${escapeHtml(l.drawTimeOfDay || "--:--")}</b> · <b class="countdown-text${urgent ? " is-urgent" : ""}" id="cd-${l.id}">${formatTime(secs)}</b></span>`);
       let prizeHtml = "";
-      if (prizes) {
+      if (livePrizes) {
+        prizeHtml = `
+          <div class="vn-prize-mini">
+            <div class="vn-prize-row vn-db-row">
+              <span class="vn-prize-label">ĐB</span>
+              <span class="vn-prize-nums">${livePrizes.db ? numToBalls(livePrizes.db, "num-ball-red") : `<span class="vn-prize-pending">${escapeHtml(t("vn_wait_num"))}</span>`}</span>
+            </div>
+            <div class="vn-prize-row">
+              <span class="vn-prize-label">G1</span>
+              <span class="vn-prize-nums">${livePrizes.nhat ? numToBalls(livePrizes.nhat, "num-ball-gold") : `<span class="vn-prize-pending">${escapeHtml(t("vn_wait_num"))}</span>`}</span>
+            </div>
+          </div>`;
+      } else if (prizes) {
         prizeHtml = `
           <div class="vn-prize-mini">
             <div class="vn-prize-row vn-db-row">
@@ -1602,10 +1716,10 @@ function renderLobby() {
         <h3 class="vn-card-title">${escapeHtml(roomLabel(l.id))}</h3>
         <div class="vn-card-time">${timeHtml}</div>
         <div class="card-rate-pills">
-          <span class="rate-pill">Lô ×3.8</span>
-          <span class="rate-pill">Đề ×85</span>
-          <span class="rate-pill">3 Càng ×800</span>
-          <span class="rate-pill">Đầu/Đuôi ×6.5</span>
+          <span class="rate-pill">Lô ×${VN_RATES.lo ?? 3.8}</span>
+          <span class="rate-pill">Đề ×${VN_RATES.de ?? 85}</span>
+          <span class="rate-pill">3 Càng ×${VN_RATES["3cang"] ?? 800}</span>
+          <span class="rate-pill">Đầu/Đuôi ×${VN_RATES.dau ?? 6.5}</span>
         </div>
         <p class="lc-how">${escapeHtml(t("lc_how_vn"))}</p>
         ${prizeHtml}
@@ -1660,6 +1774,11 @@ window.toggleVNNumberGrid = function() {
 };
 
 window.openBettingRoom = function(lotteryId) {
+  if (!state.token) {
+    showToast(t("vn_login"), t("bet_now"), "danger");
+    switchView("auth");
+    return;
+  }
   const l = state.lotteries.find(item => item.id === lotteryId);
   if (!l) return;
 
@@ -1865,8 +1984,19 @@ function startTimers() {
           applyRoomClockState("thai", 0);
         }
         if (state.activeView === "vnlotto" && state.vnCurrentLotteryId === l.id) {
-          setElText("vn-countdown-display", formatTime(0));
-          applyRoomClockState("vn", 0);
+          if (isVnLiveDrawing(l)) applyVnRoomClock(l);
+          else {
+            setElText("vn-countdown-display", formatTime(0));
+            applyRoomClockState("vn", 0);
+          }
+        }
+        if (l.liveDraw && liveDrawRemainingSecs(l.liveDraw) <= 0) {
+          if (!l._revealReloadAt || Date.now() - l._revealReloadAt > 1500) {
+            l._revealReloadAt = Date.now();
+            loadLotteries().then(() => {
+              if (state.activeView === "vnlotto" && state.vnCurrentLotteryId === l.id) refreshVNRoom();
+            });
+          }
         }
         return;
       }
@@ -1902,6 +2032,17 @@ function startTimers() {
       }
     });
     if (state.activeView === "lobby") syncHeroLive();
+    if (state.activeView === "admin") {
+      (state.lotteries || []).forEach((room) => {
+        const el = document.getElementById(`admin-cd-${room.id}`);
+        if (!el) return;
+        const drawing = isVnLiveDrawing(room);
+        el.textContent = drawing
+          ? `${t("vn_drawing")} ${formatTime(liveDrawRemainingSecs(room.liveDraw))}`
+          : formatTime(room.countdown || 0);
+        el.classList.toggle("is-urgent", drawing || (room.countdown || 0) < 30);
+      });
+    }
 
     if (state._tickCount % 8 === 0) {
       if (state.activeView === "betting" && state.selectedLottery?.id) {
@@ -2088,7 +2229,7 @@ function renderAdminDrawControls() {
       <h4>${escapeHtml(adminRoomLabel(l.id))} ${sim}</h4>
       <div class="admin-control-meta">
         <div>Kỳ tiếp: <b class="gold-text">${escapeHtml(l.nextDrawId || "-")}</b></div>
-        <div>Đóng nhận: <b class="admin-cd${(l.countdown || 0) < 30 ? " is-urgent" : ""}">${escapeHtml(formatTime(l.countdown || 0))}</b></div>
+        <div>Đóng nhận: <b class="admin-cd${(l.countdown || 0) < 30 || isVnLiveDrawing(l) ? " is-urgent" : ""}" id="admin-cd-${l.id}">${escapeHtml(isVnLiveDrawing(l) ? `${t("vn_drawing")} ${formatTime(liveDrawRemainingSecs(l.liveDraw))}` : formatTime(l.countdown || 0))}</b></div>
         <div>Kết quả gần nhất: ${escapeHtml(lastLine)}</div>
         <div class="auto-toggle-row">
           <span>Tự quay</span>
@@ -2188,6 +2329,7 @@ window.saveAdminSettings = async function() {
   }
   Object.assign(THAI_RATES, rates);
   Object.assign(VN_RATES, vnRates);
+  refreshRateTabLabels();
   showToast("Đã lưu", "Đã cập nhật tỷ lệ và giới hạn phòng", "success");
   const saved = document.getElementById("admin-settings-saved");
   if (saved) {
@@ -3527,8 +3669,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }).catch(() => {});
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js").catch((error) => console.warn("Service worker registration failed:", error));
+    navigator.serviceWorker.register("/sw.js?v=7").then((reg) => {
+      if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+      reg.addEventListener("updatefound", () => {
+        const sw = reg.installing;
+        if (!sw) return;
+        sw.addEventListener("statechange", () => {
+          if (sw.state === "installed" && navigator.serviceWorker.controller) {
+            sw.postMessage({ type: "SKIP_WAITING" });
+          }
+        });
+      });
+    }).catch((error) => console.warn("Service worker registration failed:", error));
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (state._swReloaded) return;
+      state._swReloaded = true;
+      location.reload();
+    });
   }
+  setupPwaInstall();
   // Check user session
   if (state.token && state.user) {
     updateUserProfileBar();
@@ -4629,7 +4788,6 @@ window.openVNLotteryRoom = async function(lotteryId) {
   switchView("vnlotto");
   selectVNBetType("lo");
   await refreshVNRoom();
-  state.vnRefreshInterval = setInterval(refreshVNRoom, 8000);
 };
 
 async function refreshVNRoom() {
@@ -4644,27 +4802,79 @@ async function refreshVNRoom() {
     live.countdown = l.countdown;
     live.nextDrawId = l.nextDrawId;
     live.lastResults = l.lastResults;
+    live.liveDraw = l.liveDraw;
   }
 
   setElText("vn-room-name", roomLabel(l.id));
-  setElText("vn-draw-id-display", l.nextDrawId);
-  setElText("vn-countdown-display", formatTime(l.countdown || 0));
-  applyRoomClockState("vn", l.countdown || 0);
+  setElText("vn-draw-id-display", (l.liveDraw?.drawId || l.nextDrawId || "").split("-").pop());
+  const wantMs = isVnLiveDrawing(l) ? 1000 : 8000;
+  if (state._vnRefreshMs !== wantMs) {
+    if (state.vnRefreshInterval) clearInterval(state.vnRefreshInterval);
+    state._vnRefreshMs = wantMs;
+    state.vnRefreshInterval = setInterval(refreshVNRoom, wantMs);
+  }
+  applyVnRoomClock(l);
   refreshRoomPendingStrip();
   const simNote = document.getElementById("vn-sim-note");
   if (simNote) simNote.style.display = (id === "vnmn" || id === "vnmt") ? "block" : "none";
-  renderVNLastDb(l.lastResults);
+  renderVNLastDb(l.lastResults, l.liveDraw);
 
-  renderVNPrizeTable(l.lastResults);
+  renderVNPrizeTable(l.lastResults, l.liveDraw);
   renderVNHistory(l.lastResults);
   renderVNTickets();
   updateVNPayoutPreview();
   renderVNQuickNumbers();
 }
 
-function renderVNLastDb(results) {
+function applyVnRoomClock(lottery) {
+  if (!lottery) return;
+  const view = document.getElementById("view-vnlotto");
+  if (isVnLiveDrawing(lottery)) {
+    const left = liveDrawRemainingSecs(lottery.liveDraw);
+    setElText("vn-countdown-display", formatTime(left));
+    applyRoomClockState("vn", 0);
+    const label = document.getElementById("vn-clock-label");
+    if (label) label.textContent = `${t("vn_draw_now")} ${vnPrizeLabel(lottery.liveDraw.current)}`;
+    const banner = document.getElementById("vn-draw-state");
+    if (banner) {
+      banner.hidden = false;
+      banner.textContent = t("vn_drawing");
+    }
+    view?.classList.add("is-draw-locked", "is-vn-revealing");
+    renderVNLiveBoard(lottery.liveDraw);
+    return;
+  }
+  view?.classList.remove("is-vn-revealing");
+  const board = document.getElementById("vn-live-board");
+  if (board) board.hidden = true;
+  applyRoomClockState("vn", lottery.countdown || 0);
+}
+
+function renderVNLiveBoard(liveDraw) {
+  const board = document.getElementById("vn-live-board");
+  if (!board) return;
+  if (!liveDraw) {
+    board.hidden = true;
+    return;
+  }
+  const key = liveDraw.current || "nhat";
+  const raw = liveDraw.prizes?.[key];
+  const shown = raw == null ? t("vn_wait_num") : (Array.isArray(raw) ? raw.join("  ") : raw);
+  board.hidden = false;
+  setElText("vn-live-now-label", `${t("vn_draw_now")} · ${vnPrizeLabel(key)}`);
+  setElText("vn-live-now-num", shown);
+}
+
+function renderVNLastDb(results, liveDraw) {
   const el = document.getElementById("vn-last-db-balls");
   if (!el) return;
+  if (isVnLiveDrawing({ liveDraw })) {
+    const db = liveDraw.prizes?.db;
+    el.innerHTML = db
+      ? numToBalls(db, "num-ball-red")
+      : `<span class="vn-prize-pending">${escapeHtml(t("prize_db"))}</span>`;
+    return;
+  }
   const db = results?.[0]?.prizes?.db;
   if (!db) {
     el.innerHTML = `<span class="sphere-digit">-</span>`;
@@ -4673,37 +4883,42 @@ function renderVNLastDb(results) {
   el.innerHTML = numToBalls(db, "num-ball-red");
 }
 
-function renderVNPrizeTable(results) {
+function renderVNPrizeTable(results, liveDraw) {
   const container = document.getElementById("vn-prize-table-container");
   if (!container) return;
-  if (!results || results.length === 0) {
+  const drawing = isVnLiveDrawing({ liveDraw });
+  const latest = results && results[0];
+  const p = drawing ? (liveDraw.prizes || {}) : latest?.prizes;
+  if (!drawing && (!results || !results.length || !p)) {
     container.innerHTML = `<div class="vn-prize-table-loading">${escapeHtml(t("vn_no_prize"))}</div>`;
     return;
   }
-  const latest = results[0];
-  const p = latest.prizes;
-  if (!p) {
-    container.innerHTML = `<div class="vn-prize-table-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> ${escapeHtml(t("loading"))}</div>`;
-    return;
-  }
-  const makeNums = (arr, big = false) => {
+  const makeNums = (arr, big = false, pending = false) => {
+    if (pending || arr == null) {
+      return `<div class="vn-prize-numbers"><span class="vn-prize-pending">${escapeHtml(t("vn_wait_num"))}</span></div>`;
+    }
     const items = Array.isArray(arr) ? arr : [arr];
     return `<div class="vn-prize-numbers">${items.map((n) => `<span class="vn-prize-num ${big ? "vn-prize-db" : ""}">${escapeHtml(n)}</span>`).join("")}</div>`;
+  };
+  const row = (key, labelKey, extra = "") => {
+    const has = p && p[key] != null;
+    const live = drawing && liveDraw.current === key;
+    return `<tr class="${extra}${live ? " is-live-prize" : ""}"><td class="vn-prize-label">${escapeHtml(t(labelKey))}</td><td>${makeNums(p?.[key], key === "db", !has)}</td></tr>`;
   };
   container.innerHTML = `
     <table class="vn-prize-table">
       <tbody>
-        <tr class="vn-row-db"><td class="vn-prize-label">${escapeHtml(t("prize_db"))}</td><td>${makeNums(p.db, true)}</td></tr>
-        <tr><td class="vn-prize-label">${escapeHtml(t("prize_1"))}</td><td>${makeNums(p.nhat)}</td></tr>
-        <tr><td class="vn-prize-label">${escapeHtml(t("prize_2"))}</td><td>${makeNums(p.nhi)}</td></tr>
-        <tr><td class="vn-prize-label">${escapeHtml(t("prize_3"))}</td><td>${makeNums(p.ba)}</td></tr>
-        <tr><td class="vn-prize-label">${escapeHtml(t("prize_4"))}</td><td>${makeNums(p.tu)}</td></tr>
-        <tr><td class="vn-prize-label">${escapeHtml(t("prize_5"))}</td><td>${makeNums(p.nam)}</td></tr>
-        <tr><td class="vn-prize-label">${escapeHtml(t("prize_6"))}</td><td>${makeNums(p.sau)}</td></tr>
-        <tr class="vn-row-g7"><td class="vn-prize-label">${escapeHtml(t("prize_7"))}</td><td>${makeNums(p.bay)}</td></tr>
+        ${row("db", "prize_db", "vn-row-db")}
+        ${row("nhat", "prize_g1")}
+        ${row("nhi", "prize_g2")}
+        ${row("ba", "prize_g3")}
+        ${row("tu", "prize_g4")}
+        ${row("nam", "prize_g5")}
+        ${row("sau", "prize_g6")}
+        ${row("bay", "prize_g7", "vn-row-g7")}
       </tbody>
     </table>
-    <div class="vn-prize-meta">${escapeHtml(t("draw_id"))}: ${escapeHtml(latest.drawId)}</div>`;
+    <div class="vn-prize-meta">${escapeHtml(t("draw_id"))}: ${escapeHtml((drawing ? liveDraw.drawId : latest?.drawId) || "—")}${drawing ? ` · ${escapeHtml(t("vn_drawing"))}` : ""}</div>`;
 }
 
 function renderVNHistory(results) {
@@ -5214,3 +5429,40 @@ window.loadNumberStats = async function() {
   html += '</tbody></table>';
   container.innerHTML = html;
 };
+
+function setupPwaInstall() {
+  const bar = document.getElementById("pwa-install-bar");
+  const btn = document.getElementById("pwa-install-btn");
+  const close = document.getElementById("pwa-install-x");
+  if (!bar || !btn) return;
+  const standalone = window.matchMedia("(display-mode: standalone)").matches
+    || window.navigator.standalone === true;
+  if (standalone || localStorage.getItem("soklarp-hide-install") === "1") return;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  let deferred = null;
+  window.addEventListener("beforeinstallprompt", (ev) => {
+    ev.preventDefault();
+    deferred = ev;
+    bar.hidden = false;
+    btn.textContent = t("install_app");
+  });
+  if (ios && window.innerWidth < 820) {
+    bar.hidden = false;
+    btn.textContent = t("install_ios");
+  }
+  btn.onclick = async () => {
+    if (deferred) {
+      deferred.prompt();
+      deferred = null;
+      bar.hidden = true;
+      return;
+    }
+    showToast(t("install_app"), t("install_ios"), "success");
+  };
+  if (close) {
+    close.onclick = () => {
+      bar.hidden = true;
+      localStorage.setItem("soklarp-hide-install", "1");
+    };
+  }
+}

@@ -164,7 +164,7 @@ export function registerUserRoutes(app, { authenticate, getDb, saveDb, vnPayoutR
       return res.status(400).json({ success: false, message: "Ky da dong, thu ky moi", nextDrawId: lottery.nextDrawId, countdown: lottery.countdown });
     }
 
-    if (lottery.countdown <= 0) {
+    if (lottery.countdown <= 0 || lottery.liveDraw) {
       return res.status(400).json({ success: false, message: "Da het gio dat cuoc ky nay", nextDrawId: lottery.nextDrawId, countdown: lottery.countdown });
     }
 

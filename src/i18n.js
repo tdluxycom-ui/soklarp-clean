@@ -347,7 +347,12 @@ window.SOKLARP_I18N = {
     hist_more: "Show more",
     hist_staked: "Staked",
     hist_paid: "Paid",
-    wait_result: "Waiting for result"
+    wait_result: "Waiting for result",
+    vn_drawing: "Drawing 1:30",
+    vn_draw_now: "Now drawing",
+    vn_wait_num: "…",
+    install_app: "Add SOKLARP to Home Screen",
+    install_ios: "Safari → Share → Add to Home Screen"
   },
   en: {
     back: "Back",
@@ -718,7 +723,12 @@ window.SOKLARP_I18N = {
     hist_more: "Show more",
     hist_staked: "Staked",
     hist_paid: "Paid",
-    wait_result: "Waiting for result"
+    wait_result: "Waiting for result",
+    vn_drawing: "Drawing 1:30",
+    vn_draw_now: "Now drawing",
+    vn_wait_num: "…",
+    install_app: "Add SOKLARP to Home Screen",
+    install_ios: "Safari → Share → Add to Home Screen"
   },
   vi: {
     back: "Quay lại",
@@ -1089,6 +1099,11 @@ window.SOKLARP_I18N = {
     hist_more: "Xem thêm",
     hist_staked: "Đã cược",
     hist_paid: "Đã trả",
-    wait_result: "Chờ kết quả"
+    wait_result: "Chờ kết quả",
+    vn_drawing: "Đang sổ 1:30",
+    install_app: "Thêm SOKLARP ra màn hình chính",
+    install_ios: "Safari → Chia sẻ → Thêm vào MH chính",
+    vn_draw_now: "Đang sổ",
+    vn_wait_num: "…"
   }
 };
