@@ -16,6 +16,7 @@ jobs:
       - run: npm ci --omit=dev
       # Pure odds math, no server needed — fails the build if any bet pays more than it takes.
       - run: npm run test:odds
+      - run: npm run test:security
       - run: npm run build
       - name: Start server
         run: |
