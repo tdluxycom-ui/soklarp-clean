@@ -11,6 +11,7 @@ import { applyCanonicalRoomNames, repairUserNicknames } from "./lib/room-catalog
 import { secureRandomInt } from "./lib/secure-random.mjs";
 import { createRateLimiter } from "./lib/rate-limit.mjs";
 import { createCoalescingWriter } from "./lib/db-writer.mjs";
+import { createTickClock } from "./lib/tick-clock.mjs";
 import { registerGameRoutes } from "./server/routes/games.mjs";
 import { registerAuthRoutes } from "./server/routes/auth.mjs";
 import { registerUserRoutes } from "./server/routes/user.mjs";
@@ -844,12 +845,18 @@ const { resolveDraw, resolveVNDraw, settleLotteryRoom } = createLotteryEngine({
 });
 
 // Background scheduler tick
+const schedulerClock = createTickClock();
 setInterval(() => {
-  if (!dbReady) return;
+  // Countdowns move by the seconds that actually passed rather than one per
+  // callback, so a late or skipped timer cannot leave every draw running slow.
+  // Read the clock even before the rooms exist, or the whole boot would be
+  // charged against countdowns that initLotteriesState only armed at the end.
+  const elapsed = schedulerClock.elapsedSeconds();
+  if (!dbReady || elapsed === 0) return;
   for (const key in db.lotteries) {
     const lottery = db.lotteries[key];
     if (lottery.countdown > 0) {
-      lottery.countdown -= 1;
+      lottery.countdown = Math.max(0, lottery.countdown - elapsed);
       continue;
     }
     if (!lottery.settings?.autoDraw) {
