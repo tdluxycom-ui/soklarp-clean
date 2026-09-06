@@ -9,6 +9,7 @@ import { pruneBets } from "./lib/prune-bets.mjs";
 import { createLotteryEngine } from "./lib/lottery-settle.mjs";
 import { applyCanonicalRoomNames, repairUserNicknames } from "./lib/room-catalog.mjs";
 import { secureRandomInt } from "./lib/secure-random.mjs";
+import { createRateLimiter } from "./lib/rate-limit.mjs";
 import { registerGameRoutes } from "./server/routes/games.mjs";
 import { registerAuthRoutes } from "./server/routes/auth.mjs";
 import { registerUserRoutes } from "./server/routes/user.mjs";
@@ -23,11 +24,21 @@ const SQLITE_PATH = process.env.SQLITE_PATH || path.join(__dirname, "data", "sok
 const PLATFORM_MODE = "virtual-credits";
 const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 24 * 60 * 60 * 1000);
 const AUTH_WINDOW_MS = 15 * 60 * 1000;
-const AUTH_MAX_ATTEMPTS = 10;
-const authAttempts = new Map();
+/** Failed sign-ins tolerated for one account before it is paused. */
+const AUTH_MAX_FAILURES_PER_ACCOUNT = 10;
+/**
+ * Per-address ceiling, deliberately loose. Mobile carriers put a lot of players
+ * behind one address, so the per-account limit is what actually stops a
+ * password guess; this only catches obvious floods.
+ */
+const AUTH_MAX_FAILURES_PER_IP = 100;
 const PLAY_WINDOW_MS = 10 * 1000;
 const PLAY_MAX = 80;
-const playAttempts = new Map();
+const RATE_LIMIT_SWEEP_MS = 60 * 1000;
+
+const authFailuresByAccount = createRateLimiter({ windowMs: AUTH_WINDOW_MS, max: AUTH_MAX_FAILURES_PER_ACCOUNT });
+const authFailuresByIp = createRateLimiter({ windowMs: AUTH_WINDOW_MS, max: AUTH_MAX_FAILURES_PER_IP });
+const playLimiter = createRateLimiter({ windowMs: PLAY_WINDOW_MS, max: PLAY_MAX });
 /** Prevents overlapping async draw settles for the same room (double-pay). */
 const drawingLocks = new Set();
 let saveQueue = Promise.resolve();
@@ -42,6 +53,16 @@ const app = express();
 const PORT = process.env.PORT || 59617;
 
 app.disable("x-powered-by");
+// Behind a reverse proxy or tunnel every request arrives from the proxy's own
+// address, which would drop every player into a single rate-limit bucket — ten
+// wrong passwords anywhere would then lock sign-in for everybody. Set
+// TRUST_PROXY to the number of proxy hops in front of this server (or any value
+// Express accepts). Off by default so a directly exposed deployment cannot have
+// its client address spoofed through X-Forwarded-For.
+if (process.env.TRUST_PROXY) {
+  const trustProxy = process.env.TRUST_PROXY;
+  app.set("trust proxy", /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy);
+}
 app.use(express.json({ limit: "32kb" }));
 app.use((req, res, next) => {
   res.set("X-Content-Type-Options", "nosniff");
@@ -54,18 +75,26 @@ app.use((req, res, next) => {
   );
   next();
 });
-app.use("/api/auth", (req, res, next) => {
-  const key = `${req.ip}:${req.path}`;
-  const now = Date.now();
-  const entry = authAttempts.get(key);
-  if (!entry || now > entry.resetAt) {
-    authAttempts.set(key, { count: 1, resetAt: now + AUTH_WINDOW_MS });
-    return next();
+// Only credential checks are limited, and only failures count towards the cap.
+// The previous middleware counted every /api/auth/* request, so a player who
+// signed in, changed their password and signed out a few times was locked out
+// alongside anyone actually guessing passwords.
+app.use(["/api/auth/login", "/api/auth/register"], (req, res, next) => {
+  const account = String(req.body?.username ?? "").trim().toLowerCase();
+  const address = req.ip;
+  if (!authFailuresByAccount.allows(account) || !authFailuresByIp.allows(address)) {
+    const retryAfter = Math.max(
+      authFailuresByAccount.retryAfterSeconds(account),
+      authFailuresByIp.retryAfterSeconds(address)
+    );
+    if (retryAfter > 0) res.set("Retry-After", String(retryAfter));
+    return res.status(429).json({ success: false, message: "Too many failed authentication attempts. Please try again later." });
   }
-  entry.count += 1;
-  if (entry.count > AUTH_MAX_ATTEMPTS) {
-    return res.status(429).json({ success: false, message: "Too many authentication attempts. Please try again later." });
-  }
+  res.on("finish", () => {
+    if (res.statusCode < 400) return;
+    authFailuresByAccount.hit(account);
+    authFailuresByIp.hit(address);
+  });
   next();
 });
 app.use((req, res, next) => {
@@ -73,19 +102,22 @@ app.use((req, res, next) => {
     || req.path === "/api/user/bet"
     || req.path === "/api/user/vnbet";
   if (req.method !== "POST" || !playPath) return next();
-  const key = `${req.ip}:${req.path}`;
-  const now = Date.now();
-  const entry = playAttempts.get(key);
-  if (!entry || now > entry.resetAt) {
-    playAttempts.set(key, { count: 1, resetAt: now + PLAY_WINDOW_MS });
-    return next();
-  }
-  entry.count += 1;
-  if (entry.count > PLAY_MAX) {
+  // Keyed on the session token rather than the address, so one player cannot
+  // spend everyone else's allowance when the server sits behind a proxy.
+  const authHeader = req.headers.authorization || "";
+  const key = authHeader.startsWith("Bearer ") ? `session:${authHeader.slice(7)}` : `address:${req.ip}`;
+  if (!playLimiter.hit(key)) {
+    const retryAfter = playLimiter.retryAfterSeconds(key);
+    if (retryAfter > 0) res.set("Retry-After", String(retryAfter));
     return res.status(429).json({ success: false, message: "Too many play requests. Please slow down." });
   }
   next();
 });
+setInterval(() => {
+  authFailuresByAccount.sweep();
+  authFailuresByIp.sweep();
+  playLimiter.sweep();
+}, RATE_LIMIT_SWEEP_MS);
 // Serve frontend build from dist
 // Disable caching for development
 app.use((req, res, next) => {

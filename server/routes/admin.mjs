@@ -1,4 +1,5 @@
 import { createDbProxy } from "../db-proxy.mjs";
+import { sanitizeNickname } from "../../lib/sanitize.mjs";
 
 const ADMIN_MINIGAMES = [
   { id: "game_coinflip", name: "Úp xu" },
@@ -442,7 +443,7 @@ export function registerAdminRoutes(app, {
   app.post("/api/admin/users", authenticate, adminOnly, async (req, res) => {
     const username = String(req.body.username || "").trim().toLowerCase();
     const password = String(req.body.password || "").trim();
-    const nickname = String(req.body.nickname || username).trim();
+    const nickname = sanitizeNickname(req.body.nickname || username);
     const role = req.body.role === "admin" ? "admin" : "user";
     const balance = Number(req.body.balance);
     if (!/^[a-z0-9_]{3,32}$/.test(username)) {
@@ -457,7 +458,7 @@ export function registerAdminRoutes(app, {
     db.users.push({
       username,
       password: hashPassword(password),
-      nickname: nickname.slice(0, 40) || username,
+      nickname: nickname || username,
       balance: Number.isFinite(balance) && balance >= 0 ? balance : 0,
       role,
       status: "active",
