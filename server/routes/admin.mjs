@@ -37,6 +37,7 @@ export function registerAdminRoutes(app, {
   adminOnly,
   getDb,
   saveDb,
+  flushDb,
   resolveDraw,
   resolveVNDraw,
   generateVNPrizes,
@@ -141,7 +142,7 @@ export function registerAdminRoutes(app, {
     const result = applyVirtualCredit(targetUser, action, amount, note);
     if (!result.ok) return res.status(400).json({ success: false, message: result.message });
 
-    await saveDb();
+    await flushDb();
     res.json({
       success: true,
       message: `Đã cập nhật tín dụng cho ${username}`,
@@ -366,7 +367,7 @@ export function registerAdminRoutes(app, {
       }
     }
 
-    await saveDb();
+    await flushDb();
     res.json({ success: true, message: `Đã xóa tài khoản [${username}]` });
   });
 
@@ -376,7 +377,7 @@ export function registerAdminRoutes(app, {
     if (!target) return res.status(404).json({ success: false, message: "Không tìm thấy người dùng" });
     const result = applyVirtualCredit(target, action, amount, note);
     if (!result.ok) return res.status(400).json({ success: false, message: result.message });
-    await saveDb();
+    await flushDb();
     res.json({ success: true, message: `${action === "add" ? "Đã cộng" : "Đã trừ"} ${amount} CR`, newBalance: result.newBalance });
   });
 
@@ -464,7 +465,7 @@ export function registerAdminRoutes(app, {
       status: "active",
       exp: 0
     });
-    await saveDb();
+    await flushDb();
     res.json({ success: true, message: `Đã tạo tài khoản ${username}` });
   });
 
@@ -483,7 +484,7 @@ export function registerAdminRoutes(app, {
         delete db.sessions[token];
       }
     }
-    await saveDb();
+    await flushDb();
     res.json({ success: true, message: `Đã đặt lại mật khẩu cho ${username}` });
   });
 

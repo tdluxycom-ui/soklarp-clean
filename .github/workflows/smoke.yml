@@ -17,6 +17,7 @@ jobs:
       # Pure odds math, no server needed — fails the build if any bet pays more than it takes.
       - run: npm run test:odds
       - run: npm run test:security
+      - run: npm run test:persistence
       - run: npm run build
       - name: Start server
         run: |

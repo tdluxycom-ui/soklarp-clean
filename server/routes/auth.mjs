@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { createDbProxy } from "../db-proxy.mjs";
 import { sanitizeNickname } from "../../lib/sanitize.mjs";
 
-export function registerAuthRoutes(app, { authenticate, getDb, saveDb, hashPassword, verifyPassword, sessionTtlMs }) {
+export function registerAuthRoutes(app, { authenticate, getDb, saveDb, flushDb, hashPassword, verifyPassword, sessionTtlMs }) {
   const db = createDbProxy(getDb);
 
   app.post("/api/auth/register", async (req, res) => {
@@ -30,7 +30,7 @@ export function registerAuthRoutes(app, { authenticate, getDb, saveDb, hashPassw
       role: "user",
       status: "active"
     });
-    await saveDb();
+    await flushDb();
     res.json({ success: true, message: "Registration successful. Starting credits: 50,000 CR" });
   });
 
@@ -88,7 +88,7 @@ export function registerAuthRoutes(app, { authenticate, getDb, saveDb, hashPassw
       return res.status(400).json({ success: false, message: "New password must be at least 10 characters" });
     }
     req.user.password = hashPassword(String(newPassword).trim());
-    await saveDb();
+    await flushDb();
     res.json({ success: true, message: "Password updated" });
   });
 }

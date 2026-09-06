@@ -10,6 +10,7 @@ import { createLotteryEngine } from "./lib/lottery-settle.mjs";
 import { applyCanonicalRoomNames, repairUserNicknames } from "./lib/room-catalog.mjs";
 import { secureRandomInt } from "./lib/secure-random.mjs";
 import { createRateLimiter } from "./lib/rate-limit.mjs";
+import { createCoalescingWriter } from "./lib/db-writer.mjs";
 import { registerGameRoutes } from "./server/routes/games.mjs";
 import { registerAuthRoutes } from "./server/routes/auth.mjs";
 import { registerUserRoutes } from "./server/routes/user.mjs";
@@ -41,8 +42,13 @@ const authFailuresByIp = createRateLimiter({ windowMs: AUTH_WINDOW_MS, max: AUTH
 const playLimiter = createRateLimiter({ windowMs: PLAY_WINDOW_MS, max: PLAY_MAX });
 /** Prevents overlapping async draw settles for the same room (double-pay). */
 const drawingLocks = new Set();
-let saveQueue = Promise.resolve();
 let sqliteStore = null;
+/** Most a play can wait to reach disk. See lib/db-writer.mjs for the trade-off. */
+const SNAPSHOT_WRITE_MS = 200;
+/** How often the JSON backup and the queryable SQLite tables are rebuilt. */
+const SECONDARY_WRITE_MS = 15 * 1000;
+let lastSnapshot = null;
+let secondaryStale = false;
 // Flipped true once initDb() finishes. The scheduler tick must not run before that:
 // during boot the async laodl/XSMB fetches yield the event loop and a tick would
 // resolve draws with stale or empty drawIds (seen live as duplicate LA-*/HN-* draws
@@ -236,7 +242,9 @@ async function initDb() {
     try {
       const data = JSON.parse(await fs.readFile(DB_PATH, "utf8"));
       normalizeLoadedDb(data);
-      sqliteStore.save(snapshotForStore());
+      const migrated = snapshotForStore();
+      sqliteStore.saveSnapshot(JSON.stringify(migrated));
+      sqliteStore.refreshIndexes(migrated);
       console.log("Database migrated from JSON to SQLite.");
     } catch (err) {
       console.error("Failed to parse database.json, initializing fresh one:", err);
@@ -249,6 +257,7 @@ async function initDb() {
   await initLotteriesState();
   console.log("Lottery rooms initialized:", Object.keys(db.lotteries).join(", "));
   await saveDb();
+  await flushAll();
   console.log("Database saved with all lottery rooms.");
 }
 
@@ -281,23 +290,75 @@ function snapshotForStore() {
   };
 }
 
+/**
+ * Writes the authoritative snapshot. Serialises once and hands the same string
+ * to SQLite and to the backup writer, which used to serialise the whole
+ * database a second time, pretty-printed, on every play.
+ */
+function writeSnapshot() {
+  const snapshot = snapshotForStore();
+  const payload = JSON.stringify(snapshot);
+  if (sqliteStore) sqliteStore.saveSnapshot(payload);
+  lastSnapshot = { snapshot, payload };
+  secondaryStale = true;
+}
+
+const snapshotWriter = createCoalescingWriter({
+  write: writeSnapshot,
+  intervalMs: SNAPSHOT_WRITE_MS,
+  onError: (err) => console.error("Snapshot save failed:", err)
+});
+
+/**
+ * Rebuilds the artefacts nothing reads back at runtime: the database.json
+ * backup and the SQLite tables kept for CLI queries.
+ */
+async function writeSecondaryArtefacts() {
+  if (!secondaryStale || !lastSnapshot) return;
+  const { snapshot, payload } = lastSnapshot;
+  secondaryStale = false;
+  try {
+    const tmp = DB_PATH + ".tmp";
+    await fs.writeFile(tmp, payload, "utf8");
+    await fs.rename(tmp, DB_PATH);
+  } catch (err) {
+    console.error("JSON backup save failed:", err);
+  }
+  try {
+    if (sqliteStore) {
+      sqliteStore.refreshIndexes(snapshot);
+      sqliteStore.checkpoint();
+    }
+  } catch (err) {
+    console.error("SQLite index refresh failed:", err);
+  }
+}
+
+const secondaryWriter = createCoalescingWriter({
+  write: writeSecondaryArtefacts,
+  intervalMs: SECONDARY_WRITE_MS,
+  onError: (err) => console.error("Secondary save failed:", err)
+});
+
+/** Records that the database changed. The write follows within SNAPSHOT_WRITE_MS. */
 async function saveDb() {
-  saveQueue = saveQueue.then(async () => {
-    const dataToSave = snapshotForStore();
-    try {
-      if (sqliteStore) sqliteStore.save(dataToSave);
-    } catch (err) {
-      console.error("SQLite save failed:", err);
-    }
-    try {
-      const tmp = DB_PATH + ".tmp";
-      await fs.writeFile(tmp, JSON.stringify(dataToSave, null, 2), "utf8");
-      await fs.rename(tmp, DB_PATH);
-    } catch (err) {
-      console.error("JSON backup save failed:", err);
-    }
-  });
-  return saveQueue;
+  snapshotWriter.markDirty();
+  secondaryWriter.markDirty();
+}
+
+/**
+ * Persists immediately and waits for it. For changes a player would notice
+ * going missing after a restart — creating an account, moving credit — rather
+ * than for ordinary play.
+ */
+async function flushDb() {
+  await snapshotWriter.flush();
+}
+
+/** Everything on disk, including the backup file. Used at shutdown. */
+async function flushAll() {
+  await snapshotWriter.flush();
+  await secondaryWriter.flush();
 }
 
 async function createFreshDb() {
@@ -835,6 +896,7 @@ registerAuthRoutes(app, {
   authenticate,
   getDb: () => db,
   saveDb,
+  flushDb,
   hashPassword,
   verifyPassword,
   sessionTtlMs: SESSION_TTL_MS
@@ -871,6 +933,7 @@ registerAdminRoutes(app, {
   adminOnly,
   getDb: () => db,
   saveDb,
+  flushDb,
   resolveDraw,
   resolveVNDraw,
   generateVNPrizes,
@@ -906,6 +969,23 @@ app.get("/truc-tiep-laos", (req, res) => {
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
+
+// Plays are only written every SNAPSHOT_WRITE_MS, so an orderly shutdown has to
+// drain what is still pending instead of dropping the last fraction of a second.
+let shuttingDown = false;
+for (const signal of ["SIGINT", "SIGTERM"]) {
+  process.on(signal, async () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    try {
+      await flushAll();
+      if (sqliteStore) sqliteStore.close();
+    } catch (err) {
+      console.error("Shutdown save failed:", err);
+    }
+    process.exit(0);
+  });
+}
 
 // Main Server Boot
 initDb().then(() => {
