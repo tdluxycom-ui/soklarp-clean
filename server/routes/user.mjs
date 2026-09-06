@@ -297,6 +297,16 @@ export function registerUserRoutes(app, { authenticate, getDb, saveDb, vnPayoutR
     req.user.balance += rewardCredits;
     req.user.exp = (req.user.exp || 0) + 100;
     req.user.lastDailyClaim = now.toISOString();
+    db.transactions = db.transactions || [];
+    db.transactions.push({
+      id: "tx_daily_" + Date.now(),
+      username: req.user.username,
+      type: "daily",
+      amount: rewardCredits,
+      note: "Thưởng ngày",
+      createdAt: now.toISOString(),
+      status: "completed"
+    });
 
     await saveDb();
 

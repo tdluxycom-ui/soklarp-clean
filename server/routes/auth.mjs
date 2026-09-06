@@ -56,7 +56,8 @@ export function registerAuthRoutes(app, { authenticate, getDb, saveDb, hashPassw
         username: user.username,
         nickname: user.nickname,
         balance: user.balance,
-        role: user.role
+        role: user.role,
+        exp: Number(user.exp || 0)
       },
       token
     });

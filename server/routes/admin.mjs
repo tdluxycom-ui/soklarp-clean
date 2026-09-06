@@ -1,5 +1,36 @@
 import { createDbProxy } from "../db-proxy.mjs";
 
+const ADMIN_MINIGAMES = [
+  { id: "game_coinflip", name: "Úp xu" },
+  { id: "game_hilo", name: "Tài xỉu" },
+  { id: "game_wheel", name: "Vòng quay" },
+  { id: "game_slot", name: "Slot 777" },
+  { id: "game_mines", name: "Dò mìn" },
+  { id: "game_crash", name: "Crash" },
+  { id: "game_plinko", name: "Plinko" },
+  { id: "game_pokdeng", name: "Pok Deng" },
+  { id: "game_dragontiger", name: "Rồng Hổ" },
+  { id: "game_horseracing", name: "Đua ngựa" },
+  { id: "game_coinpusher", name: "Đẩy xu" },
+  { id: "game_duckshooter", name: "Bắn vịt" },
+  { id: "game_chest", name: "Rương bí ẩn" }
+];
+
+function vipRankVi(exp) {
+  const value = Number(exp || 0);
+  if (value >= 5000) return "Kim cương";
+  if (value >= 2500) return "Vàng";
+  if (value >= 1000) return "Bạc";
+  return "Đồng";
+}
+
+function creditTypeFromNote(action, note) {
+  const text = String(note || "").toLowerCase();
+  if (/thưởng ngày|daily/.test(text)) return "daily";
+  if (/thưởng|bonus/.test(text)) return "bonus";
+  return action === "add" ? "add" : "deduct";
+}
+
 export function registerAdminRoutes(app, {
   authenticate,
   adminOnly,
@@ -14,35 +45,89 @@ export function registerAdminRoutes(app, {
 }) {
   const db = createDbProxy(getDb);
 
+  function applyVirtualCredit(target, action, amount, note) {
+    const amt = Math.abs(Number(amount));
+    if (!target || !Number.isFinite(amt) || amt <= 0) return { ok: false, message: "Dữ liệu tín dụng không hợp lệ" };
+    if (action === "add") {
+      target.balance = (target.balance || 0) + amt;
+    } else if (action === "deduct") {
+      if ((target.balance || 0) < amt) return { ok: false, message: "Người dùng không đủ CR" };
+      target.balance = (target.balance || 0) - amt;
+    } else {
+      return { ok: false, message: "Thao tác không hợp lệ" };
+    }
+    db.transactions = db.transactions || [];
+    db.transactions.push({
+      id: "tx_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+      username: target.username,
+      type: creditTypeFromNote(action, note),
+      amount: amt,
+      note: note || (action === "add" ? "Quản trị cộng CR" : "Quản trị trừ CR"),
+      createdAt: new Date().toISOString(),
+      status: "completed"
+    });
+    return { ok: true, newBalance: target.balance };
+  }
+
   // Admin API routes
   app.get("/api/admin/dashboard", authenticate, adminOnly, (req, res) => {
-    const totalBets = db.bets.reduce((sum, b) => sum + b.amount, 0);
-    const totalPayout = db.bets.reduce((sum, b) => sum + (b.payout || 0), 0);
+    const lotteryBets = db.bets.filter((b) => !String(b.lotteryType || "").startsWith("game_"));
+    const gameBets = db.bets.filter((b) => String(b.lotteryType || "").startsWith("game_"));
+    const totalBets = lotteryBets.reduce((sum, b) => sum + (b.amount || 0), 0);
+    const totalPayout = lotteryBets.reduce((sum, b) => sum + (b.payout || 0), 0);
     const netProfit = totalBets - totalPayout;
     const activeUsers = db.users.length;
     const bannedUsers = db.users.filter((u) => u.status === "banned").length;
-    const pendingBets = db.bets.filter((b) => b.status === "pending").length;
+    const pendingBets = lotteryBets.filter((b) => b.status === "pending").length;
+    const openRooms = Object.keys(db.lotteries || {}).length;
+    const gamePlays = gameBets.length;
+    const gameStake = gameBets.reduce((sum, b) => sum + (b.amount || 0), 0);
+    const gamePayout = gameBets.reduce((sum, b) => sum + (b.payout || 0), 0);
+    const roomOps = Object.keys(db.lotteries || {}).map((id) => {
+      const pending = lotteryBets.filter((b) => b.lotteryType === id && b.status === "pending");
+      return {
+        id,
+        pendingCount: pending.length,
+        pendingStake: pending.reduce((sum, b) => sum + (b.amount || 0), 0),
+        pendingRisk: pending.reduce((sum, b) => sum + (b.amount || 0) * (b.rate || 1), 0)
+      };
+    });
 
     res.json({
       success: true,
-      stats: { totalBets, totalPayout, netProfit, activeUsers, bannedUsers, pendingBets }
+      siteNote: String(db.systemSettings?.siteNote || ""),
+      roomOps,
+      stats: {
+        totalBets,
+        totalPayout,
+        netProfit,
+        activeUsers,
+        bannedUsers,
+        pendingBets,
+        openRooms,
+        gamePlays,
+        gameStake,
+        gamePayout
+      }
     });
   });
 
   app.get("/api/admin/users", authenticate, adminOnly, (req, res) => {
-    const usersList = db.users.map(u => ({
+    const usersList = db.users.map((u) => ({
       username: u.username,
       nickname: u.nickname,
       balance: u.balance,
       role: u.role,
       status: u.status || "active",
-      exp: u.exp || 0
+      exp: u.exp || 0,
+      vip: vipRankVi(u.exp),
+      lastDailyClaim: u.lastDailyClaim || null
     }));
     res.json({ success: true, users: usersList });
   });
 
   app.post("/api/admin/users/credit", authenticate, adminOnly, async (req, res) => {
-    const { username, action, amount } = req.body;
+    const { username, action, amount, note } = req.body;
     if (!username || !action || !amount || isNaN(amount) || amount <= 0) {
       return res.status(400).json({ success: false, message: "Dữ liệu tín dụng không hợp lệ" });
     }
@@ -52,23 +137,14 @@ export function registerAdminRoutes(app, {
       return res.status(404).json({ success: false, message: "Không tìm thấy người dùng" });
     }
 
-    const amt = Number(amount);
-    if (action === "add") {
-      targetUser.balance += amt;
-    } else if (action === "deduct") {
-      if (targetUser.balance < amt) {
-        return res.status(400).json({ success: false, message: "Người dùng không đủ CR" });
-      }
-      targetUser.balance -= amt;
-    } else {
-      return res.status(400).json({ success: false, message: "Thao tác không hợp lệ" });
-    }
+    const result = applyVirtualCredit(targetUser, action, amount, note);
+    if (!result.ok) return res.status(400).json({ success: false, message: result.message });
 
     await saveDb();
     res.json({
       success: true,
       message: `Đã cập nhật tín dụng cho ${username}`,
-      newBalance: targetUser.balance
+      newBalance: result.newBalance
     });
   });
 
@@ -188,7 +264,10 @@ export function registerAdminRoutes(app, {
 
   // Admin update system settings
   app.post("/api/admin/system-settings", authenticate, adminOnly, async (req, res) => {
-    const { rates, limits } = req.body;
+    const { rates, limits, siteNote } = req.body;
+    if (typeof siteNote === "string") {
+      db.systemSettings.siteNote = siteNote.slice(0, 400);
+    }
     
     if (rates) {
       // Validate rates
@@ -290,17 +369,14 @@ export function registerAdminRoutes(app, {
     res.json({ success: true, message: `Đã xóa tài khoản [${username}]` });
   });
 
-  // â”€â”€ /api/admin/credit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post("/api/admin/credit", authenticate, adminOnly, async (req, res) => {
     const { username, action, amount, note } = req.body;
     const target = db.users.find(u => u.username === username);
     if (!target) return res.status(404).json({ success: false, message: "Không tìm thấy người dùng" });
-    const change = action === "add" ? Math.abs(amount) : -Math.abs(amount);
-    target.balance = Math.max(0, (target.balance || 0) + change);
-    db.transactions = db.transactions || [];
-    db.transactions.push({ id: "tx_"+Date.now(), username, type: action, amount: Math.abs(amount), note: note||"Quản trị điều chỉnh", createdAt: new Date().toISOString(), status: "completed" });
+    const result = applyVirtualCredit(target, action, amount, note);
+    if (!result.ok) return res.status(400).json({ success: false, message: result.message });
     await saveDb();
-    res.json({ success: true, message: `${action === "add" ? "Đã cộng" : "Đã trừ"} ${amount} CR`, newBalance: target.balance });
+    res.json({ success: true, message: `${action === "add" ? "Đã cộng" : "Đã trừ"} ${amount} CR`, newBalance: result.newBalance });
   });
 
   // â”€â”€ /api/admin/manual-draw â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -432,8 +508,46 @@ export function registerAdminRoutes(app, {
 
   // â”€â”€ /api/admin/finance (list transactions) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.get("/api/admin/finance", authenticate, adminOnly, (req, res) => {
-    const txs = [...(db.transactions || [])].reverse().slice(0, 80);
-    res.json({ success: true, transactions: txs });
+    const txs = [...(db.transactions || [])]
+      .filter((t) => t.type !== "deposit" && t.type !== "withdraw")
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+      .slice(0, 120);
+    const added = txs.filter((t) => t.type === "add" || t.type === "bonus" || t.type === "daily").reduce((s, t) => s + Number(t.amount || 0), 0);
+    const deducted = txs.filter((t) => t.type === "deduct").reduce((s, t) => s + Number(t.amount || 0), 0);
+    res.json({
+      success: true,
+      cashDisabled: true,
+      summary: { added, deducted, count: txs.length },
+      transactions: txs
+    });
+  });
+
+  app.get("/api/admin/games", authenticate, adminOnly, (req, res) => {
+    const gameBets = (db.bets || []).filter((b) => String(b.lotteryType || "").startsWith("game_"));
+    const games = ADMIN_MINIGAMES.map((g) => {
+      const plays = gameBets.filter((b) => b.lotteryType === g.id);
+      return {
+        id: g.id,
+        name: g.name,
+        plays: plays.length,
+        stake: plays.reduce((sum, b) => sum + Number(b.amount || 0), 0),
+        payout: plays.reduce((sum, b) => sum + Number(b.payout || 0), 0)
+      };
+    });
+    const recent = [...gameBets]
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+      .slice(0, 80)
+      .map((b) => ({
+        id: b.id,
+        username: b.username,
+        nickname: b.nickname,
+        lotteryType: b.lotteryType,
+        amount: b.amount,
+        payout: b.payout || 0,
+        status: b.status,
+        createdAt: b.createdAt
+      }));
+    res.json({ success: true, games, recent });
   });
 
   // â”€â”€ /api/admin/finance/process â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -447,7 +561,7 @@ export function registerAdminRoutes(app, {
   // Number stats must be registered before the SPA fallback below.
   app.get("/api/admin/number-stats", authenticate, adminOnly, (req, res) => {
     const { lottery, betType, status } = req.query;
-    let bets = [...db.bets];
+    let bets = [...db.bets].filter((b) => !String(b.lotteryType || "").startsWith("game_") && (b.numbers || b.numbers === 0));
     if (lottery && lottery !== "all") bets = bets.filter(b => b.lotteryType === lottery);
     if (betType && betType !== "all") bets = bets.filter(b => b.betType === betType);
     if (status && status !== "all") bets = bets.filter(b => b.status === status);

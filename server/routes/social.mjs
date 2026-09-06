@@ -33,18 +33,28 @@ export function registerSocialRoutes(app, { authenticate, getDb, saveDb }) {
   });
 
   app.get("/api/live-wins", (_req, res) => {
+    const mask = (name) => {
+      const s = String(name || "Player");
+      if (s.length <= 2) return `${s[0] || "P"}***`;
+      return `${s[0]}***${s.slice(-1)}`;
+    };
+    const won = (db.bets || [])
+      .filter((b) => b.status === "won" && Number(b.payout) > 0)
+      .slice(-16)
+      .reverse()
+      .map((b) => ({
+        user: mask(b.nickname || b.username),
+        game: String(b.lotteryType || "game").replace(/^game_/, ""),
+        amount: Number(b.payout) || 0,
+        icon: "◆"
+      }));
+    const paid = (db.bets || []).reduce((sum, b) => sum + Number(b.payout || 0), 0);
     res.json({
       success: true,
       currency: "CR",
-      note: "Entertainment feed (virtual credits)",
-      wins: [
-        { user: "u***89", game: "Yeekee 3m", amount: 4500, icon: "*" },
-        { user: "k***12", game: "Slot", amount: 1200, icon: "*" },
-        { user: "p***99", game: "Dragon Tiger", amount: 800, icon: "*" },
-        { user: "m***55", game: "Lucky Wheel", amount: 2500, icon: "*" },
-        { user: "t***34", game: "Hanoi", amount: 9200, icon: "*" },
-        { user: "a***07", game: "Mines", amount: 1500, icon: "*" }
-      ]
+      note: "Recent virtual-credit wins",
+      jackpot: 900000 + (paid % 650000),
+      wins: won
     });
   });
 

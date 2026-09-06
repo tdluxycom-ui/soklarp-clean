@@ -97,6 +97,13 @@ await shot("m-hist.png", `switchView("history")`);
 await shot("m-coin.png", `switchView("game-coinflip")`);
 await shot("m-mines.png", `switchView("game-mines")`);
 await shot("m-crash.png", `switchView("game-crash")`);
+await shot("m-plinko.png", `switchView("game-plinko")`);
+await shot("m-wheel.png", `switchView("game-wheel")`);
+await shot("m-horse.png", `switchView("game-horseracing")`);
+await shot("m-hilo.png", `switchView("game-hilo")`);
+await shot("m-dt.png", `switchView("game-dragontiger")`);
+await shot("m-pusher.png", `switchView("game-coinpusher")`);
+await shot("m-duck.png", `switchView("game-duckshooter")`);
 
 const health = await send("Runtime.evaluate", {
   returnByValue: true,

@@ -96,6 +96,13 @@ function applyI18n() {
   if (typeof refreshBetGuides === "function") refreshBetGuides();
   if (typeof refreshGameGuides === "function") refreshGameGuides();
   if (typeof updateVipRankUI === "function") updateVipRankUI();
+  if (state.activeView === "betting" && state.selectedLottery) {
+    applyRoomClockState("thai", state.selectedLottery.countdown || 0);
+  }
+  if (state.activeView === "vnlotto") {
+    const live = (state.lotteries || []).find((l) => l.id === state.vnCurrentLotteryId);
+    if (live) applyRoomClockState("vn", live.countdown || 0);
+  }
 }
 
 window.setSoklarpLang = function(lang) {
@@ -257,11 +264,13 @@ const state = {
   activeView: "auth",
   activeAdminTab: "draws",
   lotteries: [],
+  lobbyCategory: "all",
   selectedLottery: null,
   selectedBetCategory: "3top",
   cart: [],
   currentBetInput: "",
   creditAdjustUsername: "",
+  jackpotBase: 1542890,
   lang: (function detectLang() {
     const saved = localStorage.getItem("soklarp-lang");
     if (saved === "en" || saved === "vi" || saved === "lo") return saved;
@@ -418,6 +427,7 @@ window.switchView = function(viewName) {
   document.body.classList.toggle("in-minigame", String(viewName || "").startsWith("game-"));
   document.body.classList.toggle("in-app-page", viewName === "history" || viewName === "admin");
   document.body.classList.toggle("in-lobby", viewName === "lobby");
+  if (viewName !== "game-crash" && typeof stopCrashRoundUi === "function") stopCrashRoundUi();
   const ticker = document.getElementById("ticker-container");
   if (ticker) ticker.style.display = viewName === "lobby" ? "flex" : "none";
   if (viewName !== "betting" && viewName !== "vnlotto") {
@@ -443,6 +453,8 @@ window.switchView = function(viewName) {
   if (viewName === "game-dragontiger" && window.initDragonTigerGame) initDragonTigerGame();
   if (viewName === "game-slot" && window.initSlotGame) initSlotGame();
   if (viewName === "game-mines" && window.initMinesGame) initMinesGame();
+  if (viewName === "game-plinko" && window.initPlinkoGame) initPlinkoGame();
+  if (viewName === "game-crash" && window.initCrashGame) initCrashGame();
   if (viewName === "game-horseracing") {
     state.selectedHorseId = state.selectedHorseId || 1;
     selectHorse(state.selectedHorseId);
@@ -595,6 +607,7 @@ window.refreshBetGuides = function() {
 
 // Add Number to Cart
 function addToCart(overrideNum) {
+  if (!guardRoomOpen("thai")) return false;
   const numInput = document.getElementById("bet-number-input");
   let num = String(overrideNum != null ? overrideNum : (numInput ? numInput.value.trim() : "")).replace(/\D/g, "");
   const amountInput = document.getElementById("bet-amount-input");
@@ -750,8 +763,11 @@ function setBetSteps(rootSelector, current) {
 function refreshThaiProgress() {
   const draft = typeof thaiDraftTicket === "function" ? thaiDraftTicket() : null;
   const hasCart = state.cart.length > 0;
+  const input = document.getElementById("bet-number-input");
+  const num = String(input?.value || input?.placeholder || state.currentBetInput || "").replace(/\D/g, "");
   let step = 1;
   if (state.selectedBetCategory) step = 2;
+  if (state.selectedBetCategory && num) step = 3;
   if (draft) step = 4;
   if (hasCart) step = 5;
   setBetSteps("#view-betting", step);
@@ -822,6 +838,15 @@ async function submitBets() {
     setElText("betting-draw-id-visible", (live.nextDrawId || "").split("-").pop());
     setElText("betting-stage-draw-id", (live.nextDrawId || "").split("-").pop());
     setElText("stage-countdown-display", formatTime(live.countdown || 0));
+    applyRoomClockState("thai", live.countdown || 0);
+    if (!(live.countdown > 0)) {
+      submitBtns.forEach((btn, i) => {
+        btn.disabled = false;
+        btn.innerHTML = prevHtml[i] || t("send_slip");
+      });
+      showToast(t("bets_closed"), t("drawing"), "danger");
+      return;
+    }
   }
 
   const payload = {
@@ -858,6 +883,8 @@ async function submitBets() {
     const cost = data.totalCost || placedBets.reduce((acc, curr) => acc + curr.amount, 0);
     showToast(t("sent_ok"), `${roomLabel(state.selectedLottery.id)} · ${cost.toLocaleString()} CR`, "success");
     sound.playWin();
+    state._userBetsAt = 0;
+    refreshRoomPendingStrip();
 
     // Trigger Live Quick Draw Waiting Board
     openLiveDrawWaitingBoard(state.selectedLottery, placedBets);
@@ -869,25 +896,30 @@ async function submitBets() {
 // Open Live Draw Waiting & Reveal Board
 window.openLiveDrawWaitingBoard = function(lottery, bets) {
   const box = document.getElementById("live-draw-waiting-box");
-  if (!box) return;
+  if (!box || !lottery) return;
   const placedDrawId = lottery.nextDrawId;
+  const isVn = lottery.type === "vietlottery" || String(lottery.id || "").startsWith("vn");
   box.style.display = "block";
+  box.className = "live-wait-overlay";
   box.innerHTML = `
-    <div class="modal-content" style="margin:16px auto;max-width:420px;">
-      <h3>${escapeHtml(roomLabel(lottery.id))}</h3>
-      <p>${escapeHtml(t("draw_id"))}: <b id="waiting-draw-id">${escapeHtml((placedDrawId || "").split("-").pop())}</b></p>
-      <div id="waiting-ticket-summary"></div>
-      <div id="waiting-timer-count" class="gold-text" style="font-size:1.4rem;margin:12px 0;">${escapeHtml(formatTime(lottery.countdown || 0))}</div>
-      <div id="waiting-result-line">${escapeHtml(t("loading"))}</div>
-      <button class="action-btn" type="button" onclick="closeWaitingBoard()">${escapeHtml(t("close"))}</button>
+    <div class="live-wait-card">
+      <div class="live-wait-head">
+        <span class="hero-live-dot"></span>
+        <b>${escapeHtml(roomLabel(lottery.id))}</b>
+        <span>${escapeHtml(t("draw_id"))} #${escapeHtml((placedDrawId || "").split("-").pop() || "—")}</span>
+      </div>
+      <div id="waiting-ticket-summary" class="live-wait-tickets"></div>
+      <div id="waiting-timer-count" class="live-wait-clock">${escapeHtml(formatTime(lottery.countdown || 0))}</div>
+      <div id="waiting-result-line" class="live-wait-result">${escapeHtml(t("wait_result"))}</div>
+      <button class="btn-gold" type="button" onclick="closeWaitingBoard()">${escapeHtml(t("close"))}</button>
     </div>`;
-  box.scrollIntoView({ behavior: "smooth" });
+  box.scrollIntoView({ behavior: "smooth", block: "center" });
   const ticketList = document.getElementById("waiting-ticket-summary");
   if (ticketList) {
-    ticketList.innerHTML = bets.map((b) => `
-      <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:4px 8px;background:rgba(0,0,0,0.2);border-radius:4px;margin-bottom:4px;">
-        <span class="gold-text font-bold">${escapeHtml(b.numbers)}</span>
-        <span>${escapeHtml(b.label)} (${escapeHtml(b.amount.toLocaleString())} CR)</span>
+    ticketList.innerHTML = (bets || []).map((b) => `
+      <div class="live-wait-row">
+        <span class="gold-text">${escapeHtml(String(b.numbers || b.num || ""))}</span>
+        <span>${escapeHtml(b.label || betTypeLabel(b.betType) || "")} · ${escapeHtml(Number(b.amount || 0).toLocaleString())} CR</span>
       </div>`).join("");
   }
   if (state.waitingPoll) clearInterval(state.waitingPoll);
@@ -896,17 +928,24 @@ window.openLiveDrawWaitingBoard = function(lottery, bets) {
     tries += 1;
     const live = await syncLotteryById(lottery.id);
     const timerText = document.getElementById("waiting-timer-count");
-    if (timerText && live) timerText.innerText = formatTime(live.countdown || 0);
+    if (timerText && live) timerText.innerText = live.countdown > 0 ? formatTime(live.countdown) : t("drawing");
     const latest = live?.lastResults?.[0];
     const resultLine = document.getElementById("waiting-result-line");
     if (latest && latest.drawId === placedDrawId) {
       clearInterval(state.waitingPoll);
       state.waitingPoll = null;
-      const top3 = latest.numbers?.top3 || "---";
-      const bot2 = latest.numbers?.bottom2 || "--";
-      if (resultLine) resultLine.innerHTML = `${escapeHtml(t("top3"))} <b class="gold-text">${escapeHtml(top3)}</b> · ${escapeHtml(t("bot2"))} <b>${escapeHtml(bot2)}</b>`;
-      showToast(t("sent_ok"), `${top3} / ${bot2}`, "success");
+      if (isVn && latest.prizes?.db) {
+        if (resultLine) resultLine.innerHTML = `${escapeHtml(t("last_db"))} <b class="gold-text">${escapeHtml(String(latest.prizes.db))}</b>`;
+        showToast(t("sent_ok"), String(latest.prizes.db), "success");
+      } else {
+        const top3 = latest.numbers?.top3 || "---";
+        const bot2 = latest.numbers?.bottom2 || "--";
+        if (resultLine) resultLine.innerHTML = `${escapeHtml(t("top3"))} <b class="gold-text">${escapeHtml(top3)}</b> · ${escapeHtml(t("bot2"))} <b>${escapeHtml(bot2)}</b>`;
+        showToast(t("sent_ok"), `${top3} / ${bot2}`, "success");
+      }
+      state._userBetsAt = 0;
       loadHistory();
+      refreshRoomPendingStrip();
       return;
     }
     if (tries > 90) {
@@ -924,7 +963,11 @@ window.closeWaitingBoard = function() {
     state.waitingPoll = null;
   }
   const box = document.getElementById("live-draw-waiting-box");
-  if (box) box.style.display = "none";
+  if (box) {
+    box.style.display = "none";
+    box.className = "";
+    box.innerHTML = "";
+  }
 };
 
 // Load personal bet history
@@ -955,75 +998,125 @@ function renderHistorySummary(bets) {
   const payout = won.reduce((s, b) => s + Number(b.payout || 0), 0);
   const net = payout - stake;
   box.innerHTML = `
-    <div class="hist-stat"><span>${escapeHtml(t("hist_sum_bets"))}</span><b>${bets.length}</b></div>
-    <div class="hist-stat win"><span>${escapeHtml(t("hist_sum_won"))}</span><b>${won.length}</b></div>
+    <div class="hist-stat"><span>${escapeHtml(t("hist_sum_bets"))}</span><b>${bets.length}</b><small>${escapeHtml(t("hist_staked"))} ${stake.toLocaleString()} CR</small></div>
+    <div class="hist-stat win"><span>${escapeHtml(t("hist_sum_won"))}</span><b>${won.length}</b><small>${escapeHtml(t("hist_paid"))} ${payout.toLocaleString()} CR</small></div>
     <div class="hist-stat lose"><span>${escapeHtml(t("hist_sum_lost"))}</span><b>${lost.length}</b></div>
     <div class="hist-stat wait"><span>${escapeHtml(t("hist_wait"))}</span><b>${pending.length}</b></div>
     <div class="hist-stat ${net >= 0 ? "win" : "lose"}"><span>${escapeHtml(t("hist_sum_net"))}</span><b>${net >= 0 ? "+" : ""}${net.toLocaleString()} CR</b></div>
   `;
 }
 
+function histTicketCard(b, kind) {
+  const status = b.status || "pending";
+  const rate = Number(b.rate || 0);
+  const title = kind === "game"
+    ? gameDisplayName(b.lotteryType)
+    : (roomLabel(b.lotteryType) || b.lotteryType || "—");
+  const open = kind === "game"
+    ? ""
+    : `onclick="enterLotteryRoom('${escapeHtml(b.lotteryType || "")}')"`;
+  const typeLine = kind === "game"
+    ? escapeHtml(String(b.numbers || "—"))
+    : `${escapeHtml(betTypeLabel(b.betType))} · ×${escapeHtml(rate || "—")}`;
+  return `<article class="hist-ticket hist-${escapeHtml(status)}" ${open}>
+    <div class="hist-ticket-top">
+      <button type="button" class="hist-open">${escapeHtml(title)}</button>
+      <span class="hist-pill hist-${escapeHtml(status)}">${escapeHtml(betStatusLabel(status))}</span>
+    </div>
+    <div class="hist-ticket-num">${escapeHtml(String(kind === "game" ? (b.numbers || "—") : (b.numbers || "—")))}</div>
+    <div class="hist-ticket-meta">
+      <span>${typeLine}</span>
+      <span>${escapeHtml(Number(b.amount || 0).toLocaleString())} CR</span>
+      <b class="${status === "won" ? "win-text" : ""}">${escapeHtml(histPayoutText(b))}</b>
+    </div>
+    <div class="hist-ticket-time">${escapeHtml(histTime(b.createdAt))}</div>
+  </article>`;
+}
+
 function renderHistoryTables() {
   const lotteryBody = document.getElementById("my-bets-table-body");
   const gameBody = document.getElementById("my-game-history-table-body");
-  const legacyBody = document.getElementById("user-history-tbody");
+  const list = document.getElementById("hist-ticket-list");
+  const gameList = document.getElementById("hist-game-list");
   const bets = state.userBets || [];
   const filter = state.historyFilter || "all";
   const pass = (b) => filter === "all" || (b.status || "pending") === filter;
-  const lotteryBets = bets.filter((b) => !(String(b.lotteryType || "").startsWith("game_")) && pass(b));
-  const gameBets = bets.filter((b) => String(b.lotteryType || "").startsWith("game_") && pass(b));
-  renderHistorySummary(bets);
+  const allLotto = bets.filter((b) => !String(b.lotteryType || "").startsWith("game_"));
+  const allGames = bets.filter((b) => String(b.lotteryType || "").startsWith("game_"));
+  const lotteryBets = allLotto.filter(pass);
+  const gameBets = allGames.filter(pass);
+  renderHistorySummary(allLotto);
+  const setN = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n ? String(n) : ""; };
+  setN("hist-n-all", allLotto.length);
+  setN("hist-n-won", allLotto.filter((b) => b.status === "won").length);
+  setN("hist-n-lost", allLotto.filter((b) => b.status === "lost").length);
+  setN("hist-n-wait", allLotto.filter((b) => !b.status || b.status === "pending").length);
 
-  if (lotteryBody) {
-    if (lotteryBets.length === 0) {
-      lotteryBody.innerHTML = `<tr><td colspan="8" class="no-data">${escapeHtml(t("no_hist"))}</td></tr>`;
-    } else {
-      lotteryBody.innerHTML = lotteryBets.map((b) => {
-        const rate = Number(b.rate || 0);
-        return `<tr>
-          <td data-label="${escapeHtml(t("hist_time"))}">${escapeHtml(histTime(b.createdAt))}</td>
-          <td data-label="${escapeHtml(t("hist_room"))}">${escapeHtml(roomLabel(b.lotteryType) || b.lotteryType || "—")}</td>
-          <td data-label="${escapeHtml(t("hist_type"))}">${escapeHtml(betTypeLabel(b.betType))}</td>
-          <td data-label="${escapeHtml(t("hist_num"))}" class="font-mono gold-text">${escapeHtml(b.numbers)}</td>
-          <td data-label="${escapeHtml(t("hist_amt"))}">${escapeHtml(Number(b.amount).toLocaleString())} CR</td>
-          <td data-label="${escapeHtml(t("hist_rate"))}">×${escapeHtml(rate || "—")}</td>
-          <td data-label="${escapeHtml(t("hist_payout"))}" class="${b.status === "won" ? "win-text" : ""}">${escapeHtml(histPayoutText(b))}</td>
-          <td data-label="${escapeHtml(t("hist_status"))}"><span class="hist-pill hist-${escapeHtml(b.status || "pending")}">${escapeHtml(betStatusLabel(b.status))}</span></td>
-        </tr>`;
-      }).join("");
-    }
+  const lottoLimit = state.histLottoLimit || 12;
+  const gameLimit = state.histGameLimit || 8;
+  const lottoShown = lotteryBets.slice(0, lottoLimit);
+  const gameShown = gameBets.slice(0, gameLimit);
+
+  if (list) {
+    list.innerHTML = lottoShown.length
+      ? lottoShown.map((b) => histTicketCard(b, "lotto")).join("")
+      : `<div class="admin-empty">${escapeHtml(t("no_hist"))}</div>`;
   }
+  const moreLotto = document.getElementById("hist-more-lotto");
+  if (moreLotto) moreLotto.hidden = lotteryBets.length <= lottoShown.length;
 
-  if (gameBody) {
-    if (gameBets.length === 0) {
-      gameBody.innerHTML = `<tr><td colspan="5" class="no-data">${escapeHtml(t("no_hist"))}</td></tr>`;
-    } else {
-      gameBody.innerHTML = gameBets.map((b) => `<tr>
-        <td data-label="${escapeHtml(t("hist_time"))}">${escapeHtml(histTime(b.createdAt))}</td>
-        <td data-label="${escapeHtml(t("hist_gname"))}">${escapeHtml(gameDisplayName(b.lotteryType))}</td>
-        <td data-label="${escapeHtml(t("hist_amt"))}">${escapeHtml(Number(b.amount).toLocaleString())} CR</td>
-        <td data-label="${escapeHtml(t("hist_result"))}"><span class="hist-pill hist-${escapeHtml(b.status || "pending")}">${escapeHtml(betStatusLabel(b.status))}</span></td>
-        <td data-label="${escapeHtml(t("hist_payout"))}" class="${b.status === "won" ? "win-text" : ""}">${escapeHtml(histPayoutText(b))}</td>
-      </tr>`).join("");
-    }
+  const gameSum = document.getElementById("hist-game-summary");
+  if (gameSum) {
+    const gWon = allGames.filter((b) => b.status === "won").length;
+    const gStake = allGames.reduce((s, b) => s + Number(b.amount || 0), 0);
+    gameSum.innerHTML = allGames.length
+      ? `<span>${escapeHtml(t("hist_games"))}: <b>${allGames.length}</b></span>
+         <span class="win-text">${escapeHtml(t("hist_sum_won"))} ${gWon}</span>
+         <span>${escapeHtml(t("hist_staked"))} ${gStake.toLocaleString()} CR</span>`
+      : "";
   }
+  if (gameList) {
+    gameList.innerHTML = gameShown.length
+      ? gameShown.map((b) => histTicketCard(b, "game")).join("")
+      : `<div class="admin-empty">${escapeHtml(t("no_hist"))}</div>`;
+  }
+  const moreGames = document.getElementById("hist-more-games");
+  if (moreGames) moreGames.hidden = gameBets.length <= gameShown.length;
 
-  if (legacyBody) legacyBody.innerHTML = lotteryBody ? lotteryBody.innerHTML : "";
+  if (lotteryBody) lotteryBody.innerHTML = "";
+  if (gameBody) gameBody.innerHTML = "";
 }
 
 window.setHistoryFilter = function(filter) {
   state.historyFilter = filter;
+  state.histLottoLimit = 12;
+  state.histGameLimit = 8;
   document.querySelectorAll(".hist-filter").forEach((btn) => {
     btn.classList.toggle("active", btn.getAttribute("data-hist-filter") === filter);
   });
   renderHistoryTables();
 };
 
+window.showMoreHistory = function(kind) {
+  if (kind === "games") state.histGameLimit = (state.histGameLimit || 8) + 8;
+  else state.histLottoLimit = (state.histLottoLimit || 12) + 12;
+  renderHistoryTables();
+};
+
+window.scrollToMiniGames = function() {
+  switchView("lobby");
+  setTimeout(() => document.getElementById("mini-games-section")?.scrollIntoView({ behavior: "smooth" }), 80);
+};
+
 async function loadHistory() {
   const lotteryBody = document.getElementById("my-bets-table-body");
   const gameBody = document.getElementById("my-game-history-table-body");
+  const list = document.getElementById("hist-ticket-list");
+  const gameList = document.getElementById("hist-game-list");
   if (lotteryBody) lotteryBody.innerHTML = `<tr><td colspan="8" class="no-data">${escapeHtml(t("loading"))}</td></tr>`;
   if (gameBody) gameBody.innerHTML = `<tr><td colspan="5" class="no-data">${escapeHtml(t("loading"))}</td></tr>`;
+  if (list) list.innerHTML = `<div class="admin-empty">${escapeHtml(t("loading"))}</div>`;
+  if (gameList) gameList.innerHTML = `<div class="admin-empty">${escapeHtml(t("loading"))}</div>`;
   const data = await apiCall("/api/user/bets");
   if (data && data.success) {
     state.userBets = data.bets || [];
@@ -1101,11 +1194,205 @@ async function loadLotteries() {
 // Filter Lobby by Category
 window.filterLobbyCategory = function(cat) {
   sound.playClick();
-  document.querySelectorAll(".tab-filter-btn").forEach(btn => btn.classList.remove("active"));
-  const clickedBtn = [...document.querySelectorAll(".tab-filter-btn")].find(b => b.getAttribute("onclick")?.includes(cat));
-  if (clickedBtn) clickedBtn.classList.add("active");
-  renderLobby(cat);
+  state.lobbyCategory = cat || "all";
+  document.querySelectorAll(".tab-filter-btn").forEach((btn) => {
+    const on = btn.getAttribute("data-lobby-cat") === state.lobbyCategory;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  renderLobby();
 };
+
+function countdownSeconds(lottery) {
+  return Math.max(0, Math.floor(Number(lottery?.countdown) || 0));
+}
+
+function isUrgentCountdown(secs) {
+  return secs > 0 && secs < 30;
+}
+
+function formatTimeCompact(seconds) {
+  const s = Math.max(0, Math.floor(Number(seconds) || 0));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+}
+
+function pickSoonestLiveRoom() {
+  const list = state.lotteries || [];
+  if (!list.length) return null;
+  return [...list].sort((a, b) => {
+    const ac = Number(a.countdown);
+    const bc = Number(b.countdown);
+    const aRank = ac > 0 ? ac : 1e9 + Math.abs(ac || 0);
+    const bRank = bc > 0 ? bc : 1e9 + Math.abs(bc || 0);
+    return aRank - bRank;
+  })[0];
+}
+
+window.enterLotteryRoom = function(lotteryId) {
+  const l = (state.lotteries || []).find((item) => item.id === lotteryId);
+  if (!l) return;
+  if (l.type === "vietlottery") openVNLotteryRoom(l.id);
+  else openBettingRoom(l.id);
+};
+
+window.enterSoonestLotteryRoom = function() {
+  const live = pickSoonestLiveRoom();
+  if (live) enterLotteryRoom(live.id);
+  else document.getElementById("lottery-lobby-grid")?.scrollIntoView({ behavior: "smooth" });
+};
+
+function isSelectedRoomClosed(kind) {
+  if (kind === "vn") {
+    const l = (state.lotteries || []).find((item) => item.id === state.vnCurrentLotteryId);
+    return countdownSeconds(l) <= 0;
+  }
+  return countdownSeconds(state.selectedLottery) <= 0;
+}
+
+function guardRoomOpen(kind) {
+  if (!isSelectedRoomClosed(kind)) return true;
+  showToast(t("bets_closed"), t("drawing"), "danger");
+  return false;
+}
+
+function roomLastCompact(lottery) {
+  const last = (lottery?.lastResults || [])[0];
+  if (!last) return "";
+  if (last.numbers?.top3) return String(last.numbers.top3);
+  const db = last.prizes?.db;
+  return db ? String(db).slice(-5) : "";
+}
+
+async function refreshRoomPendingStrip() {
+  const thaiEl = document.getElementById("thai-my-pending");
+  const vnEl = document.getElementById("vn-my-pending");
+  if (!state.token) {
+    if (thaiEl) { thaiEl.hidden = true; thaiEl.innerHTML = ""; }
+    if (vnEl) { vnEl.hidden = true; vnEl.innerHTML = ""; }
+    return;
+  }
+  if (!state.userBets || !state._userBetsAt || Date.now() - state._userBetsAt > 12000) {
+    const data = await apiCall("/api/user/bets");
+    if (data && data.success) {
+      state.userBets = data.bets || [];
+      state._userBetsAt = Date.now();
+    }
+  }
+  paintRoomPendingStrip(state.selectedLottery?.id, state.selectedLottery?.nextDrawId, thaiEl);
+  paintRoomPendingStrip(state.vnCurrentLotteryId, state.vnDrawId, vnEl);
+}
+
+function paintRoomPendingStrip(lotteryId, drawId, el) {
+  if (!el) return;
+  if (!lotteryId) {
+    el.hidden = true;
+    el.innerHTML = "";
+    return;
+  }
+  const bets = (state.userBets || []).filter((b) =>
+    b.lotteryType === lotteryId
+    && (b.status === "pending")
+    && (!drawId || b.drawId === drawId)
+  );
+  if (!bets.length) {
+    el.hidden = true;
+    el.innerHTML = "";
+    return;
+  }
+  const stake = bets.reduce((sum, b) => sum + Number(b.amount || 0), 0);
+  el.hidden = false;
+  el.innerHTML = `<i class="fa-solid fa-ticket"></i> <span>${escapeHtml(t("your_tickets"))}</span>
+    <b>${bets.length}</b>
+    <span class="gold-text">${stake.toLocaleString()} CR</span>
+    <div class="room-pending-nums">${bets.slice(0, 8).map((b) => `<span>${escapeHtml(String(b.numbers || ""))}</span>`).join("")}</div>`;
+}
+
+function applyCountdownClass(el, secs) {
+  if (!el) return;
+  el.classList.toggle("is-urgent", isUrgentCountdown(secs));
+  el.classList.toggle("is-drawing", !(secs > 0));
+}
+
+function paintLotteryCountdown(lottery) {
+  if (!lottery) return;
+  const secs = countdownSeconds(lottery);
+  const cd = document.getElementById(`cd-${lottery.id}`);
+  if (cd) {
+    cd.textContent = formatTime(secs);
+    applyCountdownClass(cd, secs);
+  }
+  const strip = document.getElementById(`strip-cd-${lottery.id}`);
+  if (strip) {
+    strip.textContent = secs > 0 ? formatTimeCompact(secs) : t("drawing");
+    applyCountdownClass(strip, secs);
+  }
+  const card = document.getElementById(`lotto-card-${lottery.id}`);
+  if (card) {
+    card.classList.toggle("is-urgent", isUrgentCountdown(secs));
+    card.classList.toggle("is-drawing", !(secs > 0));
+  }
+  const chip = document.getElementById(`room-chip-${lottery.id}`);
+  if (chip) {
+    const soonest = pickSoonestLiveRoom();
+    chip.classList.toggle("is-urgent", isUrgentCountdown(secs));
+    chip.classList.toggle("is-drawing", !(secs > 0));
+    chip.classList.toggle("is-soonest", soonest?.id === lottery.id);
+  }
+}
+
+function applyRoomClockState(kind, seconds) {
+  const secs = Math.max(0, Math.floor(Number(seconds) || 0));
+  const closed = !(secs > 0);
+  const urgent = isUrgentCountdown(secs);
+  const wrap = document.getElementById(kind === "vn" ? "vn-room-clock" : "thai-room-clock");
+  if (wrap) {
+    wrap.classList.toggle("is-urgent", urgent);
+    wrap.classList.toggle("is-drawing", closed);
+  }
+  const label = document.getElementById(kind === "vn" ? "vn-clock-label" : "thai-clock-label");
+  if (label) label.textContent = closed ? t("drawing") : t("closes_in");
+  const banner = document.getElementById(kind === "vn" ? "vn-draw-state" : "thai-draw-state");
+  if (banner) {
+    banner.hidden = !closed;
+    banner.textContent = t("drawing");
+  }
+  const view = document.getElementById(kind === "vn" ? "view-vnlotto" : "view-betting");
+  if (view) view.classList.toggle("is-draw-locked", closed);
+}
+
+function renderRoomsClockStrip() {
+  const track = document.getElementById("rooms-clock-track");
+  if (!track) return;
+  const soonest = pickSoonestLiveRoom();
+  const list = [...(state.lotteries || [])].sort((a, b) => {
+    const as = countdownSeconds(a);
+    const bs = countdownSeconds(b);
+    if (as !== bs) return as - bs;
+    return String(a.id).localeCompare(String(b.id));
+  });
+  track.innerHTML = list.map((l) => {
+    const secs = countdownSeconds(l);
+    const cls = [
+      "room-chip",
+      isUrgentCountdown(secs) ? "is-urgent" : "",
+      secs <= 0 ? "is-drawing" : "",
+      soonest?.id === l.id ? "is-soonest" : ""
+    ].filter(Boolean).join(" ");
+    const label = secs > 0 ? formatTimeCompact(secs) : t("drawing");
+    const last = roomLastCompact(l);
+    return `<button type="button" class="${cls}" id="room-chip-${l.id}" onclick="enterLotteryRoom('${l.id}')">
+      <span class="room-chip-name">${escapeHtml(roomLabel(l.id))}</span>
+      <b class="countdown-text" id="strip-cd-${l.id}">${escapeHtml(label)}</b>
+      ${last ? `<span class="room-chip-last">${escapeHtml(last)}</span>` : ""}
+    </button>`;
+  }).join("");
+  const countEl = document.getElementById("cmd-rooms");
+  if (countEl) countEl.textContent = String((state.lotteries || []).length);
+}
 
 function roomLabel(id) {
   return t("room_" + id);
@@ -1141,9 +1428,56 @@ function displayNickname(user) {
   return name;
 }
 
-function renderLobby(category = "all") {
+function syncHeroLive() {
+  const live = pickSoonestLiveRoom();
+  if (!live) return;
+  const secs = countdownSeconds(live);
+  const name = document.getElementById("hero-live-name");
+  const cd = document.getElementById("hero-live-cd");
+  const go = document.querySelector(".hero-live-go");
+  const box = document.getElementById("hero-live");
+  if (name) name.textContent = roomLabel(live.id);
+  if (cd) {
+    cd.textContent = secs > 0 ? formatTime(secs) : t("drawing");
+    applyCountdownClass(cd, secs);
+  }
+  if (go) go.setAttribute("onclick", `enterLotteryRoom('${live.id}')`);
+  if (box) {
+    box.classList.toggle("is-urgent", isUrgentCountdown(secs));
+    box.classList.toggle("is-drawing", !(secs > 0));
+    const tag = box.querySelector(".hero-live-tag");
+    if (tag) tag.textContent = secs > 0 ? (isUrgentCountdown(secs) ? t("closing_soon") : "LIVE") : t("drawing");
+  }
+}
+
+function bindLotteryCardClick(card, lotteryId) {
+  card.id = `lotto-card-${lotteryId}`;
+  card.setAttribute("role", "button");
+  card.tabIndex = 0;
+  const open = () => enterLotteryRoom(lotteryId);
+  card.addEventListener("click", (ev) => {
+    if (ev.target.closest(".btn-history-draw, .btn-play-lottery, .vn-play-btn")) return;
+    open();
+  });
+  card.addEventListener("keydown", (ev) => {
+    if (ev.key !== "Enter" && ev.key !== " ") return;
+    if (ev.target.closest(".btn-history-draw")) return;
+    ev.preventDefault();
+    open();
+  });
+}
+
+function renderLobby() {
   const grid = document.getElementById("lottery-lobby-grid");
   if (!grid) return;
+  const category = state.lobbyCategory || "all";
+  document.querySelectorAll(".tab-filter-btn").forEach((btn) => {
+    const on = btn.getAttribute("data-lobby-cat") === category;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  syncHeroLive();
+  renderRoomsClockStrip();
   grid.innerHTML = "";
 
   let list = state.lotteries || [];
@@ -1155,10 +1489,15 @@ function renderLobby(category = "all") {
 
   thaiList.forEach(l => {
     const card = document.createElement("div");
-    card.className = "lottery-card lc-pro" + (l.type === "yeekee" ? " is-live" : "");
+    const secs = countdownSeconds(l);
+    const urgent = isUrgentCountdown(secs);
+    card.className = "lottery-card lc-pro is-clickable"
+      + (l.type === "yeekee" ? " is-live" : "")
+      + (urgent ? " is-urgent" : "")
+      + (secs <= 0 ? " is-drawing" : "");
     const timeDisplay = l.type === "yeekee"
-      ? `<i class="fa-solid fa-bolt"></i> ${t("closes_in")} <b class="countdown-text" id="cd-${l.id}">${formatTime(l.countdown)}</b>`
-      : `<i class="fa-regular fa-clock"></i> ${t("daily_at")} <b>${l.drawTimeOfDay}</b>`;
+      ? `<i class="fa-solid fa-bolt"></i> ${t("closes_in")} <b class="countdown-text${urgent ? " is-urgent" : ""}" id="cd-${l.id}">${formatTime(secs)}</b>`
+      : `<i class="fa-regular fa-clock"></i> ${t("next_draw")} <b>${escapeHtml(l.drawTimeOfDay || "--:--")}</b> · <b class="countdown-text${urgent ? " is-urgent" : ""}" id="cd-${l.id}">${formatTime(secs)}</b>`;
     const lastResults = l.lastResults || [];
     const latestDraw = lastResults[0];
     let resultHTML = `<div class="card-live-result-board"><div class="result-board-header"><i class="fa-solid fa-square-poll-vertical"></i> ${t("last_result")}</div>`;
@@ -1167,11 +1506,11 @@ function renderLobby(category = "all") {
         <div class="result-balls-display">
           <div class="digit-box-group">
             <span class="digit-type-tag">${t("top3")}</span>
-            <div class="digit-spheres gold-spheres">${latestDraw.numbers.top3.split("").map(n => `<span class="sphere-digit">${n}</span>`).join("")}</div>
+            <div class="digit-spheres gold-spheres">${latestDraw.numbers.top3.split("").map(n => `<span class="sphere-digit">${escapeHtml(n)}</span>`).join("")}</div>
           </div>
           <div class="digit-box-group">
             <span class="digit-type-tag">${t("bot2")}</span>
-            <div class="digit-spheres green-spheres">${latestDraw.numbers.bottom2.split("").map(n => `<span class="sphere-digit">${n}</span>`).join("")}</div>
+            <div class="digit-spheres green-spheres">${String(latestDraw.numbers.bottom2 || "").split("").map(n => `<span class="sphere-digit">${escapeHtml(n)}</span>`).join("")}</div>
           </div>
         </div>`;
     }
@@ -1198,10 +1537,11 @@ function renderLobby(category = "all") {
         <button class="btn-play-lottery" type="button" onclick="openBettingRoom('${l.id}')">
           <span>${t("bet_now")}</span> <i class="fa-solid fa-arrow-right"></i>
         </button>
-        <button class="btn-history-draw" type="button" onclick="showDrawResultsHistory('${l.id}')" title="History">
+        <button class="btn-history-draw" type="button" onclick="event.stopPropagation(); showDrawResultsHistory('${l.id}')" title="History">
           <i class="fa-solid fa-clock-rotate-left"></i>
         </button>
       </div>`;
+    bindLotteryCardClick(card, l.id);
     grid.appendChild(card);
   });
 
@@ -1230,12 +1570,16 @@ function renderLobby(category = "all") {
     sortedVN.forEach(l => {
       const card = document.createElement("div");
       const isFast = !!l.interval;
-      card.className = `lottery-card lc-pro vn-card ${isFast ? "vn-card-fast is-live" : "vn-card-daily"}`;
+      const secs = countdownSeconds(l);
+      const urgent = isUrgentCountdown(secs);
+      card.className = `lottery-card lc-pro vn-card is-clickable ${isFast ? "vn-card-fast is-live" : "vn-card-daily"}`
+        + (urgent ? " is-urgent" : "")
+        + (secs <= 0 ? " is-drawing" : "");
       const lastRes = l.lastResults && l.lastResults[0];
       const prizes = lastRes && lastRes.prizes;
       const timeHtml = isFast
-        ? `<span class="vn-time-fast"><i class="fa-solid fa-bolt"></i> ${t("closes_in")} <b class="countdown-text" id="cd-${l.id}">${formatTime(l.countdown || 0)}</b></span>`
-        : `<span class="vn-time-sched"><i class="fa-regular fa-clock"></i> ${t("daily_at")} <b>${l.drawTimeOfDay || "--:--"}</b></span>`;
+        ? `<span class="vn-time-fast"><i class="fa-solid fa-bolt"></i> ${t("closes_in")} <b class="countdown-text${urgent ? " is-urgent" : ""}" id="cd-${l.id}">${formatTime(secs)}</b></span>`
+        : `<span class="vn-time-sched"><i class="fa-regular fa-clock"></i> ${t("next_draw")} <b>${escapeHtml(l.drawTimeOfDay || "--:--")}</b> · <b class="countdown-text${urgent ? " is-urgent" : ""}" id="cd-${l.id}">${formatTime(secs)}</b></span>`;
       let prizeHtml = "";
       if (prizes) {
         prizeHtml = `
@@ -1269,10 +1613,11 @@ function renderLobby(category = "all") {
         <button class="btn-play-lottery vn-play-btn" type="button" onclick="openVNLotteryRoom('${l.id}')">
           <span>${t("vn_enter")}</span> <i class="fa-solid fa-arrow-right"></i>
         </button>
-        <button class="btn-history-draw" type="button" onclick="showDrawResultsHistory('${l.id}')" title="History">
+        <button class="btn-history-draw" type="button" onclick="event.stopPropagation(); showDrawResultsHistory('${l.id}')" title="History">
           <i class="fa-solid fa-clock-rotate-left"></i>
         </button>
         </div>`;
+      bindLotteryCardClick(card, l.id);
       grid.appendChild(card);
     });
   }
@@ -1280,8 +1625,21 @@ function renderLobby(category = "all") {
 
 // Open Betting Room for a specific lottery
 window.openLastBettingRoom = function() {
+  const betting = document.getElementById("view-betting");
+  const vn = document.getElementById("view-vnlotto");
+  const inThai = betting && betting.style.display !== "none";
+  const inVn = vn && vn.style.display !== "none";
+  if (inThai) {
+    document.querySelector(".cart-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  if (inVn) {
+    document.querySelector("#view-vnlotto .cart-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
   if (state.selectedLottery) {
-    openBettingRoom(state.selectedLottery.id);
+    if (String(state.selectedLottery.type || "") === "vietlottery") openVNLotteryRoom(state.selectedLottery.id);
+    else openBettingRoom(state.selectedLottery.id);
     return;
   }
   const first = (state.lotteries || []).find((l) => l.type !== "vietlottery");
@@ -1319,11 +1677,38 @@ window.openBettingRoom = function(lotteryId) {
   setElText("stage-countdown-display", formatTime(l.countdown || 0));
 
   updateRoomStageResults(l);
+  applyRoomClockState("thai", l.countdown || 0);
   updateCartUI();
   selectBetCategory("3top");
   fetchAiPredict(l.id);
   switchView("betting");
+  refreshRoomPendingStrip();
 };
+
+function setSphereDigit(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value || "-";
+}
+
+function renderThaiRecentDraws(lottery) {
+  const el = document.getElementById("thai-recent-draws");
+  if (!el) return;
+  const rows = (lottery.lastResults || []).slice(0, 3);
+  if (!rows.length) {
+    el.innerHTML = "";
+    return;
+  }
+  el.innerHTML = rows.map((r) => {
+    const top3 = String(r.numbers?.top3 || "---");
+    const bot2 = String(r.numbers?.bottom2 || "--");
+    const id = (r.drawId || "").split("-").pop();
+    return `<div class="recent-draw-row">
+      <span class="recent-draw-id">#${escapeHtml(id)}</span>
+      <span class="digit-spheres gold-spheres">${top3.split("").map((n) => `<span class="sphere-digit">${escapeHtml(n)}</span>`).join("")}</span>
+      <span class="digit-spheres green-spheres">${bot2.split("").map((n) => `<span class="sphere-digit">${escapeHtml(n)}</span>`).join("")}</span>
+    </div>`;
+  }).join("");
+}
 
 function updateRoomStageResults(lottery) {
   const lastResults = lottery.lastResults || [];
@@ -1343,6 +1728,13 @@ function updateRoomStageResults(lottery) {
   setElText("room-ball-3", top3Arr[2] || "?");
   setElText("room-ball-4", b2Arr[0] || "?");
   setElText("room-ball-5", b2Arr[1] || "?");
+  setSphereDigit("room-sphere-1", top3Arr[0]);
+  setSphereDigit("room-sphere-2", top3Arr[1]);
+  setSphereDigit("room-sphere-3", top3Arr[2]);
+  setSphereDigit("room-sphere-4", b2Arr[0]);
+  setSphereDigit("room-sphere-5", b2Arr[1]);
+  renderThaiRecentDraws(lottery);
+  applyRoomClockState("thai", lottery.countdown || 0);
 }
 
 window.selectBetCategory = function(cat) {
@@ -1465,17 +1857,30 @@ function startTimers() {
   state.timerInterval = setInterval(() => {
     state._tickCount += 1;
     state.lotteries.forEach((l) => {
-      if (!(l.countdown > 0)) return;
+      if (!(l.countdown > 0)) {
+        paintLotteryCountdown(l);
+        if (state.activeView === "betting" && state.selectedLottery?.id === l.id) {
+          setElText("betting-stage-countdown", formatTime(0));
+          setElText("stage-countdown-display", formatTime(0));
+          applyRoomClockState("thai", 0);
+        }
+        if (state.activeView === "vnlotto" && state.vnCurrentLotteryId === l.id) {
+          setElText("vn-countdown-display", formatTime(0));
+          applyRoomClockState("vn", 0);
+        }
+        return;
+      }
       l.countdown--;
-      const el = document.getElementById(`cd-${l.id}`);
-      if (el) el.innerText = formatTime(l.countdown);
+      paintLotteryCountdown(l);
 
       if (state.activeView === "betting" && state.selectedLottery?.id === l.id) {
         setElText("betting-stage-countdown", formatTime(l.countdown));
         setElText("stage-countdown-display", formatTime(l.countdown));
+        applyRoomClockState("thai", l.countdown);
       }
       if (state.activeView === "vnlotto" && state.vnCurrentLotteryId === l.id) {
         setElText("vn-countdown-display", formatTime(l.countdown));
+        applyRoomClockState("vn", l.countdown);
       }
 
       if (l.countdown === 0) {
@@ -1496,6 +1901,7 @@ function startTimers() {
         });
       }
     });
+    if (state.activeView === "lobby") syncHeroLive();
 
     if (state._tickCount % 8 === 0) {
       if (state.activeView === "betting" && state.selectedLottery?.id) {
@@ -1503,18 +1909,20 @@ function startTimers() {
           if (!live) return;
           setElText("stage-countdown-display", formatTime(live.countdown || 0));
           setElText("betting-stage-countdown", formatTime(live.countdown || 0));
+          applyRoomClockState("thai", live.countdown || 0);
           const drawTail = (live.nextDrawId || "").split("-").pop();
           setElText("betting-draw-id", drawTail);
           setElText("betting-draw-id-visible", drawTail);
           setElText("betting-stage-draw-id", drawTail);
+          updateRoomStageResults(live);
         });
       }
     }
 
     const jpEl = document.getElementById("mega-jackpot-counter");
-    if (jpEl) {
-      let val = parseFloat(jpEl.innerText.replace(/[^0-9.]/g, "")) || 12854920;
-      val += Math.random() * 2.5;
+    if (jpEl && state.jackpotBase) {
+      const pulse = (Date.now() / 8000) % 1;
+      const val = state.jackpotBase + Math.sin(pulse * Math.PI * 2) * 18;
       jpEl.innerText = `CR ${val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
   }, 1000);
@@ -1547,9 +1955,16 @@ async function loadAdminPanel() {
       el("admin-total-revenue").textContent = netProfit.toLocaleString() + " CR";
       el("admin-total-revenue").style.color = netProfit >= 0 ? "#2ecc71" : "#e74c3c";
     }
-    if (el("admin-active-draws")) el("admin-active-draws").textContent = (state.lotteries || []).length;
+    if (el("admin-active-draws")) el("admin-active-draws").textContent = Number(stats.openRooms || (state.lotteries || []).length).toLocaleString();
     if (el("admin-pending-bets")) el("admin-pending-bets").textContent = Number(stats.pendingBets || 0).toLocaleString();
     if (el("admin-banned-users")) el("admin-banned-users").textContent = Number(stats.bannedUsers || 0).toLocaleString();
+    state.adminRoomOps = data.roomOps || [];
+    const noteBanner = el("admin-site-note-banner");
+    const note = String(data.settings?.siteNote || data.siteNote || "").trim();
+    if (noteBanner) {
+      noteBanner.hidden = !note;
+      noteBanner.textContent = note;
+    }
     
     // Backward compat
     if (el("admin-stat-revenue")) el("admin-stat-revenue").innerText = totalBets.toLocaleString("th-TH") + " CR";
@@ -1605,23 +2020,75 @@ function isVnLotteryId(id) {
   return ["vnfast", "vnmb", "vnmn", "vnmt"].includes(id);
 }
 
+function isSimVnRoom(id) {
+  return id === "vnmn" || id === "vnmt";
+}
+
+function adminVipRank(exp) {
+  const value = Number(exp || 0);
+  if (value >= 5000) return "Kim cương";
+  if (value >= 2500) return "Vàng";
+  if (value >= 1000) return "Bạc";
+  return "Đồng";
+}
+
+function adminFmtWhen(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString("vi-VN", { hour12: false });
+}
+
+function adminLastResultLine(result, roomId) {
+  if (!result) return "Chưa có kết quả";
+  const vn = isVnLotteryId(roomId) || result.prizes;
+  if (vn && result.prizes) {
+    const db = result.prizes.db;
+    const g1 = result.prizes.nhat || result.prizes.g1;
+    if (!db) return "Chưa có kết quả";
+    return g1 ? `ĐB ${db} · G1 ${g1}` : `ĐB ${db}`;
+  }
+  if (result.numbers?.top3) {
+    return `3 trên ${result.numbers.top3} · 2 dưới ${result.numbers.bottom2 || "--"}`;
+  }
+  return "Chưa có kết quả";
+}
+
+function adminStatusBadge(status) {
+  const label = adminStatusVi(status);
+  const cls = status === "won" ? "is-won" : status === "lost" ? "is-lost" : status === "pending" ? "is-pending" : status === "cancelled" ? "is-cancel" : "";
+  return `<span class="admin-pill ${cls}">${escapeHtml(label)}</span>`;
+}
+
+function adminMiniStats(items) {
+  return items.map((item) => `<div class="admin-mini-stat"><span>${escapeHtml(item.label)}</span><b>${escapeHtml(String(item.value))}</b></div>`).join("");
+}
+
 function renderAdminDrawControls() {
   const container = document.getElementById("admin-draws-list") || document.getElementById("admin-draw-control-grid");
   if (!container) return;
+  const rooms = state.lotteries || [];
+  if (!rooms.length) {
+    container.innerHTML = `<div class="admin-empty">Chưa có phòng xổ số để điều khiển.</div>`;
+    return;
+  }
   container.innerHTML = "";
 
-  (state.lotteries || []).forEach(l => {
+  rooms.forEach(l => {
     const card = document.createElement("div");
     card.className = "admin-control-card";
     const last = (l.lastResults || [])[0];
-    const lastLine = last
-      ? (last.numbers?.top3 ? `3 trên ${last.numbers.top3} · 2 dưới ${last.numbers.bottom2}` : (last.prizes?.db ? `ĐB ${last.prizes.db}` : "Chưa có kết quả"))
-      : "Chưa có kết quả";
+    const lastLine = adminLastResultLine(last, l.id);
+    const sim = isSimVnRoom(l.id) ? `<span class="admin-pill is-sim">Mô phỏng</span>` : "";
+    const last3 = (l.lastResults || []).slice(0, 3).map((r) => {
+      return `<div class="admin-result-row"><span>${escapeHtml((r.drawId || "").split("-").pop() || "—")}</span><b class="gold-text">${escapeHtml(adminLastResultLine(r, l.id))}</b></div>`;
+    }).join("") || `<div class="admin-result-row">Chưa có lịch sử</div>`;
+    const ops = (state.adminRoomOps || []).find((r) => r.id === l.id) || {};
     card.innerHTML = `
-      <h4>${escapeHtml(adminRoomLabel(l.id))}</h4>
+      <h4>${escapeHtml(adminRoomLabel(l.id))} ${sim}</h4>
       <div class="admin-control-meta">
-        <div>Kỳ: <b class="gold-text">${escapeHtml(l.nextDrawId || "-")}</b></div>
-        <div>Đóng nhận: <b>${escapeHtml(formatTime(l.countdown || 0))}</b></div>
+        <div>Kỳ tiếp: <b class="gold-text">${escapeHtml(l.nextDrawId || "-")}</b></div>
+        <div>Đóng nhận: <b class="admin-cd${(l.countdown || 0) < 30 ? " is-urgent" : ""}">${escapeHtml(formatTime(l.countdown || 0))}</b></div>
         <div>Kết quả gần nhất: ${escapeHtml(lastLine)}</div>
         <div class="auto-toggle-row">
           <span>Tự quay</span>
@@ -1631,10 +2098,17 @@ function renderAdminDrawControls() {
           </label>
         </div>
       </div>
-      <div class="admin-control-actions" style="gap: 8px;">
-        <button class="btn-admin-draw" type="button" onclick="openManualDrawModal('${l.id}', '${l.nextDrawId || ""}')" style="width: 100%;">
+      <div class="admin-mini-stats admin-room-ops">
+        <div class="admin-mini-stat"><span>Phiếu chờ</span><b>${Number(ops.pendingCount || 0).toLocaleString()}</b></div>
+        <div class="admin-mini-stat"><span>Cược chờ</span><b>${Number(ops.pendingStake || 0).toLocaleString()} CR</b></div>
+        <div class="admin-mini-stat"><span>Rủi ro</span><b>${Math.round(Number(ops.pendingRisk || 0)).toLocaleString()} CR</b></div>
+      </div>
+      <div class="admin-mini-results">${last3}</div>
+      <div class="admin-control-actions">
+        <button class="btn-admin-draw" type="button" onclick="openManualDrawModal('${l.id}', '${l.nextDrawId || ""}')">
           ${l.type === "vietlottery" ? "Chốt kỳ Việt Nam" : "Chốt kỳ thủ công"}
         </button>
+        <button class="quick-btn" type="button" onclick="openAdminRoomBets('${l.id}')">Xem phiếu chờ</button>
       </div>
     `;
     container.appendChild(card);
@@ -1642,14 +2116,12 @@ function renderAdminDrawControls() {
 
   const settled = document.getElementById("admin-draw-result-list");
   if (settled) {
-    settled.innerHTML = (state.lotteries || []).map((l) => {
-      const rows = (l.lastResults || []).slice(0, 5).map((r) => {
-        if (r.prizes?.db) return `<div class="admin-result-row"><span>${escapeHtml((r.drawId || "").split("-").pop())}</span><b class="gold-text">ĐB ${escapeHtml(r.prizes.db)}</b></div>`;
-        const top3 = r.numbers?.top3 || "---";
-        const bot2 = r.numbers?.bottom2 || "--";
-        return `<div class="admin-result-row"><span>${escapeHtml((r.drawId || "").split("-").pop())}</span><b class="gold-text">${escapeHtml(top3)} / ${escapeHtml(bot2)}</b></div>`;
+    settled.innerHTML = rooms.map((l) => {
+      const rows = (l.lastResults || []).slice(0, 3).map((r) => {
+        return `<div class="admin-result-row"><span>${escapeHtml(r.drawId || "—")}</span><b class="gold-text">${escapeHtml(adminLastResultLine(r, l.id))}</b></div>`;
       }).join("") || `<div class="admin-result-row">Chưa có lịch sử</div>`;
-      return `<div class="admin-control-card admin-settled-card"><h4>${escapeHtml(adminRoomLabel(l.id))}</h4>${rows}</div>`;
+      const sim = isSimVnRoom(l.id) ? `<span class="admin-pill is-sim">Mô phỏng</span>` : "";
+      return `<div class="admin-control-card admin-settled-card"><h4>${escapeHtml(adminRoomLabel(l.id))} ${sim}</h4>${rows}</div>`;
     }).join("");
   }
 }
@@ -1697,7 +2169,8 @@ window.saveAdminSettings = async function() {
     minBet: Number(document.getElementById("limit-min-bet")?.value),
     maxBet: Number(document.getElementById("limit-max-bet")?.value)
   };
-  const rateRes = await apiCall("/api/admin/system-settings", "POST", { rates, vnRates, limits });
+  const siteNote = String(document.getElementById("admin-site-note")?.value || "").slice(0, 400);
+  const rateRes = await apiCall("/api/admin/system-settings", "POST", { rates, vnRates, limits, siteNote });
   if (!rateRes || !rateRes.success) {
     showToast("Lưu thất bại", rateRes?.message || "Tỷ lệ", "danger");
     return;
@@ -1716,6 +2189,11 @@ window.saveAdminSettings = async function() {
   Object.assign(THAI_RATES, rates);
   Object.assign(VN_RATES, vnRates);
   showToast("Đã lưu", "Đã cập nhật tỷ lệ và giới hạn phòng", "success");
+  const saved = document.getElementById("admin-settings-saved");
+  if (saved) {
+    saved.hidden = false;
+    setTimeout(() => { saved.hidden = true; }, 4000);
+  }
   loadLotteries();
 };
 
@@ -1743,46 +2221,67 @@ window.saveHalfPayNumbers = async function(lotteryId) {
   }
 };
 
-async function loadAdminUsers() {
+async function loadAdminUsers(more) {
   const tbody = document.getElementById("admin-users-table-body") || document.getElementById("admin-users-tbody");
   if (!tbody) return;
+  if (!more) state.adminUserLimit = 25;
   tbody.innerHTML = `<tr><td colspan="5" class="no-data">Đang tải...</td></tr>`;
 
   const data = await apiCall("/api/admin/users");
-  if (data && data.success) {
-    const q = String(document.getElementById("admin-user-search")?.value || "").trim().toLowerCase();
-    const users = (data.users || []).filter((u) => {
-      if (!q) return true;
-      return String(u.username || "").toLowerCase().includes(q) || String(u.nickname || "").toLowerCase().includes(q);
-    });
-    tbody.innerHTML = "";
-    if (!users.length) {
-      tbody.innerHTML = `<tr><td colspan="5" class="no-data">Không có thành viên phù hợp</td></tr>`;
-      return;
-    }
-    users.forEach(u => {
-      const isMe = (u.username === state.user.username);
-      const safeUser = escapeHtml(u.username);
-      const safeNick = escapeHtml(displayNickname(u));
-      const status = u.status || "active";
-      const roleVi = u.role === "admin" ? "Quản trị" : "Thành viên";
-      const statusVi = status === "banned" ? "Đã khóa" : "Hoạt động";
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td><b>${safeUser}</b><div class="text-muted">${safeNick} · ${roleVi}</div></td>
-        <td class="gold-text">${Number(u.balance).toLocaleString()} CR</td>
-        <td>VIP · ${Number(u.exp || 0).toLocaleString()} EXP</td>
-        <td>${statusVi}</td>
-        <td>
-          <button class="btn-action-table" type="button" onclick="openCreditModal('${safeUser}', '${safeNick}')" ${isMe ? "disabled" : ""}>Tín dụng</button>
-          <button class="btn-action-table" type="button" onclick="openResetPasswordModal('${safeUser}')">Mật khẩu</button>
-          <button class="btn-action-table" type="button" onclick="toggleUserStatus('${safeUser}', '${status}')" ${isMe ? "disabled" : ""}>${status === "banned" ? "Mở khóa" : "Khóa"}</button>
-          <button class="btn-action-table" type="button" onclick="deleteUserAccount('${safeUser}')" ${isMe ? "disabled" : ""}>Xóa</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
+  if (!(data && data.success)) {
+    tbody.innerHTML = `<tr><td colspan="5" class="no-data">Không tải được danh sách thành viên</td></tr>`;
+    return;
   }
+  const q = String(document.getElementById("admin-user-search")?.value || "").trim().toLowerCase();
+  const stFilter = document.getElementById("admin-user-status")?.value || "all";
+  const roleFilter = document.getElementById("admin-user-role")?.value || "all";
+  const users = (data.users || []).filter((u) => {
+    if (stFilter !== "all" && (u.status || "active") !== stFilter) return false;
+    if (roleFilter !== "all" && (u.role || "user") !== roleFilter) return false;
+    if (!q) return true;
+    return String(u.username || "").toLowerCase().includes(q) || String(u.nickname || "").toLowerCase().includes(q);
+  });
+  const summary = document.getElementById("admin-users-summary");
+  if (summary) {
+    summary.innerHTML = adminMiniStats([
+      { label: "Hiển thị", value: users.length },
+      { label: "Tổng thành viên", value: (data.users || []).length },
+      { label: "Đã khóa", value: (data.users || []).filter((u) => u.status === "banned").length }
+    ]);
+  }
+  tbody.innerHTML = "";
+  if (!users.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="no-data">Không có thành viên phù hợp</td></tr>`;
+    const emptyMore = document.getElementById("admin-users-more");
+    if (emptyMore) emptyMore.hidden = true;
+    return;
+  }
+  const shown = users.slice(0, state.adminUserLimit || 25);
+  const moreBtn = document.getElementById("admin-users-more");
+  if (moreBtn) moreBtn.hidden = users.length <= shown.length;
+  shown.forEach(u => {
+    const isMe = (u.username === state.user.username);
+    const safeUser = escapeHtml(u.username);
+    const safeNick = escapeHtml(displayNickname(u));
+    const status = u.status || "active";
+    const roleVi = u.role === "admin" ? "Quản trị" : "Thành viên";
+    const statusVi = status === "banned" ? "Đã khóa" : "Hoạt động";
+    const vip = u.vip || adminVipRank(u.exp);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td data-label="Tài khoản"><b>${safeUser}</b><div class="text-muted">${safeNick} · ${roleVi}</div></td>
+      <td data-label="Số dư" class="gold-text">${Number(u.balance).toLocaleString()} CR</td>
+      <td data-label="VIP">${escapeHtml(vip)} · ${Number(u.exp || 0).toLocaleString()} EXP</td>
+      <td data-label="Trạng thái">${statusVi}</td>
+      <td data-label="Thao tác">
+        <button class="btn-action-table" type="button" onclick="openCreditModal('${safeUser}', '${safeNick}')">Tín dụng</button>
+        <button class="btn-action-table" type="button" onclick="openResetPasswordModal('${safeUser}')">Mật khẩu</button>
+        <button class="btn-action-table" type="button" onclick="toggleUserStatus('${safeUser}', '${status}')" ${isMe ? "disabled" : ""}>${status === "banned" ? "Mở khóa" : "Khóa"}</button>
+        <button class="btn-action-table" type="button" onclick="deleteUserAccount('${safeUser}')" ${isMe ? "disabled" : ""}>Xóa</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 window.toggleUserStatus = async function(username, currentStatus) {
@@ -1815,68 +2314,110 @@ function adminStatusVi(status) {
   return status || "—";
 }
 
-async function loadAdminAllBets() {
+async function loadAdminAllBets(more) {
   const tbody = document.getElementById("admin-bets-table-body") || document.getElementById("admin-bets-tbody");
   if (!tbody) return;
-  tbody.innerHTML = `<tr><td colspan="6" class="no-data">Đang tải...</td></tr>`;
+  if (!more) state.adminBetLimit = 25;
+  tbody.innerHTML = `<tr><td colspan="7" class="no-data">Đang tải...</td></tr>`;
 
   const data = await apiCall("/api/admin/bets");
-  if (data && data.success) {
-    const room = document.getElementById("admin-bets-room")?.value || "all";
-    const st = document.getElementById("admin-bets-status")?.value || "all";
-    const q = String(document.getElementById("admin-bets-search")?.value || "").trim().toLowerCase();
-    let bets = data.bets || [];
-    if (room !== "all") bets = bets.filter((b) => b.lotteryType === room);
-    if (st !== "all") bets = bets.filter((b) => b.status === st);
-    if (q) {
-      bets = bets.filter((b) => String(b.username || "").toLowerCase().includes(q) || String(b.nickname || "").toLowerCase().includes(q) || String(b.numbers || "").toLowerCase().includes(q));
-    }
-    tbody.innerHTML = "";
-    if (!bets.length) {
-      tbody.innerHTML = `<tr><td colspan="6" class="no-data">Chưa có phiếu cược</td></tr>`;
-      return;
-    }
-
-    bets.slice(0, 120).forEach(b => {
-      const safeId = escapeHtml(b.id || "");
-      const canCancel = b.status === "pending" && b.id;
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${escapeHtml(b.nickname || b.username || "")}</td>
-        <td>${escapeHtml(adminRoomLabel(b.lotteryType))}</td>
-        <td>${escapeHtml(adminBetTypeLabel(b.betType))} <b class="gold-text">${escapeHtml(b.numbers || "")}</b></td>
-        <td>${Number(b.amount || 0).toLocaleString()} CR</td>
-        <td>${escapeHtml(adminStatusVi(b.status))}${b.status === "won" ? ` +${Number(b.payout || 0).toLocaleString()}` : ""}</td>
-        <td>${canCancel ? `<button class="btn-action-table" type="button" onclick="cancelAdminBet('${safeId}')">Hủy hoàn</button>` : "—"}</td>
-      `;
-      tbody.appendChild(tr);
-    });
+  if (!(data && data.success)) {
+    tbody.innerHTML = `<tr><td colspan="7" class="no-data">Không tải được phiếu cược</td></tr>`;
+    return;
   }
+  const room = document.getElementById("admin-bets-room")?.value || "all";
+  const st = document.getElementById("admin-bets-status")?.value || "all";
+  const q = String(document.getElementById("admin-bets-search")?.value || "").trim().toLowerCase();
+  let bets = (data.bets || []).filter((b) => !String(b.lotteryType || "").startsWith("game_"));
+  if (room !== "all") bets = bets.filter((b) => b.lotteryType === room);
+  if (st !== "all") bets = bets.filter((b) => b.status === st);
+  if (q) {
+    bets = bets.filter((b) => String(b.username || "").toLowerCase().includes(q) || String(b.nickname || "").toLowerCase().includes(q) || String(b.numbers || "").toLowerCase().includes(q) || String(b.drawId || "").toLowerCase().includes(q));
+  }
+  const pending = bets.filter((b) => b.status === "pending").length;
+  const won = bets.filter((b) => b.status === "won").length;
+  const stake = bets.reduce((s, b) => s + Number(b.amount || 0), 0);
+  const payout = bets.reduce((s, b) => s + Number(b.payout || 0), 0);
+  const summary = document.getElementById("admin-bets-summary");
+  if (summary) {
+    summary.innerHTML = adminMiniStats([
+      { label: "Phiếu", value: bets.length },
+      { label: "Đang chờ", value: pending },
+      { label: "Trúng", value: won },
+      { label: "Tổng cược", value: `${stake.toLocaleString()} CR` },
+      { label: "Đã trả", value: `${payout.toLocaleString()} CR` }
+    ]);
+  }
+  tbody.innerHTML = "";
+  if (!bets.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="no-data">Chưa có phiếu cược phù hợp</td></tr>`;
+    const emptyMore = document.getElementById("admin-bets-more");
+    if (emptyMore) emptyMore.hidden = true;
+    return;
+  }
+  const shownBets = bets.slice(0, state.adminBetLimit || 25);
+  const moreBets = document.getElementById("admin-bets-more");
+  if (moreBets) moreBets.hidden = bets.length <= shownBets.length;
+
+  shownBets.forEach(b => {
+    const safeId = escapeHtml(b.id || "");
+    const canCancel = b.status === "pending" && b.id;
+    const pay = Number(b.payout || 0);
+    const payText = b.status === "won" ? `+${pay.toLocaleString()} CR` : (b.status === "pending" ? "Chưa chốt" : "0 CR");
+    const drawTail = (b.drawId || "").split("-").pop() || "—";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td data-label="Người chơi">${escapeHtml(b.nickname || b.username || "")}</td>
+      <td data-label="Phòng">${escapeHtml(adminRoomLabel(b.lotteryType))}<div class="text-muted">${escapeHtml(drawTail)}</div></td>
+      <td data-label="Loại / số">${escapeHtml(adminBetTypeLabel(b.betType))} <b class="gold-text">${escapeHtml(b.numbers || "")}</b></td>
+      <td data-label="Mức cược">${Number(b.amount || 0).toLocaleString()} CR</td>
+      <td data-label="Trả thưởng">${payText}</td>
+      <td data-label="Trạng thái">${adminStatusBadge(b.status)}</td>
+      <td data-label="Thao tác">${canCancel ? `<button class="btn-action-table" type="button" onclick="cancelAdminBet('${safeId}')">Hủy hoàn</button>` : "—"}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 window.loadAdminGames = async function() {
   const tbody = document.getElementById("admin-games-table-body");
-  if (!tbody) return;
-  tbody.innerHTML = `<tr><td colspan="5" class="no-data">Đang tải...</td></tr>`;
-  const data = await apiCall("/api/admin/bets");
+  const catalog = document.getElementById("admin-games-catalog");
+  if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="no-data">Đang tải...</td></tr>`;
+  const data = await apiCall("/api/admin/games");
   if (!(data && data.success)) {
-    tbody.innerHTML = `<tr><td colspan="5" class="no-data">Không tải được lịch sử trò chơi</td></tr>`;
+    if (catalog) catalog.innerHTML = `<div class="admin-empty">Không tải được thống kê trò chơi</div>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="no-data">Không tải được lịch sử trò chơi</td></tr>`;
     return;
   }
-  const games = (data.bets || []).filter((b) => String(b.lotteryType || "").startsWith("game_"));
-  if (!games.length) {
+  if (catalog) {
+    const q = String(document.getElementById("admin-games-search")?.value || "").trim().toLowerCase();
+    const games = (data.games || []).filter((g) => !q || String(g.name || "").toLowerCase().includes(q));
+    catalog.innerHTML = games.map((g) => `
+      <div class="admin-game-card">
+        <h4>${escapeHtml(g.name)}</h4>
+        <div class="admin-control-meta">
+          <div>Lượt chơi: <b>${Number(g.plays || 0).toLocaleString()}</b></div>
+          <div>Tổng cược: <b>${Number(g.stake || 0).toLocaleString()} CR</b></div>
+          <div>Trả thưởng: <b>${Number(g.payout || 0).toLocaleString()} CR</b></div>
+        </div>
+      </div>
+    `).join("") || `<div class="admin-empty">Chưa có dữ liệu minigame</div>`;
+  }
+  if (!tbody) return;
+  const recent = data.recent || [];
+  if (!recent.length) {
     tbody.innerHTML = `<tr><td colspan="5" class="no-data">Chưa có lượt chơi mini game</td></tr>`;
     return;
   }
   tbody.innerHTML = "";
-  games.slice(0, 120).forEach((b) => {
+  recent.forEach((b) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${escapeHtml(b.nickname || b.username || "")}</td>
-      <td>${escapeHtml(gameDisplayName(b.lotteryType))}</td>
-      <td>${Number(b.amount || 0).toLocaleString()} CR</td>
-      <td>${escapeHtml(adminStatusVi(b.status))}</td>
-      <td>${b.status === "won" ? `+${Number(b.payout || 0).toLocaleString()} CR` : "—"}</td>
+      <td data-label="Người chơi">${escapeHtml(b.nickname || b.username || "")}</td>
+      <td data-label="Trò chơi">${escapeHtml(gameDisplayName(b.lotteryType))}</td>
+      <td data-label="Mức cược">${Number(b.amount || 0).toLocaleString()} CR</td>
+      <td data-label="Kết quả">${adminStatusBadge(b.status)}</td>
+      <td data-label="Trả thưởng">${b.status === "won" ? `+${Number(b.payout || 0).toLocaleString()} CR` : "—"}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -1886,12 +2427,50 @@ async function loadAdminFinanceRequests() {
   const list = document.getElementById("admin-finance-list");
   const tbody = document.getElementById("admin-finance-tbody");
   const data = await apiCall("/api/admin/finance");
-  const txs = (data && data.success) ? (data.transactions || data.requests || []) : [];
-  const typeVi = (type) => ({ add: "Cộng", deduct: "Trừ", deposit: "Nạp", withdraw: "Rút" }[type] || type || "—");
-  const stVi = (st) => ({ completed: "Xong", pending: "Chờ", success: "Xong", rejected: "Từ chối" }[st] || st || "—");
+  if (!(data && data.success)) {
+    if (list) list.innerHTML = `<div class="admin-empty">Không tải được sổ tín dụng</div>`;
+    return;
+  }
+  const typeFilter = document.getElementById("admin-finance-type")?.value || "all";
+  const q = String(document.getElementById("admin-finance-search")?.value || "").trim().toLowerCase();
+  let txs = data.transactions || data.requests || [];
+  if (typeFilter !== "all") txs = txs.filter((r) => r.type === typeFilter);
+  if (q) {
+    txs = txs.filter((r) =>
+      String(r.username || "").toLowerCase().includes(q)
+      || String(r.note || "").toLowerCase().includes(q)
+    );
+  }
+  const typeVi = (type) => ({
+    add: "Cộng CR",
+    deduct: "Trừ CR",
+    bonus: "Thưởng",
+    daily: "Thưởng ngày",
+    adjust: "Điều chỉnh"
+  }[type] || type || "—");
+  const summary = document.getElementById("admin-finance-summary");
+  if (summary) {
+    const added = Number(data.summary?.added || 0);
+    const deducted = Number(data.summary?.deducted || 0);
+    summary.innerHTML = adminMiniStats([
+      { label: "Bút toán", value: txs.length },
+      { label: "Đã cộng / thưởng", value: `${added.toLocaleString()} CR` },
+      { label: "Đã trừ", value: `${deducted.toLocaleString()} CR` }
+    ]);
+  }
   const html = txs.length === 0
-    ? `<div class="no-data">Chưa có lịch sử tín dụng. Dùng form phía trên hoặc nút Tín dụng ở tab Thành viên.</div>`
-    : txs.slice(0, 60).map((r) => `<div class="admin-control-card"><b>${escapeHtml(r.username || "")}</b> · ${escapeHtml(typeVi(r.type))} · ${Number(r.amount || 0).toLocaleString()} CR · ${escapeHtml(stVi(r.status))}<div class="text-muted">${escapeHtml(r.note || "")}</div></div>`).join("");
+    ? `<div class="admin-empty">Chưa có lịch sử tín dụng. Dùng form phía trên hoặc nút Tín dụng ở tab Thành viên.</div>`
+    : txs.slice(0, 80).map((r) => {
+      const sign = r.type === "deduct" ? "−" : "+";
+      return `<div class="admin-control-card admin-ledger-card">
+        <div class="admin-ledger-top">
+          <b>${escapeHtml(r.username || "")}</b>
+          <span class="admin-pill">${escapeHtml(typeVi(r.type))}</span>
+        </div>
+        <div class="gold-text">${sign}${Number(r.amount || 0).toLocaleString()} CR</div>
+        <div class="text-muted">${escapeHtml(r.note || "Điều chỉnh CR")} · ${escapeHtml(adminFmtWhen(r.createdAt))}</div>
+      </div>`;
+    }).join("");
   if (list) list.innerHTML = html;
   if (tbody) tbody.innerHTML = `<tr><td colspan="7">${html}</td></tr>`;
 }
@@ -1931,7 +2510,45 @@ async function loadAdminSystemSettings() {
   setVal("rate-xien4", vn.xien4 ?? VN_RATES.xien4);
   setVal("limit-min-bet", limits.minBet ?? 10);
   setVal("limit-max-bet", limits.maxBet ?? 50000);
+  const noteEl = document.getElementById("admin-site-note");
+  if (noteEl) noteEl.value = data.settings.siteNote || "";
+  const noteBanner = document.getElementById("admin-site-note-banner");
+  const note = String(data.settings.siteNote || "").trim();
+  if (noteBanner) {
+    noteBanner.hidden = !note;
+    noteBanner.textContent = note;
+  }
   loadAdminRoomSettings();
+}
+
+window.showMoreAdminUsers = function() {
+  state.adminUserLimit = (state.adminUserLimit || 25) + 25;
+  loadAdminUsers(true);
+};
+
+window.showMoreAdminBets = function() {
+  state.adminBetLimit = (state.adminBetLimit || 25) + 25;
+  loadAdminAllBets(true);
+};
+
+window.openAdminPendingBets = function() {
+  const sel = document.getElementById("admin-bets-status");
+  if (sel) sel.value = "pending";
+  switchAdminTab("bets");
+};
+
+window.openAdminRoomBets = function(roomId) {
+  const room = document.getElementById("admin-bets-room");
+  const st = document.getElementById("admin-bets-status");
+  if (room) room.value = roomId || "all";
+  if (st) st.value = "pending";
+  switchAdminTab("bets");
+};
+
+window.openAdminBannedUsers = function() {
+  const sel = document.getElementById("admin-user-status");
+  if (sel) sel.value = "banned";
+  switchAdminTab("users");
 }
 
 window.loadAdminRoomSettings = async function() {
@@ -2255,11 +2872,18 @@ state.selectedCoinSide = null;
 state.selectedHiloType = null;
 
 window.initCoinFlipGame = function() {
-  state.selectedCoinSide = null;
+  const amt = document.getElementById("coin-amount-input");
+  if (amt && !amt.value) amt.value = "10";
+  if (!state.selectedCoinSide) state.selectedCoinSide = "head";
   const hBtn = document.getElementById("coin-btn-head");
   const tBtn = document.getElementById("coin-btn-tail");
-  if (hBtn) hBtn.classList.remove("active");
-  if (tBtn) tBtn.classList.remove("active");
+  if (hBtn) hBtn.classList.toggle("active", state.selectedCoinSide === "head");
+  if (tBtn) tBtn.classList.toggle("active", state.selectedCoinSide === "tail");
+  const coin = document.getElementById("coin-anim");
+  if (coin) {
+    coin.classList.toggle("is-head", state.selectedCoinSide === "head");
+    coin.classList.toggle("is-tail", state.selectedCoinSide === "tail");
+  }
   renderCoinHistory();
 };
 
@@ -2268,12 +2892,15 @@ window.selectCoinSide = function(side) {
   state.selectedCoinSide = side;
   const hBtn = document.getElementById("coin-btn-head");
   const tBtn = document.getElementById("coin-btn-tail");
+  const coin = document.getElementById("coin-anim");
   if (side === "head") {
     if (hBtn) hBtn.classList.add("active");
     if (tBtn) tBtn.classList.remove("active");
+    if (coin) { coin.classList.remove("is-tail"); coin.classList.add("is-head"); }
   } else {
     if (hBtn) hBtn.classList.remove("active");
     if (tBtn) tBtn.classList.add("active");
+    if (coin) { coin.classList.remove("is-head"); coin.classList.add("is-tail"); }
   }
 };
 
@@ -2292,9 +2919,19 @@ window.playCoinFlip = async function() {
   spinBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${t("playing")}`;
 
   const data = await apiCall("/api/games/coinflip", "POST", { betOn: state.selectedCoinSide, amount });
+  const coinFace = document.getElementById("coin-anim");
+  if (coinFace) {
+    coinFace.classList.add("is-flipping");
+    coinFace.classList.remove("is-head", "is-tail");
+  }
   setTimeout(() => {
     spinBtn.disabled = false;
     spinBtn.innerHTML = t("play");
+    if (coinFace) {
+      coinFace.classList.remove("is-flipping");
+      coinFace.classList.toggle("is-head", data?.result === "head");
+      coinFace.classList.toggle("is-tail", data?.result === "tail");
+    }
 
     if (data && data.success) {
       state.user.balance = data.newBalance;
@@ -2331,7 +2968,6 @@ function renderCoinHistory() {
   if (!container) return;
   container.innerHTML = "";
   if (state.coinHistory.length === 0) {
-    container.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 20px;">${escapeHtml(t("no_game_hist"))}</div>`;
     return;
   }
   state.coinHistory.forEach(h => {
@@ -2339,23 +2975,32 @@ function renderCoinHistory() {
     div.className = "cart-item";
     div.innerHTML = `
       <div class="cart-item-meta">
-        <span>ผลออก: <b class="gold-text">${h.result}</b></span>
-        <span class="text-muted">แทง: ${h.bet} (${h.amount} CR)</span>
+        <span>${escapeHtml(t("hist_outcome"))}: <b class="gold-text">${escapeHtml(h.result)}</b></span>
+        <span class="text-muted">${escapeHtml(t("hist_stake"))}: ${escapeHtml(h.bet)} (${h.amount} CR)</span>
       </div>
-      <div>${h.win ? `<b class="green-text">+${h.payout} CR</b>` : `<span class="danger-text">เสีย</span>`}</div>
+      <div>${h.win ? `<b class="green-text">+${h.payout} CR</b>` : `<span class="danger-text">${escapeHtml(t("g_lose"))}</span>`}</div>
     `;
     container.appendChild(div);
   });
 }
 
 window.initHiloGame = function() {
-  state.selectedHiloType = null;
+  const amt = document.getElementById("hilo-amount-input");
+  if (amt && !amt.value) amt.value = "10";
+  if (!state.selectedHiloType) state.selectedHiloType = "high";
+  const sel = document.getElementById("hilo-type-select");
+  if (sel) sel.value = state.selectedHiloType;
+  document.querySelectorAll(".hilo-opt-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.id === `hilo-btn-${state.selectedHiloType}`);
+  });
   renderHiloHistory();
 };
 
 window.selectHiloType = function(type) {
   sound.playClick();
   state.selectedHiloType = type;
+  const sel = document.getElementById("hilo-type-select");
+  if (sel) sel.value = type;
   document.querySelectorAll(".hilo-opt-btn").forEach(btn => btn.classList.remove("active"));
   const btn = document.getElementById(`hilo-btn-${type}`);
   if (btn) btn.classList.add("active");
@@ -2389,9 +3034,10 @@ window.playHilo = async function() {
       const d1 = document.getElementById("hilo-d1");
       const d2 = document.getElementById("hilo-d2");
       const d3 = document.getElementById("hilo-d3");
-      if (d1) d1.className = `hilo-dice dice-val-${data.dice[0]}`;
-      if (d2) d2.className = `hilo-dice dice-val-${data.dice[1]}`;
-      if (d3) d3.className = `hilo-dice dice-val-${data.dice[2]}`;
+      const faces = ["", "\u2680", "\u2681", "\u2682", "\u2683", "\u2684", "\u2685"];
+      if (d1) { d1.className = `lux-die dice-val-${data.dice[0]}`; d1.textContent = faces[data.dice[0]] || String(data.dice[0]); }
+      if (d2) { d2.className = `lux-die dice-val-${data.dice[1]}`; d2.textContent = faces[data.dice[1]] || String(data.dice[1]); }
+      if (d3) { d3.className = `lux-die dice-val-${data.dice[2]}`; d3.textContent = faces[data.dice[2]] || String(data.dice[2]); }
 
       if (data.win) {
         showToast(t("g_win"), `${data.total} (+${data.payout} CR)`, "success");
@@ -2421,7 +3067,6 @@ function renderHiloHistory() {
   if (!container) return;
   container.innerHTML = "";
   if (state.hiloHistory.length === 0) {
-    container.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 20px;">${escapeHtml(t("no_game_hist"))}</div>`;
     return;
   }
   state.hiloHistory.forEach(h => {
@@ -2429,10 +3074,10 @@ function renderHiloHistory() {
     div.className = "cart-item";
     div.innerHTML = `
       <div class="cart-item-meta">
-        <span>เต๋าออก: <b class="gold-text">${h.dice.join("+")} = ${h.total}</b></span>
-        <span class="text-muted">แทง: ${h.bet} (${h.amount} CR)</span>
+        <span>${escapeHtml(t("hist_outcome"))}: <b class="gold-text">${escapeHtml(h.dice.join("+"))} = ${h.total}</b></span>
+        <span class="text-muted">${escapeHtml(t("hist_stake"))}: ${escapeHtml(String(h.bet))} (${h.amount} CR)</span>
       </div>
-      <div>${h.win ? `<b class="green-text">+${h.payout} CR</b>` : `<span class="danger-text">เสีย</span>`}</div>
+      <div>${h.win ? `<b class="green-text">+${h.payout} CR</b>` : `<span class="danger-text">${escapeHtml(t("g_lose"))}</span>`}</div>
     `;
     container.appendChild(div);
   });
@@ -2457,12 +3102,19 @@ window.playLuckyWheel = async function() {
   spinBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${t("playing")}`;
 
   const disc = document.getElementById("wheel-disc");
-  if (disc) {
-    const randomRot = 1440 + Math.floor(Math.random() * 360);
-    disc.style.transform = `rotate(${randomRot}deg)`;
-  }
-
   const data = await apiCall("/api/games/wheel", "POST", { amount });
+  if (disc && data && data.success) {
+    const slice = 360 / 7;
+    const target = 1440 + (360 - ((data.chosenIndex + 0.5) * slice));
+    disc.style.transition = "none";
+    disc.style.transform = "rotate(0deg)";
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        disc.style.transition = "transform 2.4s cubic-bezier(0.17, 0.67, 0.12, 0.99)";
+        disc.style.transform = `rotate(${target}deg)`;
+      });
+    });
+  }
   setTimeout(() => {
     spinBtn.disabled = false;
     spinBtn.innerHTML = t("play");
@@ -2500,7 +3152,6 @@ function renderWheelHistory() {
   if (!container) return;
   container.innerHTML = "";
   if (state.wheelHistory.length === 0) {
-    container.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 20px;">${escapeHtml(t("no_game_hist"))}</div>`;
     return;
   }
   state.wheelHistory.forEach(h => {
@@ -2522,8 +3173,15 @@ state.selectedDragonTigerSide = null;
 state.dtHistory = [];
 
 window.initDragonTigerGame = function() {
-  state.selectedDragonTigerSide = null;
-  document.querySelectorAll("#view-game-dragontiger .hilo-opt-btn").forEach(btn => btn.classList.remove("active"));
+  const amt = document.getElementById("dt-amount-input");
+  if (amt && !amt.value) amt.value = "10";
+  if (!state.selectedDragonTigerSide) state.selectedDragonTigerSide = "dragon";
+  document.querySelectorAll("#dt-btn-dragon, #dt-btn-tie, #dt-btn-tiger").forEach((btn) => {
+    btn.classList.toggle("active", btn.id === `dt-btn-${state.selectedDragonTigerSide}`);
+  });
+  const status = document.getElementById("dt-status-msg");
+  const sideKey = { dragon: "dt_dragon", tiger: "dt_tiger", tie: "dt_tie" }[state.selectedDragonTigerSide];
+  if (status && sideKey) status.innerText = t(sideKey);
   renderDragonTigerHistory();
 };
 
@@ -2604,7 +3262,6 @@ function renderDragonTigerHistory() {
   if (!container) return;
   container.innerHTML = "";
   if (state.dtHistory.length === 0) {
-    container.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 20px;">${escapeHtml(t("no_game_hist"))}</div>`;
     return;
   }
   state.dtHistory.forEach(h => {
@@ -2625,6 +3282,8 @@ function renderDragonTigerHistory() {
 state.slotHistory = [];
 
 window.initSlotGame = function() {
+  const amt = document.getElementById("slot-amount-input");
+  if (amt && !amt.value) amt.value = "10";
   renderSlotHistory();
 };
 
@@ -2651,9 +3310,11 @@ window.playSlotMachine = async function() {
     spinBtn.disabled = false;
     spinBtn.innerHTML = t("play");
 
-    if (r1) { r1.className = "slot-reel"; r1.innerText = data.reels[0]; }
-    if (r2) { r2.className = "slot-reel"; r2.innerText = data.reels[1]; }
-    if (r3) { r3.className = "slot-reel"; r3.innerText = data.reels[2]; }
+    const SLOT_ICON = { "7": "7", DIA: "◆", STAR: "★", BELL: "♪", CHERRY: "●", LEMON: "○" };
+    const icon = (sym) => SLOT_ICON[sym] || sym;
+    if (r1) { r1.className = "slot-reel"; r1.innerText = icon(data.reels[0]); }
+    if (r2) { r2.className = "slot-reel"; r2.innerText = icon(data.reels[1]); }
+    if (r3) { r3.className = "slot-reel"; r3.innerText = icon(data.reels[2]); }
 
     if (data && data.success) {
       state.user.balance = data.newBalance;
@@ -2688,7 +3349,6 @@ function renderSlotHistory() {
   if (!container) return;
   container.innerHTML = "";
   if (state.slotHistory.length === 0) {
-    container.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 20px;">${escapeHtml(t("no_game_hist"))}</div>`;
     return;
   }
   state.slotHistory.forEach(h => {
@@ -2696,10 +3356,10 @@ function renderSlotHistory() {
     div.className = "cart-item";
     div.innerHTML = `
       <div class="cart-item-meta">
-        <span>ผลสล็อต: <b class="gold-text">${h.reels}</b></span>
-        <span class="text-muted">เดิมพัน: ${h.amount} CR</span>
+        <span>${escapeHtml(t("hist_outcome"))}: <b class="gold-text">${escapeHtml(h.reels)}</b></span>
+        <span class="text-muted">${escapeHtml(t("hist_stake"))}: ${h.amount} CR</span>
       </div>
-      <div>${h.win ? `<b class="green-text">+${h.payout} CR</b>` : `<span class="danger-text">เสีย</span>`}</div>
+      <div>${h.win ? `<b class="green-text">+${h.payout} CR</b>` : `<span class="danger-text">${escapeHtml(t("g_lose"))}</span>`}</div>
     `;
     container.appendChild(div);
   });
@@ -2711,6 +3371,8 @@ state.minesCurrentRate = 1.0;
 state.minesCurrentPayout = 0;
 
 window.initMinesGame = function() {
+  const amt = document.getElementById("mines-amount-input");
+  if (amt && !amt.value) amt.value = "10";
   renderMinesGridInitial();
 };
 
@@ -2721,7 +3383,7 @@ function renderMinesGridInitial() {
   for (let i = 0; i < 25; i++) {
     const btn = document.createElement("button");
     btn.className = "mines-tile";
-    btn.innerText = "❓";
+    btn.innerHTML = "<i class=\"fa-solid fa-question\"></i>";
     btn.disabled = true;
     grid.appendChild(btn);
   }
@@ -2757,7 +3419,7 @@ window.startMinesGame = async function() {
     document.getElementById("mines-current-rate").innerText = "x1.00";
     document.getElementById("mines-cashout-amt").innerText = "0 CR";
     cashoutBtn.disabled = true;
-    document.getElementById("mines-status-msg").innerText = "💎";
+    document.getElementById("mines-status-msg").innerText = t("playing");
 
     // Build interactive 5x5 grid
     const grid = document.getElementById("mines-grid");
@@ -2765,7 +3427,7 @@ window.startMinesGame = async function() {
     for (let i = 0; i < 25; i++) {
       const btn = document.createElement("button");
       btn.className = "mines-tile mines-tile-active";
-      btn.innerText = "❓";
+      btn.innerHTML = "<i class=\"fa-solid fa-question\"></i>";
       btn.onclick = () => revealMinesTile(i, btn);
       grid.appendChild(btn);
     }
@@ -2781,7 +3443,7 @@ async function revealMinesTile(index, tileBtn) {
   if (data && data.success) {
     if (data.isBomb) {
       sound.playError();
-      tileBtn.innerText = "💣";
+      tileBtn.innerHTML = "<i class=\"fa-solid fa-burst\"></i>";
       tileBtn.className = "mines-tile mines-tile-bomb";
       state.minesActive = false;
       document.getElementById("btn-cashout-mines").disabled = true;
@@ -2795,17 +3457,17 @@ async function revealMinesTile(index, tileBtn) {
         if (tiles[idx]) {
           tiles[idx].disabled = true;
           if (type === "bomb") {
-            tiles[idx].innerText = "💣";
+            tiles[idx].innerHTML = "<i class=\"fa-solid fa-burst\"></i>";
             tiles[idx].className = "mines-tile mines-tile-bomb";
           } else {
-            tiles[idx].innerText = "💎";
+            tiles[idx].innerHTML = "<i class=\"fa-solid fa-gem\"></i>";
             tiles[idx].className = "mines-tile mines-tile-gem";
           }
         }
       });
     } else {
       sound.playCoin();
-      tileBtn.innerText = "💎";
+      tileBtn.innerHTML = "<i class=\"fa-solid fa-gem\"></i>";
       tileBtn.className = "mines-tile mines-tile-gem";
       
       state.minesCurrentRate = data.rate;
@@ -2814,7 +3476,7 @@ async function revealMinesTile(index, tileBtn) {
       document.getElementById("mines-current-rate").innerText = `x${data.rate.toFixed(2)}`;
       document.getElementById("mines-cashout-amt").innerText = `${data.currentPayout.toLocaleString()} CR`;
       document.getElementById("btn-cashout-mines").disabled = false;
-      document.getElementById("mines-status-msg").innerText = `💎 ${data.currentPayout.toLocaleString()} CR`;
+      document.getElementById("mines-status-msg").innerText = `${data.currentPayout.toLocaleString()} CR`;
     }
   }
 }
@@ -2844,10 +3506,10 @@ window.cashoutMines = async function() {
       if (tiles[idx]) {
         tiles[idx].disabled = true;
         if (type === "bomb") {
-          tiles[idx].innerText = "💣";
+          tiles[idx].innerHTML = "<i class=\"fa-solid fa-burst\"></i>";
           tiles[idx].className = "mines-tile mines-tile-bomb";
         } else {
-          tiles[idx].innerText = "💎";
+          tiles[idx].innerHTML = "<i class=\"fa-solid fa-gem\"></i>";
           tiles[idx].className = "mines-tile mines-tile-gem";
         }
       }
@@ -2857,6 +3519,13 @@ window.cashoutMines = async function() {
 
 // Attach Event Listeners on DOM load
 document.addEventListener("DOMContentLoaded", () => {
+  fetch("/api/health").then((r) => r.json()).then((h) => {
+    const n = Array.isArray(h?.rooms) ? h.rooms.length : 0;
+    if (n) {
+      const el = document.getElementById("auth-rooms-count");
+      if (el) el.textContent = String(n);
+    }
+  }).catch(() => {});
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch((error) => console.warn("Service worker registration failed:", error));
   }
@@ -2895,6 +3564,12 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("lang-toggle")?.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-lang]");
     if (btn) setSoklarpLang(btn.getAttribute("data-lang"));
+  });
+  document.getElementById("chat-input-text")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendChatMessage();
+    }
   });
   document.getElementById("form-change-password")?.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -3052,7 +3727,7 @@ window.claimDailyReward = async function() {
     if (chest) chest.style.display = "none";
     if (result) {
       result.style.display = "block";
-      result.innerText = `รับแล้ว +${Number(data.rewardCredits).toLocaleString()} CR`;
+      result.innerText = `${t("g_win")} +${Number(data.rewardCredits).toLocaleString()} CR`;
     }
     const rewardDisplay = document.getElementById("reward-amount-display");
     if (rewardDisplay) rewardDisplay.innerText = `+${Number(data.rewardCredits).toLocaleString()} CR`;
@@ -3140,9 +3815,12 @@ async function fetchLiveWinsMarquee() {
   if (data && data.success && data.wins) {
     const container = document.getElementById("marquee-content");
     if (!container) return;
-    container.innerHTML = data.wins.map(w => 
-      `<span>${escapeHtml(w.icon)} คุณ ${escapeHtml(w.user)} ชนะ ${escapeHtml(w.game)} <b>+${escapeHtml(Number(w.amount).toLocaleString())} CR</b></span>`
-    ).join("");
+    if (Number(data.jackpot) > 0) state.jackpotBase = Number(data.jackpot);
+    container.innerHTML = data.wins.length
+      ? data.wins.map((w) =>
+        `<span>${escapeHtml(w.icon || "◆")} ${escapeHtml(w.user)} ${escapeHtml(t("ticker_won"))} ${escapeHtml(w.game)} <b>+${escapeHtml(Number(w.amount).toLocaleString())} CR</b></span>`
+      ).join("")
+      : `<span>${escapeHtml(t("jackpot_sub"))}</span>`;
   }
 }
 
@@ -3231,54 +3909,237 @@ window.setBetAmountMax = function() {
   input.value = Math.min(50000, state.user.balance || 1000);
 };
 
-// Plinko Peg Drop Game Handler
+window.initPlinkoGame = function() {
+  const pegs = document.getElementById("plinko-pegs");
+  if (!pegs || pegs.childElementCount) return;
+  for (let r = 0; r < 7; r++) {
+    const row = document.createElement("div");
+    row.className = "plinko-peg-row";
+    for (let i = 0; i < r + 3; i++) {
+      const peg = document.createElement("span");
+      peg.className = "plinko-peg";
+      row.appendChild(peg);
+    }
+    pegs.appendChild(row);
+  }
+};
+
+function highlightPlinkoSlot(slot) {
+  document.querySelectorAll("#plinko-slots span").forEach((el) => {
+    el.classList.toggle("is-hit", Number(el.dataset.slot) === Number(slot));
+  });
+}
+
+function animatePlinkoBall(slot) {
+  return new Promise((resolve) => {
+    const board = document.getElementById("plinko-board");
+    const ball = document.getElementById("plinko-ball");
+    if (!board || !ball) {
+      resolve();
+      return;
+    }
+    const rows = 6;
+    let rights = Math.max(0, Math.min(rows, Number(slot) || 3));
+    let lefts = rows - rights;
+    const path = [];
+    for (let i = 0; i < rows; i++) {
+      const goRight = rights > 0 && (lefts === 0 || Math.random() < rights / (rights + lefts));
+      if (goRight) {
+        path.push(1);
+        rights--;
+      } else {
+        path.push(-1);
+        lefts--;
+      }
+    }
+    const w = board.clientWidth;
+    const h = board.clientHeight;
+    ball.hidden = false;
+    ball.classList.add("is-dropping");
+    let x = 0.5;
+    let step = 0;
+    const place = (nx, ny) => {
+      ball.style.left = `${nx * w}px`;
+      ball.style.top = `${ny * (h - 42)}px`;
+    };
+    place(0.5, 0.06);
+    const tick = () => {
+      if (step >= path.length) {
+        place((Number(slot) + 0.5) / 7, 0.88);
+        highlightPlinkoSlot(slot);
+        setTimeout(resolve, 260);
+        return;
+      }
+      x += path[step] * (0.48 / 7);
+      place(x, 0.12 + ((step + 1) / rows) * 0.68);
+      step += 1;
+      setTimeout(tick, 130);
+    };
+    setTimeout(tick, 80);
+  });
+}
+
 window.playPlinkoGame = async function() {
   const amountInput = document.getElementById("plinko-amount-input");
-  const amount = parseInt(amountInput.value);
+  const amount = parseInt(amountInput.value, 10);
   if (isNaN(amount) || amount < 10) {
     showToast(t("need_amt"), "10 CR", "error");
     return;
   }
 
   const dropBtn = document.getElementById("btn-drop-plinko");
+  const ball = document.getElementById("plinko-ball");
   dropBtn.disabled = true;
   dropBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${t("playing")}`;
-
-  const ball = document.getElementById("plinko-ball");
-  if (ball) ball.style.display = "block";
-
+  highlightPlinkoSlot(-1);
+  if (ball) {
+    ball.hidden = false;
+    ball.classList.remove("is-dropping");
+  }
   sound.playCoin();
 
   const data = await apiRequest("/api/games/plinko", "POST", { amount });
-
-  setTimeout(() => {
-    dropBtn.disabled = false;
-    dropBtn.innerHTML = t("play");
-    if (ball) ball.style.display = "none";
-
-    if (data && data.success) {
-      state.user.balance = data.newBalance;
-      localStorage.setItem("user", JSON.stringify(state.user));
-      updateUserProfileBar();
-
-      const status = document.getElementById("plinko-status-msg");
-      if (status) status.innerText = `${data.chosen.label} +${data.payout.toLocaleString()} CR`;
-
-      if (data.payout > 0) {
-        sound.playWin();
-        showToast(t("g_win"), `${data.chosen.label} +${data.payout.toLocaleString()} CR`, "success");
-      } else {
-        showToast(t("g_plinko"), data.chosen.label, "info");
-      }
+  if (data && data.success && data.chosen) {
+    await animatePlinkoBall(data.chosen.slot);
+    state.user.balance = data.newBalance;
+    localStorage.setItem("user", JSON.stringify(state.user));
+    updateUserProfileBar();
+    const status = document.getElementById("plinko-status-msg");
+    if (status) status.innerText = `${data.chosen.label} +${data.payout.toLocaleString()} CR`;
+    if (data.payout > 0) {
+      sound.playWin();
+      showToast(t("g_win"), `${data.chosen.label} +${data.payout.toLocaleString()} CR`, "success");
+    } else {
+      showToast(t("g_plinko"), data.chosen.label, "info");
     }
-  }, 1800);
+  }
+  dropBtn.disabled = false;
+  dropBtn.innerHTML = t("play");
 };
 
-// Space Crash Multiplier Rocket Handler
 const CRASH_GROWTH = 0.00008;
 let crashAnimTimer = null;
 let crashPollTimer = null;
 let crashStartedAt = 0;
+let crashChartPts = [];
+
+function crashChartSize(canvas) {
+  const parent = canvas.parentElement;
+  const w = Math.max(280, parent ? parent.clientWidth : 720);
+  const h = Math.max(180, parent ? parent.clientHeight : 320);
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w;
+    canvas.height = h;
+  }
+  return { w, h };
+}
+
+function drawCrashChart(crashed) {
+  const canvas = document.getElementById("crash-chart");
+  const rocket = document.getElementById("crash-rocket-icon");
+  const stage = document.getElementById("crash-stage");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const { w, h } = crashChartSize(canvas);
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "rgba(8, 10, 16, 0.55)";
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = "rgba(228,195,106,0.12)";
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 5; i++) {
+    const y = (h / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+  if (!crashChartPts.length) {
+    if (rocket) {
+      rocket.style.left = "18px";
+      rocket.style.bottom = "22px";
+      rocket.style.top = "auto";
+    }
+    return;
+  }
+  const maxM = Math.max(1.8, ...crashChartPts.map((p) => p.m));
+  const padL = 16;
+  const padB = 22;
+  const padT = 28;
+  const padR = 36;
+  const last = crashChartPts[crashChartPts.length - 1];
+  const xAt = (i) => padL + (i / Math.max(1, crashChartPts.length - 1)) * (w - padL - padR);
+  const yAt = (m) => h - padB - ((m - 1) / (maxM - 1)) * (h - padT - padB);
+  if (crashChartPts.length < 2 && !crashed) {
+    ctx.setLineDash([5, 7]);
+    ctx.beginPath();
+    for (let i = 0; i < 36; i++) {
+      const t = i / 35;
+      const m = 1 + t * t * 1.55;
+      const x = padL + t * (w - padL - padR);
+      const y = yAt(m);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = "rgba(228,195,106,0.32)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    if (rocket) {
+      rocket.style.left = "18px";
+      rocket.style.bottom = "22px";
+      rocket.style.top = "auto";
+    }
+    return;
+  }
+  ctx.beginPath();
+  crashChartPts.forEach((p, i) => {
+    const x = xAt(i);
+    const y = yAt(p.m);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = crashed ? "#ff6b6b" : "#e4c36a";
+  ctx.lineWidth = 3;
+  ctx.shadowColor = crashed ? "rgba(255,80,80,.45)" : "rgba(228,195,106,.45)";
+  ctx.shadowBlur = 12;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  if (rocket && stage) {
+    const x = xAt(crashChartPts.length - 1);
+    const y = yAt(last.m);
+    rocket.style.left = `${x - 10}px`;
+    rocket.style.top = `${y - 18}px`;
+    rocket.style.bottom = "auto";
+    rocket.classList.toggle("is-bust", !!crashed);
+  }
+}
+
+function resetCrashChart() {
+  crashChartPts = [{ m: 1 }];
+  const stage = document.getElementById("crash-stage");
+  if (stage) stage.classList.remove("is-bust");
+  drawCrashChart(false);
+}
+
+window.initCrashGame = function() {
+  resetCrashChart();
+  const counter = document.getElementById("crash-multiplier-counter");
+  const sub = document.getElementById("crash-status-sub");
+  if (counter) counter.innerText = "x1.00";
+  if (sub) sub.innerText = t("crash_wait");
+  if (state.crashAutoAt) setCrashAuto(state.crashAutoAt);
+};
+
+window.setCrashAuto = function(mult) {
+  sound.playClick();
+  const next = Number(mult);
+  state.crashAutoAt = state.crashAutoAt === next ? null : next;
+  document.querySelectorAll(".crash-tgt").forEach((btn) => {
+    btn.classList.toggle("is-on", Number(btn.dataset.at) === state.crashAutoAt);
+  });
+  const hint = document.getElementById("crash-auto-hint");
+  if (hint) hint.textContent = state.crashAutoAt ? `${t("crash_auto")} x${state.crashAutoAt.toFixed(1)}` : "";
+};
 
 function stopCrashRoundUi() {
   if (crashAnimTimer) clearInterval(crashAnimTimer);
@@ -3297,6 +4158,7 @@ function stopCrashRoundUi() {
 }
 
 function applyCrashResult(data) {
+  state.crashAutoBusy = false;
   stopCrashRoundUi();
   if (!data) return;
   if (typeof data.newBalance === "number") {
@@ -3306,14 +4168,19 @@ function applyCrashResult(data) {
   }
   const counter = document.getElementById("crash-multiplier-counter");
   const sub = document.getElementById("crash-status-sub");
+  const stage = document.getElementById("crash-stage");
+  if (data.crashPoint) crashChartPts.push({ m: Number(data.crashPoint) });
   if (data.isWin) {
     sound.playWin();
     if (counter) counter.innerText = `x${Number(data.cashoutAt).toFixed(2)}`;
     if (sub) sub.innerText = `+${Number(data.payout).toLocaleString()} CR`;
+    drawCrashChart(false);
     showToast(t("cashout"), `x${Number(data.cashoutAt).toFixed(2)}  +${Number(data.payout).toLocaleString()} CR`, "success");
   } else {
+    if (stage) stage.classList.add("is-bust");
     if (counter) counter.innerText = `x${Number(data.crashPoint).toFixed(2)}`;
-    if (sub) sub.innerText = `💥 x${Number(data.crashPoint).toFixed(2)}`;
+    if (sub) sub.innerText = `x${Number(data.crashPoint).toFixed(2)}`;
+    drawCrashChart(true);
     showToast("Crash", `x${Number(data.crashPoint).toFixed(2)}`, "error");
   }
 }
@@ -3340,6 +4207,7 @@ window.playCrashGame = async function() {
   updateUserProfileBar();
 
   crashStartedAt = data.startedAt || Date.now();
+  resetCrashChart();
   if (rocket) rocket.classList.add("rocket-flying");
   if (cashBtn) cashBtn.disabled = false;
   if (sub) sub.innerText = t("crash_flying");
@@ -3347,7 +4215,14 @@ window.playCrashGame = async function() {
 
   crashAnimTimer = setInterval(() => {
     const live = Math.exp(CRASH_GROWTH * Math.max(0, Date.now() - crashStartedAt));
+    crashChartPts.push({ m: live });
+    if (crashChartPts.length > 240) crashChartPts = crashChartPts.slice(-240);
     if (counter) counter.innerText = `x${live.toFixed(2)}`;
+    drawCrashChart(false);
+    if (state.crashAutoAt && live >= state.crashAutoAt && !state.crashAutoBusy) {
+      state.crashAutoBusy = true;
+      cashoutCrash();
+    }
   }, 50);
 
   crashPollTimer = setInterval(async () => {
@@ -3488,6 +4363,13 @@ window.playCoinPusherGame = async function() {
   dropBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${t("playing")}`;
   sound.playCoin();
 
+  const stage = document.getElementById("pusher-display");
+  const payoutEl = document.getElementById("pusher-payout");
+  if (stage) {
+    stage.classList.remove("is-drop");
+    void stage.offsetWidth;
+    stage.classList.add("is-drop");
+  }
   const data = await apiCall("/api/games/coinpusher", "POST", { amount });
   setTimeout(() => {
     dropBtn.disabled = false;
@@ -3500,6 +4382,7 @@ window.playCoinPusherGame = async function() {
 
       const status = document.getElementById("pusher-status-msg");
       if (status) status.innerText = `${data.chosen.label} +${data.payout.toLocaleString()} CR`;
+      if (payoutEl) payoutEl.innerText = `${data.chosen.label} · +${data.payout.toLocaleString()} CR`;
 
       if (data.payout > 0) {
         sound.playWin();
@@ -3508,6 +4391,7 @@ window.playCoinPusherGame = async function() {
         showToast(t("g_pusher"), data.chosen.label, "info");
       }
     }
+    if (stage) stage.classList.remove("is-drop");
   }, 1200);
 };
 
@@ -3587,7 +4471,23 @@ window.playHorseRacingGame = async function() {
   startBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${t("playing")}`;
   sound.playCoin();
 
+  document.querySelectorAll(".derby-horse").forEach((el) => {
+    el.style.transition = "none";
+    el.style.transform = "translateX(0)";
+  });
+  document.querySelectorAll(".derby-lane").forEach((el) => el.classList.remove("is-win"));
   const data = await apiCall("/api/games/horseracing", "POST", { amount, selectedHorse: state.selectedHorseId });
+  const winnerId = Number(data?.winner?.id || 0);
+  requestAnimationFrame(() => {
+    document.querySelectorAll(".derby-horse").forEach((el) => {
+      const id = Number(el.dataset.horse);
+      const laneW = el.parentElement ? el.parentElement.clientWidth : 240;
+      const max = Math.max(48, laneW - 40);
+      const finish = id === winnerId ? max * 0.86 : max * (0.46 + Math.random() * 0.26);
+      el.style.transition = "transform 1.35s cubic-bezier(.15,.75,.2,1)";
+      el.style.transform = `translateX(${finish}px)`;
+    });
+  });
   setTimeout(() => {
     startBtn.disabled = false;
     startBtn.innerHTML = t("play");
@@ -3596,9 +4496,8 @@ window.playHorseRacingGame = async function() {
       state.user.balance = data.newBalance;
       localStorage.setItem("user", JSON.stringify(state.user));
       updateUserProfileBar();
-
-      const board = document.getElementById("derby-result-display");
-      if (board) board.innerHTML = `<i class="fa-solid fa-horse"></i><b>${escapeHtml(data.winner.name)}</b>`;
+      const winLane = document.querySelector(`.derby-lane[data-horse="${winnerId}"]`);
+      if (winLane) winLane.classList.add("is-win");
       const status = document.getElementById("derby-status-msg");
       if (data.isWin) {
         sound.playWin();
@@ -3610,7 +4509,7 @@ window.playHorseRacingGame = async function() {
         showToast(t("g_horse"), data.winner.name, "info");
       }
     }
-  }, 1600);
+  }, 1500);
 };
 
 // Lucky Duck Shooter Game Handler
@@ -3622,19 +4521,36 @@ window.playDuckShooterGame = async function() {
   }
 
   const shootBtn = document.getElementById("btn-shoot-duck");
-  shootBtn.disabled = true;
-  shootBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${t("playing")}`;
+  if (shootBtn) {
+    shootBtn.disabled = true;
+    shootBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${t("playing")}`;
+  }
   sound.playCoin();
 
+  const stage = document.getElementById("duck-display");
+  const ducks = [...document.querySelectorAll(".duck-fly")];
+  ducks.forEach((el) => el.classList.remove("is-hit"));
+  if (stage) stage.classList.remove("is-miss");
   const data = await apiCall("/api/games/duckshooter", "POST", { amount });
   setTimeout(() => {
-    shootBtn.disabled = false;
-    shootBtn.innerHTML = t("play");
+    if (shootBtn) {
+      shootBtn.disabled = false;
+      shootBtn.innerHTML = t("play");
+    }
 
     if (data && data.success) {
       state.user.balance = data.newBalance;
       localStorage.setItem("user", JSON.stringify(state.user));
       updateUserProfileBar();
+
+      const miss = Number(data.chosen?.mult || 0) <= 0;
+      if (miss) {
+        if (stage) stage.classList.add("is-miss");
+      } else if (ducks.length) {
+        const hitMap = { 0.5: 0, 1.5: 1, 3.5: 2, 10: 3 };
+        const idx = hitMap[Number(data.chosen.mult)] ?? 0;
+        ducks[idx].classList.add("is-hit");
+      }
 
       const status = document.getElementById("duck-status-msg");
       if (status) status.innerText = `${data.chosen.label} +${data.payout.toLocaleString()} CR`;
@@ -3646,7 +4562,7 @@ window.playDuckShooterGame = async function() {
         showToast(t("g_duck"), data.chosen.label, "info");
       }
     }
-  }, 1200);
+  }, 900);
 };
 
 // ==========================================================================
@@ -3733,14 +4649,28 @@ async function refreshVNRoom() {
   setElText("vn-room-name", roomLabel(l.id));
   setElText("vn-draw-id-display", l.nextDrawId);
   setElText("vn-countdown-display", formatTime(l.countdown || 0));
+  applyRoomClockState("vn", l.countdown || 0);
+  refreshRoomPendingStrip();
   const simNote = document.getElementById("vn-sim-note");
   if (simNote) simNote.style.display = (id === "vnmn" || id === "vnmt") ? "block" : "none";
+  renderVNLastDb(l.lastResults);
 
   renderVNPrizeTable(l.lastResults);
   renderVNHistory(l.lastResults);
   renderVNTickets();
   updateVNPayoutPreview();
   renderVNQuickNumbers();
+}
+
+function renderVNLastDb(results) {
+  const el = document.getElementById("vn-last-db-balls");
+  if (!el) return;
+  const db = results?.[0]?.prizes?.db;
+  if (!db) {
+    el.innerHTML = `<span class="sphere-digit">-</span>`;
+    return;
+  }
+  el.innerHTML = numToBalls(db, "num-ball-red");
 }
 
 function renderVNPrizeTable(results) {
@@ -3816,7 +4746,8 @@ window.selectVNBetType = function(type) {
   const comma = document.getElementById("vn-xien-comma");
   if (comma) comma.style.display = ["xien2", "xien3", "xien4"].includes(type) ? "" : "none";
   const grid = document.getElementById("vn-number-grid");
-  if (grid) {
+  if (grid && !grid.hidden) renderNumberGrid();
+  else if (grid) {
     grid.hidden = true;
     grid.innerHTML = "";
   }
@@ -3923,6 +4854,7 @@ function readVNStake() {
 }
 
 window.addVNToSlip = function() {
+  if (!guardRoomOpen("vn")) return false;
   const betType = state.vnCurrentBetType;
   const inp = document.getElementById("vn-bet-number");
   let raw = inp?.value;
@@ -3972,6 +4904,11 @@ window.submitVNSlip = async function() {
   const live = await syncLotteryById(lotteryId);
   const lottery = live || state.lotteries.find((l) => l.id === lotteryId);
   let drawId = live?.nextDrawId || state.vnDrawId || lottery?.nextDrawId || null;
+  if (live && !(live.countdown > 0)) {
+    applyRoomClockState("vn", live.countdown || 0);
+    showToast(t("bets_closed"), t("drawing"), "danger");
+    return;
+  }
   if (!lotteryId || !drawId) {
     showToast(t("vn_err"), t("pick_room"), "danger");
     return;
@@ -4029,14 +4966,22 @@ window.submitVNSlip = async function() {
   if (ok) {
     sound.playWin();
     showToast(t("vn_ok"), `${ok} · CR`, "success");
+    state._userBetsAt = 0;
+    refreshRoomPendingStrip();
+    const placed = pending.slice(0, ok);
+    const room = (state.lotteries || []).find((l) => l.id === lotteryId) || live || { id: lotteryId, type: "vietlottery", nextDrawId: drawId, countdown: live?.countdown || 0 };
+    if (placed.length) openLiveDrawWaitingBoard(room, placed);
   }
 };
 
 function refreshVNProgress() {
   const draft = typeof vnDraftTicket === "function" ? vnDraftTicket() : null;
   const hasCart = state.vnCurrentTickets.length > 0;
+  const inp = document.getElementById("vn-bet-number");
+  const raw = String(inp?.value || inp?.placeholder || "").trim();
   let step = 1;
   if (state.vnCurrentBetType) step = 2;
+  if (state.vnCurrentBetType && raw) step = 3;
   if (draft) step = 4;
   if (hasCart) step = 5;
   setBetSteps("#view-vnlotto", step);
@@ -4229,54 +5174,43 @@ window.loadNumberStats = async function() {
   const lottery = document.getElementById('admin-stats-lottery-select')?.value || 'all';
   const betType = document.getElementById('admin-stats-bet-type')?.value || 'all';
   const status = document.getElementById('admin-stats-status')?.value || 'pending';
-  
-  const data = await apiCall('/api/admin/number-stats?lottery=' + lottery + '&betType=' + betType + '&status=' + status);
-  if (!data || !data.success) return;
-  
-  // Update summary
-  const el = id => document.getElementById(id);
-  if (el('ns-total-tickets')) el('ns-total-tickets').textContent = data.totalTickets.toLocaleString();
-  if (el('ns-total-amount')) el('ns-total-amount').textContent = data.totalAmount.toLocaleString() + ' CR';
-  if (el('ns-max-risk')) el('ns-max-risk').textContent = Math.round(data.maxRisk).toLocaleString() + ' CR';
-  
-  // Render table
   const container = document.getElementById('admin-number-stats-table');
-  if (!container) return;
-  
-  if (data.stats.length === 0) {
-    container.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,.3); padding: 30px;">Chưa có dữ liệu cược</div>';
+  if (container) container.innerHTML = '<div class="admin-empty">Đang tải thống kê số...</div>';
+
+  const data = await apiCall('/api/admin/number-stats?lottery=' + lottery + '&betType=' + betType + '&status=' + status);
+  if (!data || !data.success) {
+    if (container) container.innerHTML = '<div class="admin-empty">Không tải được thống kê số. Thử làm mới.</div>';
     return;
   }
-  
+
+  const el = id => document.getElementById(id);
+  if (el('ns-total-tickets')) el('ns-total-tickets').textContent = Number(data.totalTickets || 0).toLocaleString();
+  if (el('ns-total-amount')) el('ns-total-amount').textContent = Number(data.totalAmount || 0).toLocaleString() + ' CR';
+  if (el('ns-max-risk')) el('ns-max-risk').textContent = Math.round(data.maxRisk || 0).toLocaleString() + ' CR';
+
+  if (!container) return;
+  const stats = data.stats || [];
+  if (stats.length === 0) {
+    container.innerHTML = '<div class="admin-empty">Chưa có dữ liệu cược cho bộ lọc này.</div>';
+    return;
+  }
+
   const typeLabels = { '3top': '3 trên', '3toad': '3 đảo', '2top': '2 trên', '2bottom': '2 dưới', 'run_top': 'Đá trên', 'run_bottom': 'Đá dưới', 'lo': 'Lô', 'de': 'Đề', '3cang': '3 càng', 'dau': 'Đầu', 'duoi': 'Đuôi', 'xien2': 'Xiên 2', 'xien3': 'Xiên 3', 'xien4': 'Xiên 4' };
-  
-  let html = '<table style="width: 100%; border-collapse: collapse; font-size: .78rem;">';
-  html += '<thead><tr style="border-bottom: 1px solid rgba(255,193,7,.1); background: rgba(255,193,7,.04);">';
-  html += '<th style="padding: 8px; text-align: left; color: rgba(255,193,7,.5);">#</th>';
-  html += '<th style="padding: 8px; text-align: left; color: rgba(255,193,7,.5);">Số</th>';
-  html += '<th style="padding: 8px; text-align: right; color: rgba(255,193,7,.5);">Số phiếu</th>';
-  html += '<th style="padding: 8px; text-align: right; color: rgba(255,193,7,.5);">Tổng cược</th>';
-  html += '<th style="padding: 8px; text-align: right; color: rgba(255,193,7,.5);">Rủi ro</th>';
-  html += '<th style="padding: 8px; text-align: left; color: rgba(255,193,7,.5);">Loại cược</th>';
-  html += '</tr></thead><tbody>';
-  
-  const maxAmt = data.stats[0]?.totalAmount || 1;
-  
-  data.stats.forEach(function(s, i) {
+  const maxAmt = stats[0]?.totalAmount || 1;
+  let html = '<table class="admin-table"><thead><tr><th>#</th><th>Số</th><th>Số phiếu</th><th>Tổng cược</th><th>Rủi ro</th><th>Loại cược</th></tr></thead><tbody>';
+  stats.forEach(function(s, i) {
     const pct = Math.round((s.totalAmount / maxAmt) * 100);
-    const barColor = pct > 80 ? '#e74c3c' : pct > 50 ? '#f39c12' : '#2ecc71';
-    const types = Object.entries(s.betTypes).map(function(e) { return (typeLabels[e[0]] || e[0]) + ': ' + e[1].toLocaleString(); }).join(', ');
-    
-    html += '<tr style="border-bottom: 1px solid rgba(255,255,255,.03);">';
-    html += '<td style="padding: 6px 8px; color: rgba(255,255,255,.3);">' + (i + 1) + '</td>';
-    html += '<td style="padding: 6px 8px;"><span style="background: rgba(255,193,7,.08); padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: .88rem; color: #ffc107;">' + s.number + '</span></td>';
-    html += '<td style="padding: 6px 8px; text-align: right;">' + s.count + '</td>';
-    html += '<td style="padding: 6px 8px; text-align: right; font-weight: 700; color: ' + barColor + ';">' + s.totalAmount.toLocaleString() + ' CR</td>';
-    html += '<td style="padding: 6px 8px; text-align: right; color: #e74c3c;">' + Math.round(s.maxPayout).toLocaleString() + ' CR</td>';
-    html += '<td style="padding: 6px 8px; font-size: .68rem; color: rgba(255,255,255,.4);">' + types + '</td>';
+    const riskCls = pct > 80 ? 'is-hot' : pct > 50 ? 'is-warm' : 'is-cool';
+    const types = Object.entries(s.betTypes || {}).map(function(e) { return (typeLabels[e[0]] || e[0]) + ': ' + Number(e[1]).toLocaleString(); }).join(', ');
+    html += '<tr>';
+    html += '<td data-label="#">' + (i + 1) + '</td>';
+    html += '<td data-label="Số"><b class="gold-text">' + escapeHtml(String(s.number || '—')) + '</b></td>';
+    html += '<td data-label="Số phiếu">' + Number(s.count || 0) + '</td>';
+    html += '<td data-label="Tổng cược" class="' + riskCls + '">' + Number(s.totalAmount || 0).toLocaleString() + ' CR</td>';
+    html += '<td data-label="Rủi ro">' + Math.round(s.maxPayout || 0).toLocaleString() + ' CR</td>';
+    html += '<td data-label="Loại cược" class="text-muted">' + escapeHtml(types) + '</td>';
     html += '</tr>';
   });
-  
   html += '</tbody></table>';
   container.innerHTML = html;
 };

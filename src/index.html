@@ -10,8 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;family=Noto+Sans+Lao:wght@400;600;700&amp;family=Be+Vietnam+Pro:wght@500;700&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="libs/fontawesome/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=1788648000">
-  <link rel="stylesheet" href="lobby-pro.css?v=1788648000">
+  <link rel="stylesheet" href="style.css?v=1788669800">
+  <link rel="stylesheet" href="lobby-pro.css?v=1788669800">
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -101,8 +101,8 @@
       </div>
       <div class="auth-stats-grid">
         <div class="auth-stat-box">
-          <span class="auth-stat-num">50K+</span>
-          <span class="auth-stat-label" data-i18n="auth_members">Members</span>
+          <span class="auth-stat-num" id="auth-rooms-count">8</span>
+          <span class="auth-stat-label" data-i18n="auth_rooms">Rooms</span>
         </div>
         <div class="auth-stat-box">
           <span class="auth-stat-num">13</span>
@@ -168,21 +168,22 @@
           </div>
           <div class="form-field">
             <label><i class="fa-solid fa-user"></i> <span data-i18n="auth_user">ຊື່ຜູ້ໃຊ້</span></label>
-            <input type="text" id="reg-username" placeholder="3-32 ຕົວອັກສອນ a-z, 0-9 ຫຼື _" required>
+            <input type="text" id="reg-username" placeholder="3-32 a-z, 0-9 or _" data-i18n-placeholder="auth_user_ph" required>
           </div>
           <div class="form-field">
             <label><i class="fa-solid fa-id-card"></i> <span data-i18n="auth_nick">ຊື່ສະແດງ</span></label>
-            <input type="text" id="reg-nickname" placeholder="ຊື່ທີ່ສະແດງໃນລະບົບ" required>
+            <input type="text" id="reg-nickname" placeholder="Display name" data-i18n-placeholder="auth_nick_ph" required>
           </div>
           <div class="form-field">
             <label><i class="fa-solid fa-lock"></i> <span data-i18n="auth_pass">ລະຫັດຜ່ານ</span></label>
-            <input type="password" id="reg-password" placeholder="ຢ່າງໜ້ອຍ 10 ຕົວອັກສອນ" required>
+            <input type="password" id="reg-password" placeholder="At least 10 characters" data-i18n-placeholder="auth_pass_ph" required>
           </div>
           <button type="submit" class="btn-auth-submit">
             <i class="fa-solid fa-user-plus"></i> <span data-i18n="auth_register">ສ້າງບັນຊີ
           </span></button>
         </form>
-        <p style="margin:16px 4px 0;text-align:center;font-size:.78rem;color:rgba(255,255,255,.55);">ເຄຣດິດທັງໝົດເປັນເຄຣດິດເສມືອນ ແລະ ບໍ່ສາມາດແລກເປັນເງິນໄດ້ · <a href="/lao-info.html" style="color:#f5c842;">ອ່ານຂໍ້ມູນການນຳໃຊ້</a></p>
+        <p class="auth-legal-note" style="margin:16px 4px 0;text-align:center;font-size:.78rem;color:rgba(255,255,255,.55);"><span data-i18n="auth_virtual_note">All credits are virtual and cannot be exchanged for money</span> · <a href="/lao-info.html" style="color:#f5c842;">info</a></p>
+        <p hidden style="margin:16px 4px 0;text-align:center;font-size:.78rem;color:rgba(255,255,255,.55);">ເຄຣດິດທັງໝົດເປັນເຄຣດິດເສມືອນ ແລະ ບໍ່ສາມາດແລກເປັນເງິນໄດ້ · <a href="/lao-info.html" style="color:#f5c842;">ອ່ານຂໍ້ມູນການນຳໃຊ້</a></p>
       </div>
     </div>
   </div>
@@ -190,17 +191,45 @@
 
 <!-- VIEW: LOBBY -->
 <section id="view-lobby" class="view-section" style="display:none;">
-  <!-- Jackpot Banner — Premium -->
-  <div class="jackpot-banner">
-    <div class="jackpot-label"><i class="fa-solid fa-gem"></i> MEGA JACKPOT <i class="fa-solid fa-gem"></i></div>
-    <span id="mega-jackpot-counter" class="jackpot-number">CR 1,542,890.00</span>
-    <div class="jackpot-sub" data-i18n="jackpot_sub">ລາງວັນເຄຣດິດເສມືອນ · ອັບເດດຕາມລະບົບ</div>
-    <div class="jp-stats-row">
-      <div class="jp-stat"><i class="fa-solid fa-clock"></i> 24/7</div>
-      <div class="jp-stat"><i class="fa-solid fa-coins"></i> <span data-i18n="jp_credits">ເຄຣດິດເສມືອນ</span> CR</div>
-      <div class="jp-stat"><i class="fa-solid fa-shield-halved"></i> SSL 256-bit</div>
+  <div class="lobby-hero">
+    <div class="hero-beam"></div>
+    <div class="hero-crest"><i class="fa-solid fa-dragon"></i></div>
+    <p class="hero-kicker" data-i18n="hero_kicker">Virtual credit hall</p>
+    <h1 class="hero-brand">SOKLARP.ORG</h1>
+    <p class="hero-tag" data-i18n="auth_tagline">Virtual-credit entertainment hall</p>
+    <div class="jackpot-banner">
+      <div class="jp-orb jp-orb-a"></div>
+      <div class="jp-orb jp-orb-b"></div>
+      <div class="jackpot-label"><i class="fa-solid fa-gem"></i> MEGA JACKPOT <i class="fa-solid fa-gem"></i></div>
+      <span id="mega-jackpot-counter" class="jackpot-number">CR 1,542,890.00</span>
+      <div class="jackpot-sub" data-i18n="jackpot_sub">ລາງວັນເຄຣດິດເສມືອນ · ອັບເດດຕາມລະບົບ</div>
+      <div class="jp-stats-row">
+        <div class="jp-stat"><i class="fa-solid fa-clock"></i> 24/7</div>
+        <div class="jp-stat"><i class="fa-solid fa-coins"></i> <span data-i18n="jp_credits">ເຄຣດິດເສມືອນ</span> CR</div>
+        <div class="jp-stat"><i class="fa-solid fa-shield-halved"></i> SSL 256-bit</div>
+      </div>
+    </div>
+    <div class="hero-cta-row">
+      <button type="button" class="btn-gold hero-cta" onclick="enterSoonestLotteryRoom()" data-i18n="hero_enter">Enter rooms</button>
+      <button type="button" class="hero-ghost" onclick="openDailyRewardModal()" data-i18n="hero_chest">Daily chest</button>
+    </div>
+    <div class="hero-live" id="hero-live">
+      <span class="hero-live-dot"></span>
+      <span class="hero-live-tag">LIVE</span>
+      <b id="hero-live-name">Yeekee</b>
+      <span id="hero-live-cd" class="countdown-text">00:00:00</span>
+      <button type="button" class="hero-live-go" onclick="enterLotteryRoom('yeekee3')" data-i18n="bet_now">Bet</button>
     </div>
   </div>
+
+  <div class="rooms-clock" id="rooms-clock">
+    <div class="rooms-clock-head">
+      <i class="fa-solid fa-stopwatch"></i>
+      <span data-i18n="rooms_clock">All rooms</span>
+    </div>
+    <div class="rooms-clock-track" id="rooms-clock-track"></div>
+  </div>
+
   <div class="lobby-command" id="lobby-command">
     <button type="button" class="cmd-card" onclick="openVipRankModal()">
       <i class="fa-solid fa-crown"></i>
@@ -212,7 +241,7 @@
       <b data-i18n="daily">Daily</b>
       <span data-i18n="cmd_daily">Claim free CR</span>
     </button>
-    <button type="button" class="cmd-card" onclick="document.getElementById('lottery-lobby-grid')?.scrollIntoView({behavior:'smooth'})">
+    <button type="button" class="cmd-card" onclick="enterSoonestLotteryRoom()">
       <i class="fa-solid fa-bolt"></i>
       <b id="cmd-rooms">8</b>
       <span data-i18n="cmd_rooms">Live rooms</span>
@@ -255,99 +284,113 @@
   </div>
 
   <!-- Thai Lottery Section -->
-  <div class="lobby-heading"><span class="lux-mark"><i class="fa-solid fa-ticket-simple"></i></span> <span data-i18n="lobby_bet">ຫ້ອງຫວຍ</span></div>
+  <div class="lobby-lotto-block">
+  <div class="lobby-heading lobby-heading-pro">
+    <div class="lobby-heading-row">
+      <span class="lux-mark"><i class="fa-solid fa-ticket-simple"></i></span>
+      <span data-i18n="lobby_bet">ຫ້ອງຫວຍ</span>
+    </div>
+    <p class="lobby-heading-sub" data-i18n="lobby_bet_sub">Thai · Yeekee · Vietnam lottery</p>
+  </div>
+  <div class="lobby-filters lobby-tabs" id="lobby-filters" role="tablist" aria-label="Lottery rooms">
+    <button type="button" role="tab" aria-selected="true" class="tab-filter-btn active" data-lobby-cat="all" onclick="filterLobbyCategory('all')" data-i18n="filt_all">All</button>
+    <button type="button" role="tab" aria-selected="false" class="tab-filter-btn" data-lobby-cat="yeekee" onclick="filterLobbyCategory('yeekee')" data-i18n="filt_yeekee">Yeekee</button>
+    <button type="button" role="tab" aria-selected="false" class="tab-filter-btn" data-lobby-cat="scheduled" onclick="filterLobbyCategory('scheduled')" data-i18n="filt_gov">Government</button>
+    <button type="button" role="tab" aria-selected="false" class="tab-filter-btn" data-lobby-cat="vietlottery" onclick="filterLobbyCategory('vietlottery')" data-i18n="filt_vn">Vietnam</button>
+  </div>
   <div id="lottery-lobby-grid" class="lottery-grid"></div>
+  </div>
   <div id="vn-lotto-lobby" class="lottery-grid" style="display:none;"></div>
 
   <!-- Mini Games Section -->
-  <div class="mini-games-section">
+  <div class="mini-games-section" id="mini-games-section">
     <div class="section-title"><span class="lux-mark"><i class="fa-solid fa-chess-knight"></i></span> <span data-i18n="minigames">ມິນິເກມ</span></div>
     <div class="mini-games-grid">
-      <div class="mini-game-card" onclick="switchView('game-coinflip')">
+      <div class="mini-game-card mg-coin" onclick="switchView('game-coinflip')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-coins"></i></span>
         <span class="mg-label" data-i18n="g_coinflip">ກັບກົ້ອຍ</span>
         <span class="mg-odds">×1.92</span>
         <span class="mg-how" data-i18n="how_coin">Pick heads or tails. Correct side pays ×1.92.</span>
         <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       </div>
-      <div class="mini-game-card" onclick="switchView('game-hilo')">
+      <div class="mini-game-card mg-hilo" onclick="switchView('game-hilo')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-dice"></i></span>
         <span class="mg-label" data-i18n="g_hilo">ໄຮໂລ</span>
         <span class="mg-odds">×1.95–40</span>
         <span class="mg-how" data-i18n="how_hilo">High/Low ×1.95 · exactly 11 ×6 · triple ×40.</span>
         <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       </div>
-      <div class="mini-game-card" onclick="switchView('game-wheel')">
+      <div class="mini-game-card mg-wheel" onclick="switchView('game-wheel')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-dharmachakra"></i></span>
         <span class="mg-label" data-i18n="g_wheel">ວົງລໍ້ນຳໂຊກ</span>
         <span class="mg-odds">×0–15</span>
         <span class="mg-how" data-i18n="how_wheel">Spin the wheel. Payout is the segment it lands on.</span>
         <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       </div>
-      <div class="mini-game-card" onclick="switchView('game-slot')">
+      <div class="mini-game-card mg-slot" onclick="switchView('game-slot')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-gem"></i></span>
         <span class="mg-label" data-i18n="g_slot">ສະລັອດ 777</span>
         <span class="mg-odds">×1.4–40</span>
         <span class="mg-how" data-i18n="how_slot">777 ×40 · diamond triple ×20 · other triple ×6 · pair ×1.4.</span>
         <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       </div>
-      <div class="mini-game-card" onclick="switchView('game-mines')">
+      <div class="mini-game-card mg-mines" onclick="switchView('game-mines')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-bomb"></i></span>
         <span class="mg-label" data-i18n="g_mines">ກູ້ລະເບີດ</span>
         <span class="mg-odds">×1+</span>
         <span class="mg-how" data-i18n="how_mines">Open safe tiles. Cash out before hitting a mine.</span>
         <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       </div>
-      <div class="mini-game-card" onclick="switchView('game-crash')">
+      <div class="mini-game-card mg-crash" onclick="switchView('game-crash')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-rocket"></i></span>
         <span class="mg-label" data-i18n="g_crash">ຈະຫວະວັດໃຈ</span>
         <span class="mg-odds">×1.1–50</span>
         <span class="mg-how" data-i18n="how_crash">Set cash-out 1.1–50x before the rocket crashes.</span>
         <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       </div>
-      <div class="mini-game-card" onclick="switchView('game-plinko')">
+      <div class="mini-game-card mg-plinko" onclick="switchView('game-plinko')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-down-long"></i></span>
         <span class="mg-label" data-i18n="g_plinko">ພລິນໂກ</span>
         <span class="mg-odds">×0.3–8</span>
         <span class="mg-how" data-i18n="how_plinko">Drop the ball. Edges pay ×8, center pays ×0.3.</span>
         <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       </div>
-      <div class="mini-game-card" onclick="switchView('game-pokdeng')">
+      <div class="mini-game-card mg-pok" onclick="switchView('game-pokdeng')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-clover"></i></span>
         <span class="mg-label" data-i18n="g_pokdeng">ປ໋ອກເດັງ</span>
         <span class="mg-odds">×1.9–2</span>
         <span class="mg-how" data-i18n="how_pd">Beat the dealer ×1.9. Score 8+ pays ×2.0.</span>
         <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       </div>
-      <div class="mini-game-card" onclick="switchView('game-dragontiger')">
+      <div class="mini-game-card mg-dt" onclick="switchView('game-dragontiger')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-dragon"></i></span>
         <span class="mg-label" data-i18n="g_dt">ເສືອມັງກອນ</span>
         <span class="mg-odds">×1.95 / 8</span>
         <span class="mg-how" data-i18n="how_dt">Higher card wins ×1.95. Tie pays ×8.</span>
         <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       </div>
-      <div class="mini-game-card" onclick="switchView('game-horseracing')">
+      <div class="mini-game-card mg-horse" onclick="switchView('game-horseracing')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-horse"></i></span>
         <span class="mg-label" data-i18n="g_horse">ແຂ່ງມ້າ</span>
         <span class="mg-odds">×2.8–14</span>
         <span class="mg-how" data-i18n="how_horse">Pick 1 of 4 horses: ×2.8 · ×4.5 · ×7 · ×14.</span>
         <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       </div>
-      <div class="mini-game-card" onclick="switchView('game-coinpusher')">
+      <div class="mini-game-card mg-push" onclick="switchView('game-coinpusher')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-hand-holding-dollar"></i></span>
         <span class="mg-label" data-i18n="g_pusher">ດັນເງິນ</span>
         <span class="mg-odds">×0–12</span>
         <span class="mg-how" data-i18n="how_pusher">Drop coins. Jackpot pays ×12.</span>
         <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       </div>
-      <div class="mini-game-card" onclick="switchView('game-duckshooter')">
+      <div class="mini-game-card mg-duck" onclick="switchView('game-duckshooter')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-crosshairs"></i></span>
         <span class="mg-label" data-i18n="g_duck">ຍິງເປັດ</span>
         <span class="mg-odds">×0–10</span>
         <span class="mg-how" data-i18n="how_duck">Hit ducks. Crystal duck pays ×10.</span>
         <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       </div>
-      <div class="mini-game-card" onclick="switchView('game-chest')">
+      <div class="mini-game-card mg-chest" onclick="switchView('game-chest')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-box-open"></i></span>
         <span class="mg-label" data-i18n="g_chest">ກ່ອງລຶກລັບ</span>
         <span class="mg-odds">FREE</span>
@@ -356,6 +399,7 @@
       </div>
     </div>
   </div>
+  <button type="button" class="lobby-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Top"><i class="fa-solid fa-chevron-up"></i></button>
 </section>
 
 <!-- VIEW: BETTING -->
@@ -366,11 +410,13 @@
       <h2 id="room-name-display">SOKLARP</h2>
       <span id="room-draw-id-display" class="bet-draw-chip"><span data-i18n="draw_id">ງວດ</span> #<span id="betting-draw-id-visible">000</span></span>
     </div>
-    <div class="bet-room-clock">
+    <div class="bet-room-clock" id="thai-room-clock">
       <div id="stage-countdown-display">00:00:00</div>
-      <div class="bet-clock-sub"><span data-i18n="closes_in">ປິດຮັບໃນ</span></div>
+      <div class="bet-clock-sub"><span id="thai-clock-label" data-i18n="closes_in">ປິດຮັບໃນ</span></div>
     </div>
   </div>
+  <div class="draw-state-banner" id="thai-draw-state" hidden></div>
+  <div class="room-pending-strip" id="thai-my-pending" hidden></div>
 
   <ol class="bet-steps">
     <li class="bet-step is-current"><span class="step-dot">1</span><span data-i18n="step1">1. ເລືອກປະເພດ</span></li>
@@ -383,18 +429,35 @@
   <div class="bet-last-row">
     <div class="bet-last-card">
       <span data-i18n="last_draw">ຜົນລ່າສຸດ</span>
-      <div class="bet-last-balls">
-        <b data-i18n="top3">3 ໂຕບົນ</b>
-        <span id="room-last-top3" class="gold-text">---</span>
-        <b data-i18n="bot2">2 ໂຕລຸ່ມ</b>
-        <span id="room-last-bottom2" class="win-text">--</span>
+      <div class="bet-last-balls thai-last-spheres">
+        <div class="digit-box-group">
+          <span class="digit-type-tag" data-i18n="top3">3 ໂຕບົນ</span>
+          <div class="digit-spheres gold-spheres" id="room-last-top3-spheres">
+            <span class="sphere-digit" id="room-sphere-1">-</span>
+            <span class="sphere-digit" id="room-sphere-2">-</span>
+            <span class="sphere-digit" id="room-sphere-3">-</span>
+          </div>
+        </div>
+        <div class="digit-box-group">
+          <span class="digit-type-tag" data-i18n="bot2">2 ໂຕລຸ່ມ</span>
+          <div class="digit-spheres green-spheres" id="room-last-bot2-spheres">
+            <span class="sphere-digit" id="room-sphere-4">-</span>
+            <span class="sphere-digit" id="room-sphere-5">-</span>
+          </div>
+        </div>
       </div>
+      <div class="recent-draws-head" data-i18n="recent_draws">Recent draws</div>
+      <div class="recent-draws-strip" id="thai-recent-draws"></div>
+      <span id="room-last-top3" class="gold-text" hidden>---</span>
+      <span id="room-last-bottom2" class="win-text" hidden>--</span>
     </div>
     <div id="ai-predict-panel" class="bet-hint-card">
       <h3><i class="fas fa-lightbulb"></i> <span data-i18n="how_play">ວິທີຫຼິ້ນ</span></h3>
       <div id="bet-guide-text" class="bet-guide">ກົງ 3 ໂຕສຸດທ້າຍ ×900</div>
       <div class="bet-hint-line">3-top: <span id="ai-top3-suggest">—</span> · 2-bot: <span id="ai-bot2-suggest">—</span></div>
-      <div class="bet-hint-line"><span data-i18n="lucky">ເລກໂຊກ</span>: <span id="ai-hot-digits">—</span></div>
+      <div class="bet-hint-line"><span data-i18n="lucky">ເລກໂຊກ</span>: <span id="ai-hot-digits">—</span>
+        <button type="button" class="hint-use-btn" onclick="aiAutoFillDigits()" data-i18n="lucky">Lucky</button>
+      </div>
     </div>
   </div>
 
@@ -472,43 +535,19 @@
     </div>
     <div class="hist-summary" id="hist-summary"></div>
     <div class="hist-filters" id="hist-filters">
-      <button type="button" class="hist-filter active" data-hist-filter="all" onclick="setHistoryFilter('all')" data-i18n="hist_all">All</button>
-      <button type="button" class="hist-filter" data-hist-filter="won" onclick="setHistoryFilter('won')" data-i18n="hist_won">Won</button>
-      <button type="button" class="hist-filter" data-hist-filter="lost" onclick="setHistoryFilter('lost')" data-i18n="hist_lost">Lost</button>
-      <button type="button" class="hist-filter" data-hist-filter="pending" onclick="setHistoryFilter('pending')" data-i18n="hist_wait">Pending</button>
+      <button type="button" class="hist-filter active" data-hist-filter="all" onclick="setHistoryFilter('all')"><span data-i18n="hist_all">All</span> <b class="hist-n" id="hist-n-all"></b></button>
+      <button type="button" class="hist-filter" data-hist-filter="won" onclick="setHistoryFilter('won')"><span data-i18n="hist_won">Won</span> <b class="hist-n" id="hist-n-won"></b></button>
+      <button type="button" class="hist-filter" data-hist-filter="lost" onclick="setHistoryFilter('lost')"><span data-i18n="hist_lost">Lost</span> <b class="hist-n" id="hist-n-lost"></b></button>
+      <button type="button" class="hist-filter" data-hist-filter="pending" onclick="setHistoryFilter('pending')"><span data-i18n="hist_wait">Pending</span> <b class="hist-n" id="hist-n-wait"></b></button>
     </div>
-    <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th data-i18n="hist_time">Time</th>
-            <th data-i18n="hist_room">Room</th>
-            <th data-i18n="hist_type">Type</th>
-            <th data-i18n="hist_num">Number</th>
-            <th data-i18n="hist_amt">Stake</th>
-            <th data-i18n="hist_rate">Rate</th>
-            <th data-i18n="hist_payout">Payout</th>
-            <th data-i18n="hist_status">Status</th>
-          </tr>
-        </thead>
-        <tbody id="my-bets-table-body"></tbody>
-      </table>
-    </div>
+    <div id="hist-ticket-list" class="hist-ticket-list"></div>
+    <button type="button" class="quick-btn hist-more" id="hist-more-lotto" hidden onclick="showMoreHistory('lotto')" data-i18n="hist_more">Show more</button>
+    <table hidden><tbody id="my-bets-table-body"></tbody></table>
     <h2 class="admin-subhead" data-i18n="hist_games">ປະຫວັດມິນິເກມ</h2>
-    <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th data-i18n="hist_time">Time</th>
-            <th data-i18n="hist_gname">Game</th>
-            <th data-i18n="hist_amt">Stake</th>
-            <th data-i18n="hist_result">Result</th>
-            <th data-i18n="hist_payout">Payout</th>
-          </tr>
-        </thead>
-        <tbody id="my-game-history-table-body"></tbody>
-      </table>
-    </div>
+    <div id="hist-game-summary" class="hist-game-summary"></div>
+    <div id="hist-game-list" class="hist-ticket-list"></div>
+    <button type="button" class="quick-btn hist-more" id="hist-more-games" hidden onclick="showMoreHistory('games')" data-i18n="hist_more">Show more</button>
+    <table hidden><tbody id="my-game-history-table-body"></tbody></table>
   </div>
 </section>
 
@@ -520,71 +559,73 @@
     </h1>
     <button class="quick-btn" type="button" onclick="switchView('lobby')"><i class="fa-solid fa-arrow-left"></i> Về sảnh</button>
   </div>
+  <p id="admin-site-note-banner" class="admin-hint" hidden></p>
   
   <!-- STATS CARDS -->
-  <div class="admin-stats-grid" style="gap: 14px; margin-bottom: 24px;">
-    <div class="admin-stat-card" style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border-left: 3px solid #3498db;">
-      <div style="font-size: .72rem; color: rgba(255,255,255,.4);">Thành viên</div>
-      <div id="admin-total-users" style="font-size: 1.8rem; font-weight: 800; color: #3498db;">0</div>
-    </div>
-    <div class="admin-stat-card" style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border-left: 3px solid #2ecc71;">
-      <div style="font-size: .72rem; color: rgba(255,255,255,.4);">Tổng cược</div>
-      <div id="admin-total-bets" style="font-size: 1.8rem; font-weight: 800; color: #2ecc71;">0 CR</div>
-    </div>
-    <div class="admin-stat-card" style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border-left: 3px solid #ffc107;">
-      <div style="font-size: .72rem; color: rgba(255,255,255,.4);">Tổng trả thưởng</div>
-      <div id="admin-total-payout" style="font-size: 1.8rem; font-weight: 800; color: #ffc107;">0 CR</div>
-    </div>
-    <div class="admin-stat-card" style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border-left: 3px solid #e74c3c;">
-      <div style="font-size: .72rem; color: rgba(255,255,255,.4);">Lãi / lỗ</div>
-      <div id="admin-total-revenue" style="font-size: 1.8rem; font-weight: 800; color: #e74c3c;">0 CR</div>
-    </div>
-    <div class="admin-stat-card" style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border-left: 3px solid #9b59b6;">
-      <div style="font-size: .72rem; color: rgba(255,255,255,.4);">Phòng đang mở</div>
-      <div id="admin-active-draws" style="font-size: 1.8rem; font-weight: 800; color: #9b59b6;">0</div>
-    </div>
-    <div class="admin-stat-card" style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border-left: 3px solid #e67e22;">
-      <div style="font-size: .72rem; color: rgba(255,255,255,.4);">Phiếu đang chờ</div>
-      <div id="admin-pending-bets" style="font-size: 1.8rem; font-weight: 800; color: #e67e22;">0</div>
-    </div>
-    <div class="admin-stat-card" style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border-left: 3px solid #95a5a6;">
-      <div style="font-size: .72rem; color: rgba(255,255,255,.4);">Tài khoản bị khóa</div>
-      <div id="admin-banned-users" style="font-size: 1.8rem; font-weight: 800; color: #95a5a6;">0</div>
-    </div>
+  <div class="admin-stats-grid">
+    <button type="button" class="admin-stat-card is-blue" onclick="switchAdminTab('users')">
+      <div class="admin-stat-label">Thành viên</div>
+      <div id="admin-total-users" class="admin-stat-num">0</div>
+    </button>
+    <button type="button" class="admin-stat-card is-green" onclick="switchAdminTab('bets')">
+      <div class="admin-stat-label">Tổng cược</div>
+      <div id="admin-total-bets" class="admin-stat-num">0 CR</div>
+    </button>
+    <button type="button" class="admin-stat-card is-gold" onclick="switchAdminTab('bets')">
+      <div class="admin-stat-label">Tổng trả thưởng</div>
+      <div id="admin-total-payout" class="admin-stat-num">0 CR</div>
+    </button>
+    <button type="button" class="admin-stat-card is-red" onclick="switchAdminTab('finance')">
+      <div class="admin-stat-label">Lãi / lỗ</div>
+      <div id="admin-total-revenue" class="admin-stat-num">0 CR</div>
+    </button>
+    <button type="button" class="admin-stat-card is-purple" onclick="switchAdminTab('draws')">
+      <div class="admin-stat-label">Phòng đang mở</div>
+      <div id="admin-active-draws" class="admin-stat-num">0</div>
+    </button>
+    <button type="button" class="admin-stat-card is-orange" onclick="openAdminPendingBets()">
+      <div class="admin-stat-label">Phiếu đang chờ</div>
+      <div id="admin-pending-bets" class="admin-stat-num">0</div>
+    </button>
+    <button type="button" class="admin-stat-card is-gray" onclick="openAdminBannedUsers()">
+      <div class="admin-stat-label">Tài khoản bị khóa</div>
+      <div id="admin-banned-users" class="admin-stat-num">0</div>
+    </button>
   </div>
 
   <!-- TABS -->
-  <div style="display: flex; gap: 6px; margin-bottom: 18px; overflow-x: auto; padding-bottom: 8px; flex-wrap: wrap;">
+  <div class="admin-toolbar">
     <button class="quick-btn active" onclick="switchAdminTab('draws')"><i class="fa-solid fa-dice"></i> Kỳ quay</button>
     <button class="quick-btn" onclick="switchAdminTab('number-stats')"><i class="fa-solid fa-chart-bar"></i> Thống kê số</button>
     <button class="quick-btn" onclick="switchAdminTab('users')"><i class="fa-solid fa-users"></i> Thành viên</button>
     <button class="quick-btn" onclick="switchAdminTab('bets')"><i class="fa-solid fa-receipt"></i> Phiếu cược</button>
     <button class="quick-btn" onclick="switchAdminTab('finance')"><i class="fa-solid fa-wallet"></i> Tín dụng</button>
-      <button class="quick-btn" onclick="switchAdminTab('games')"><i class="fa-solid fa-gamepad"></i> Trò chơi</button>
-      <button class="quick-btn" onclick="switchAdminTab('settings')"><i class="fa-solid fa-gear"></i> Cài đặt</button>
+    <button class="quick-btn" onclick="switchAdminTab('games')"><i class="fa-solid fa-gamepad"></i> Trò chơi</button>
+    <button class="quick-btn" onclick="switchAdminTab('settings')"><i class="fa-solid fa-gear"></i> Cài đặt</button>
   </div>
 
   <!-- TAB: QUẢN LÝ PHIÊN XỔ SỐ -->
   <div id="admin-tab-content-draws" class="admin-tab-panel" style="display: block;">
-    <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center;">
-      <button class="btn-gold" style="width: auto;" onclick="openManualDrawModal()"><i class="fa-solid fa-plus"></i> Mở kỳ quay tay</button>
-      <button class="quick-btn" onclick="loadAdminPanel()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+    <div class="admin-toolbar">
+      <button class="btn-gold" type="button" onclick="openManualDrawModal()"><i class="fa-solid fa-plus"></i> Chốt kỳ tay</button>
+      <button class="quick-btn" type="button" onclick="loadAdminPanel()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
     </div>
-    <h3 style="color: #ffc107; font-size: .95rem;"><i class="fa-solid fa-clock"></i> Kỳ đang mở</h3>
+    <p class="admin-hint">8 phòng: Yeekee / Hà Nội / Lào / VN. Miền Nam và Miền Trung đang mô phỏng — không phải kết quả xổ số thật.</p>
+    <h3 class="admin-subhead"><i class="fa-solid fa-clock"></i> Kỳ đang mở</h3>
     <div id="admin-draws-list" class="admin-draw-grid"></div>
-    <h3 style="margin-top: 24px; color: #ffc107; font-size: .95rem;"><i class="fa-solid fa-check-circle"></i> Kết quả đã chốt</h3>
+    <h3 class="admin-subhead"><i class="fa-solid fa-check-circle"></i> 3 kỳ gần nhất</h3>
     <div id="admin-draw-result-list" class="admin-draw-grid"></div>
   </div>
 
-  <!-- TAB: THỐNG KÊ SỐ — MỚI -->
+  <!-- TAB: THỐNG KÊ SỐ -->
   <div id="admin-tab-content-number-stats" class="admin-tab-panel" style="display: none;">
-    <div style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border: 1px solid rgba(255,193,7,.08); margin-bottom: 16px;">
-      <h3 style="margin-top: 0; color: #ffc107; font-size: .95rem;"><i class="fa-solid fa-chart-bar"></i> Cược theo số</h3>
-      <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-        <select id="admin-stats-lottery-select" onchange="loadNumberStats()" style="background: #241000; border: 1px solid rgba(255,193,7,.15); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: inherit;">
+    <div class="admin-panel-card">
+      <h3 class="admin-subhead"><i class="fa-solid fa-chart-bar"></i> Cược theo số</h3>
+      <div class="admin-toolbar">
+        <select id="admin-stats-lottery-select" onchange="loadNumberStats()">
           <option value="all">Tất cả phòng</option>
-          <option value="yeekee3">Yee Kee 3 phút</option>
-          <option value="yeekee30">Yee Kee 30 phút</option>
+          <option value="yeekee3">Yeekee 3 phút</option>
+          <option value="yeekee30">Yeekee 30 phút</option>
           <option value="hanoi">Hà Nội</option>
           <option value="laos">Lào</option>
           <option value="vnfast">VN nhanh</option>
@@ -592,7 +633,7 @@
           <option value="vnmn">Miền Nam</option>
           <option value="vnmt">Miền Trung</option>
         </select>
-        <select id="admin-stats-bet-type" onchange="loadNumberStats()" style="background: #241000; border: 1px solid rgba(255,193,7,.15); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: inherit;">
+        <select id="admin-stats-bet-type" onchange="loadNumberStats()">
           <option value="all">Mọi loại</option>
           <option value="3top">3 trên</option>
           <option value="2top">2 trên</option>
@@ -609,32 +650,24 @@
           <option value="xien3">Xiên 3</option>
           <option value="xien4">Xiên 4</option>
         </select>
-        <select id="admin-stats-status" onchange="loadNumberStats()" style="background: #241000; border: 1px solid rgba(255,193,7,.15); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: inherit;">
+        <select id="admin-stats-status" onchange="loadNumberStats()">
           <option value="pending">Đang chờ</option>
           <option value="all">Tất cả</option>
           <option value="won">Trúng</option>
           <option value="lost">Trượt</option>
           <option value="cancelled">Đã hủy</option>
         </select>
+        <button class="quick-btn" type="button" onclick="loadNumberStats()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 14px;">
-        <div style="background: rgba(255,193,7,.04); padding: 12px; border-radius: 10px; text-align: center;">
-          <div style="font-size: .68rem; color: rgba(255,255,255,.35);">Số phiếu</div>
-          <div id="ns-total-tickets" style="font-size: 1.3rem; font-weight: 800; color: #ffc107;">0</div>
-        </div>
-        <div style="background: rgba(255,193,7,.04); padding: 12px; border-radius: 10px; text-align: center;">
-          <div style="font-size: .68rem; color: rgba(255,255,255,.35);">Tổng cược</div>
-          <div id="ns-total-amount" style="font-size: 1.3rem; font-weight: 800; color: #2ecc71;">0 CR</div>
-        </div>
-        <div style="background: rgba(255,193,7,.04); padding: 12px; border-radius: 10px; text-align: center;">
-          <div style="font-size: .68rem; color: rgba(255,255,255,.35);">Rủi ro tối đa</div>
-          <div id="ns-max-risk" style="font-size: 1.3rem; font-weight: 800; color: #e74c3c;">0 CR</div>
-        </div>
+      <div class="admin-mini-stats">
+        <div class="admin-mini-stat"><span>Số phiếu</span><b id="ns-total-tickets">0</b></div>
+        <div class="admin-mini-stat"><span>Tổng cược</span><b id="ns-total-amount">0 CR</b></div>
+        <div class="admin-mini-stat"><span>Rủi ro tối đa</span><b id="ns-max-risk">0 CR</b></div>
       </div>
     </div>
-    <div style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border: 1px solid rgba(255,193,7,.08);">
-      <h4 style="color: #ffc107; font-size: .85rem; margin-top: 0;"><i class="fa-solid fa-list-ol"></i> Số được cược nhiều nhất</h4>
-      <div id="admin-number-stats-table" style="max-height: 500px; overflow-y: auto;"></div>
+    <div class="admin-panel-card">
+      <h3 class="admin-subhead"><i class="fa-solid fa-list-ol"></i> Số được cược nhiều nhất</h3>
+      <div id="admin-number-stats-table" class="admin-table-wrap"></div>
     </div>
   </div>
 
@@ -656,7 +689,19 @@
     </div>
     <div class="admin-toolbar">
       <input type="search" id="admin-user-search" class="admin-search" placeholder="Tìm tài khoản hoặc biệt danh" oninput="loadAdminUsers()">
+      <select id="admin-user-status" onchange="loadAdminUsers()">
+        <option value="all">Mọi trạng thái</option>
+        <option value="active">Đang hoạt động</option>
+        <option value="banned">Đã khóa</option>
+      </select>
+      <select id="admin-user-role" onchange="loadAdminUsers()">
+        <option value="all">Mọi vai trò</option>
+        <option value="user">Thành viên</option>
+        <option value="admin">Quản trị</option>
+      </select>
+      <button class="quick-btn" type="button" onclick="loadAdminUsers()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
     </div>
+    <div id="admin-users-summary" class="admin-mini-stats"></div>
     <div class="admin-table-wrap">
     <table class="admin-table">
       <thead>
@@ -671,6 +716,7 @@
       <tbody id="admin-users-table-body"></tbody>
     </table>
     </div>
+    <button type="button" class="quick-btn hist-more" id="admin-users-more" hidden onclick="showMoreAdminUsers()">Xem thêm thành viên</button>
   </div>
 
   <div id="admin-tab-content-bets" class="admin-tab-panel" style="display: none;">
@@ -694,15 +740,18 @@
         <option value="cancelled">Đã hủy</option>
       </select>
       <input type="search" id="admin-bets-search" class="admin-search" placeholder="Tìm số hoặc tài khoản" oninput="loadAdminAllBets()">
+      <button class="quick-btn" type="button" onclick="loadAdminAllBets()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
     </div>
+    <div id="admin-bets-summary" class="admin-mini-stats"></div>
     <div class="admin-table-wrap">
     <table class="admin-table">
       <thead>
         <tr>
           <th>Người chơi</th>
-          <th>Phòng</th>
+          <th>Phòng / kỳ</th>
           <th>Loại / số</th>
           <th>Mức cược</th>
+          <th>Trả thưởng</th>
           <th>Trạng thái</th>
           <th>Thao tác</th>
         </tr>
@@ -710,9 +759,11 @@
       <tbody id="admin-bets-table-body"></tbody>
     </table>
     </div>
+    <button type="button" class="quick-btn hist-more" id="admin-bets-more" hidden onclick="showMoreAdminBets()">Xem thêm phiếu</button>
   </div>
 
   <div id="admin-tab-content-finance" class="admin-tab-panel" style="display: none;">
+    <div class="admin-cash-banner">Chỉ tín dụng ảo (CR). Nạp / rút tiền mặt đã tắt — không duyệt giao dịch tiền thật.</div>
     <div class="admin-credit-form">
       <h3>Cộng / trừ tín dụng ảo</h3>
       <div class="admin-toolbar">
@@ -722,19 +773,35 @@
           <option value="deduct">Trừ CR</option>
         </select>
         <input type="number" id="finance-quick-amount" min="1" placeholder="Số CR">
-        <input type="text" id="finance-quick-note" placeholder="Ghi chú">
+        <input type="text" id="finance-quick-note" placeholder="Ghi chú: thưởng, điều chỉnh…">
         <button class="btn-gold" type="button" onclick="handleQuickCredit()">Xác nhận</button>
       </div>
-      <p class="admin-hint">Nền tảng chỉ dùng tín dụng ảo — không có nạp/rút tiền mặt.</p>
+      <p class="admin-hint">Dùng form này hoặc nút Tín dụng ở tab Thành viên. Ghi chú có chữ «thưởng» sẽ vào sổ thưởng.</p>
     </div>
-    <h3 class="admin-subhead">Lịch sử điều chỉnh CR</h3>
+    <div class="admin-toolbar">
+      <select id="admin-finance-type" onchange="loadAdminFinanceRequests()">
+        <option value="all">Mọi loại sổ</option>
+        <option value="add">Cộng CR</option>
+        <option value="deduct">Trừ CR</option>
+        <option value="bonus">Thưởng</option>
+        <option value="daily">Thưởng ngày</option>
+      </select>
+      <input type="search" id="admin-finance-search" class="admin-search" placeholder="Tìm tài khoản hoặc ghi chú" oninput="loadAdminFinanceRequests()">
+      <button class="quick-btn" type="button" onclick="loadAdminFinanceRequests()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+    </div>
+    <div id="admin-finance-summary" class="admin-mini-stats"></div>
+    <h3 class="admin-subhead">Sổ điều chỉnh CR</h3>
     <div id="admin-finance-list" class="admin-finance-list"></div>
   </div>
 
   <div id="admin-tab-content-games" class="admin-tab-panel" style="display: none;">
     <div class="admin-toolbar">
-      <button class="quick-btn" type="button" onclick="loadAdminGames()">Làm mới</button>
+      <input type="search" id="admin-games-search" class="admin-search" placeholder="Tìm trò chơi" oninput="loadAdminGames()">
+      <button class="quick-btn" type="button" onclick="loadAdminGames()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
     </div>
+    <p class="admin-hint">13 minigame của sảnh. Số liệu lấy từ phiếu chơi — rương miễn phí có thể chưa có lượt ghi sổ.</p>
+    <div id="admin-games-catalog" class="admin-games-grid"></div>
+    <h3 class="admin-subhead">Lượt chơi gần đây</h3>
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead>
@@ -753,27 +820,40 @@
 
   <div id="admin-tab-content-settings" class="admin-tab-panel" style="display: none;">
     <div class="admin-settings-card">
+      <div class="admin-cash-banner">Chỉ tín dụng ảo. Không có cài đặt nạp/rút tiền mặt.</div>
+      <h3>Ghi chú sảnh</h3>
+      <div class="input-group">
+        <label>Hiển thị cho quản trị (tối đa 400 ký tự)</label>
+        <textarea id="admin-site-note" rows="3" placeholder="Ví dụ: Sảnh chỉ dùng CR ảo. Miền Nam / Miền Trung đang mô phỏng."></textarea>
+      </div>
+
       <h3>Tỷ lệ trả thưởng Thái</h3>
-      <div class="input-group"><label>3 trên</label><input type="number" id="rate-3top" value="900"></div>
-      <div class="input-group"><label>3 đảo</label><input type="number" id="rate-3toad" value="150"></div>
-      <div class="input-group"><label>2 trên</label><input type="number" id="rate-2top" value="92"></div>
-      <div class="input-group"><label>2 dưới</label><input type="number" id="rate-2bottom" value="92"></div>
-      <div class="input-group"><label>Đá trên</label><input type="number" id="rate-run-top" value="3.2" step="0.1"></div>
-      <div class="input-group"><label>Đá dưới</label><input type="number" id="rate-run-bottom" value="4.2" step="0.1"></div>
+      <div class="admin-rate-grid">
+        <div class="input-group"><label>3 trên</label><input type="number" id="rate-3top" value="900"></div>
+        <div class="input-group"><label>3 đảo</label><input type="number" id="rate-3toad" value="150"></div>
+        <div class="input-group"><label>2 trên</label><input type="number" id="rate-2top" value="92"></div>
+        <div class="input-group"><label>2 dưới</label><input type="number" id="rate-2bottom" value="92"></div>
+        <div class="input-group"><label>Đá trên</label><input type="number" id="rate-run-top" value="3.2" step="0.1"></div>
+        <div class="input-group"><label>Đá dưới</label><input type="number" id="rate-run-bottom" value="4.2" step="0.1"></div>
+      </div>
 
       <h3>Tỷ lệ trả thưởng Việt Nam</h3>
-      <div class="input-group"><label>Lô</label><input type="number" id="rate-lo" value="3.8" step="0.1"></div>
-      <div class="input-group"><label>Đề</label><input type="number" id="rate-de" value="85"></div>
-      <div class="input-group"><label>3 càng</label><input type="number" id="rate-3cang" value="800"></div>
-      <div class="input-group"><label>Đầu</label><input type="number" id="rate-dau" value="6.5" step="0.1"></div>
-      <div class="input-group"><label>Đuôi</label><input type="number" id="rate-duoi" value="6.5" step="0.1"></div>
-      <div class="input-group"><label>Xiên 2</label><input type="number" id="rate-xien2" value="12"></div>
-      <div class="input-group"><label>Xiên 3</label><input type="number" id="rate-xien3" value="28"></div>
-      <div class="input-group"><label>Xiên 4</label><input type="number" id="rate-xien4" value="55"></div>
+      <div class="admin-rate-grid">
+        <div class="input-group"><label>Lô</label><input type="number" id="rate-lo" value="3.8" step="0.1"></div>
+        <div class="input-group"><label>Đề</label><input type="number" id="rate-de" value="85"></div>
+        <div class="input-group"><label>3 càng</label><input type="number" id="rate-3cang" value="800"></div>
+        <div class="input-group"><label>Đầu</label><input type="number" id="rate-dau" value="6.5" step="0.1"></div>
+        <div class="input-group"><label>Đuôi</label><input type="number" id="rate-duoi" value="6.5" step="0.1"></div>
+        <div class="input-group"><label>Xiên 2</label><input type="number" id="rate-xien2" value="12"></div>
+        <div class="input-group"><label>Xiên 3</label><input type="number" id="rate-xien3" value="28"></div>
+        <div class="input-group"><label>Xiên 4</label><input type="number" id="rate-xien4" value="55"></div>
+      </div>
 
       <h3>Giới hạn cược</h3>
-      <div class="input-group"><label>Cược tối thiểu (CR)</label><input type="number" id="limit-min-bet" value="10"></div>
-      <div class="input-group"><label>Cược tối đa (CR)</label><input type="number" id="limit-max-bet" value="50000"></div>
+      <div class="admin-rate-grid">
+        <div class="input-group"><label>Cược tối thiểu (CR)</label><input type="number" id="limit-min-bet" value="10"></div>
+        <div class="input-group"><label>Cược tối đa (CR)</label><input type="number" id="limit-max-bet" value="50000"></div>
+      </div>
 
       <h3>Giới hạn từng phòng</h3>
       <div class="input-group">
@@ -807,6 +887,7 @@
         </label>
       </div>
       <button class="btn-gold" type="button" onclick="saveAdminSettings()">Lưu cài đặt</button>
+      <p id="admin-settings-saved" class="admin-saved-banner" hidden>Đã lưu cài đặt tỷ lệ, giới hạn và ghi chú sảnh.</p>
     </div>
   </div>
   </div>
@@ -820,12 +901,18 @@
       <h2 id="vn-room-name">Xổ số</h2>
       <span class="bet-draw-chip"><span data-i18n="draw_id">ງວດ</span> <span id="vn-draw-id-display">—</span></span>
     </div>
-    <div class="bet-room-clock">
+    <div class="bet-room-clock" id="vn-room-clock">
       <div id="vn-countdown-display">00:00:00</div>
-      <div class="bet-clock-sub"><span data-i18n="closes_in">ປິດຮັບໃນ</span></div>
+      <div class="bet-clock-sub"><span id="vn-clock-label" data-i18n="closes_in">ປິດຮັບໃນ</span></div>
     </div>
   </div>
+  <div class="draw-state-banner" id="vn-draw-state" hidden></div>
+  <div class="room-pending-strip" id="vn-my-pending" hidden></div>
   <div id="vn-sim-note" class="vn-sim-note" style="display:none;" data-i18n="vn_sim_note">This room uses simulated results — not live XSMN/XSMT draws</div>
+  <div class="bet-last-card vn-last-db-card" id="vn-last-db-card">
+    <span data-i18n="last_db">Special prize</span>
+    <div class="bet-last-balls" id="vn-last-db-balls"></div>
+  </div>
 
   <ol class="bet-steps">
     <li class="bet-step is-current"><span class="step-dot">1</span><span data-i18n="step1">1. ເລືອກປະເພດ</span></li>
@@ -934,10 +1021,15 @@
     <h2 data-i18n="g_coinflip">Coin Flip</h2>
   </div>
   <div class="play-area">
-    <div id="coin-anim" class="coin-anim lux-stage-icon"><i class="fa-solid fa-coins"></i></div>
-    <div class="flex-row" style="margin-bottom: 20px;">
-      <button id="coin-btn-head" class="action-btn" style="background: #ffd700; color: #000; font-size: 1.2rem; padding: 10px 30px; font-weight: bold;" onclick="selectCoinSide('head')" data-i18n="coin_head">HEAD</button>
-      <button id="coin-btn-tail" class="action-btn" style="background: #c0c0c0; color: #000; font-size: 1.2rem; padding: 10px 30px; font-weight: bold;" onclick="selectCoinSide('tail')" data-i18n="coin_tail">TAIL</button>
+    <div id="coin-anim" class="lux-coin">
+      <div class="lux-coin-inner">
+        <span class="lux-coin-h" data-i18n="coin_head">HEAD</span>
+        <span class="lux-coin-t" data-i18n="coin_tail">TAIL</span>
+      </div>
+    </div>
+    <div class="flex-row coin-sides">
+      <button id="coin-btn-head" class="coin-side coin-side-h" type="button" onclick="selectCoinSide('head')" data-i18n="coin_head">HEAD</button>
+      <button id="coin-btn-tail" class="coin-side coin-side-t" type="button" onclick="selectCoinSide('tail')" data-i18n="coin_tail">TAIL</button>
     </div>
     <div class="input-group" style="width: 100%; max-width: 300px;">
       <input type="number" id="coin-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
@@ -962,19 +1054,23 @@
     <h2 data-i18n="g_hilo">Hi-Lo</h2>
   </div>
   <div class="play-area">
-    <div class="flex-row big-display">
-      <span id="hilo-d1" class="lux-die"><i class="fa-solid fa-dice"></i></span>
-      <span id="hilo-d2" class="lux-die"><i class="fa-solid fa-dice"></i></span>
-      <span id="hilo-d3" class="lux-die"><i class="fa-solid fa-dice"></i></span>
+    <div class="hilo-tray">
+      <span id="hilo-d1" class="lux-die">?</span>
+      <span id="hilo-d2" class="lux-die">?</span>
+      <span id="hilo-d3" class="lux-die">?</span>
     </div>
-    <div class="input-group" style="width: 100%; max-width: 300px;">
-      <select id="hilo-type-select">
-        <option value="high" data-i18n="hilo_high">High (12-18) — 1.95x</option>
-        <option value="low" data-i18n="hilo_low">Low (3-10) — 1.95x</option>
-        <option value="hilo11" data-i18n="hilo_11">Exactly 11 — 6x</option>
-        <option value="triple" data-i18n="hilo_triple">Triple (111-666) — 40x</option>
-      </select>
+    <div class="hilo-opts">
+      <button type="button" class="hilo-opt-btn active" id="hilo-btn-high" onclick="selectHiloType('high')" data-i18n="hilo_high">High (12-18) — 1.95x</button>
+      <button type="button" class="hilo-opt-btn" id="hilo-btn-low" onclick="selectHiloType('low')" data-i18n="hilo_low">Low (3-10) — 1.95x</button>
+      <button type="button" class="hilo-opt-btn" id="hilo-btn-hilo11" onclick="selectHiloType('hilo11')" data-i18n="hilo_11">Exactly 11 — 6x</button>
+      <button type="button" class="hilo-opt-btn" id="hilo-btn-triple" onclick="selectHiloType('triple')" data-i18n="hilo_triple">Triple — 40x</button>
     </div>
+    <select id="hilo-type-select" hidden>
+      <option value="high">high</option>
+      <option value="low">low</option>
+      <option value="hilo11">hilo11</option>
+      <option value="triple">triple</option>
+    </select>
     <div class="input-group" style="width: 100%; max-width: 300px;">
       <input type="number" id="hilo-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
       <div class="flex-row" style="margin-top: 10px;">
@@ -995,8 +1091,14 @@
     <h2 data-i18n="g_wheel">Lucky Wheel</h2>
   </div>
   <div class="play-area">
-    <div id="wheel-disc" class="big-display lux-stage-icon" style="transition: transform 3s cubic-bezier(0.17, 0.67, 0.12, 0.99);"><i class="fa-solid fa-dharmachakra"></i></div>
-    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;">
+    <div class="wheel-wrap">
+      <div class="wheel-pointer"><i class="fa-solid fa-caret-down"></i></div>
+      <div id="wheel-disc" class="wheel-face">
+        <span>×0</span><span>×0.5</span><span>×1</span><span>×1.5</span><span>×2.5</span><span>×5</span><span>×15</span>
+      </div>
+      <i class="wheel-hub"></i>
+    </div>
+    <div class="wheel-pay-row">
       <span class="badge wheel-pay">×0</span>
       <span class="badge wheel-pay">×0.5</span>
       <span class="badge wheel-pay">×1</span>
@@ -1025,16 +1127,18 @@
     <h2 data-i18n="g_slot">Slot 777</h2>
   </div>
   <div class="play-area">
-    <div class="flex-row slot-reels">
-      <div id="slot-reel-1" class="slot-reel">🍒</div>
-      <div id="slot-reel-2" class="slot-reel">🍒</div>
-      <div id="slot-reel-3" class="slot-reel">🍒</div>
+    <div class="slot-machine">
+      <div class="flex-row slot-reels">
+        <div id="slot-reel-1" class="slot-reel">7</div>
+        <div id="slot-reel-2" class="slot-reel">7</div>
+        <div id="slot-reel-3" class="slot-reel">7</div>
+      </div>
     </div>
     <div class="slot-paytable">
       <span><b>777</b> ×40</span>
-      <span><b>💎💎💎</b> ×20</span>
-      <span><b>🍒🍒🍒</b> ×6</span>
-      <span><b>pair</b> ×1.4</span>
+      <span><b>◆◆◆</b> ×20</span>
+      <span><b>●●●</b> ×6</span>
+      <span><b data-i18n="slot_pair">Pair</b> ×1.4</span>
     </div>
     <div class="input-group" style="width: 100%; max-width: 300px;">
       <input type="number" id="slot-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
@@ -1056,12 +1160,12 @@
     <h2 data-i18n="g_mines">Mines</h2>
   </div>
   <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
-    <div style="background: #222; padding: 20px; border-radius: 10px;">
+    <div class="mines-panel">
       <div id="mines-grid" class="mines-grid">
         <!-- grid generated by JS -->
       </div>
     </div>
-    <div style="background: #222; padding: 20px; border-radius: 10px; min-width: 250px; display: flex; flex-direction: column; gap: 15px;">
+    <div class="mines-panel mines-controls">
       <div class="input-group">
         <label data-i18n="mines_count">Mines</label>
         <select id="mines-count-select">
@@ -1074,18 +1178,18 @@
       </div>
       <div class="input-group">
         <label data-i18n="stake">Stake (CR)</label>
-        <input type="number" id="mines-amount-input" placeholder="10">
+        <input type="number" id="mines-amount-input" placeholder="10" min="10" value="10">
       </div>
       <button id="btn-start-mines" class="btn-gold" onclick="startMinesGame()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       
-      <div style="background: #111; padding: 15px; border-radius: 5px; text-align: center; margin-top: 10px;">
-        <div style="color: #aaa; margin-bottom: 5px;" data-i18n="mines_mult">Current multiplier</div>
-        <div id="mines-current-rate" style="font-size: 1.5rem; color: #ffd700; font-weight: bold;">1.00x</div>
-        <div style="color: #aaa; margin-top: 10px; margin-bottom: 5px;" data-i18n="mines_out">Cash-out (CR)</div>
-        <div style="font-size: 1.2rem; color: #2ecc71; font-weight: bold;">CR <span id="mines-cashout-amt">0.00</span></div>
+      <div class="mines-hud">
+        <div class="mines-hud-label" data-i18n="mines_mult">Current multiplier</div>
+        <div id="mines-current-rate" class="mines-hud-rate">1.00x</div>
+        <div class="mines-hud-label" data-i18n="mines_out">Cash-out (CR)</div>
+        <div class="mines-hud-out">CR <span id="mines-cashout-amt">0.00</span></div>
       </div>
       
-      <button id="btn-cashout-mines" class="action-btn" style="background: #2ecc71; font-size: 1.1rem; padding: 10px; font-weight: bold;" onclick="cashoutMines()" disabled data-i18n="cashout">ແຄຊເອົາ</button>
+      <button id="btn-cashout-mines" class="btn-cashout" onclick="cashoutMines()" disabled data-i18n="cashout">ແຄຊເອົາ</button>
       <div id="mines-status-msg" class="status-msg" style="text-align: center;"></div>
     </div>
   </div>
@@ -1098,18 +1202,20 @@
     <h2 data-i18n="g_crash">Crash</h2>
   </div>
   <div class="play-area">
-    <div style="background: #111; width: 100%; max-width: 600px; height: 300px; border-radius: 10px; position: relative; overflow: hidden; border: 1px solid #333; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-      <div id="crash-rocket-icon" class="crash-rocket lux-stage-icon"><i class="fa-solid fa-rocket"></i></div>
+    <div class="crash-stage" id="crash-stage">
+      <canvas id="crash-chart" width="720" height="320"></canvas>
+      <div id="crash-rocket-icon" class="crash-rocket"><i class="fa-solid fa-rocket"></i></div>
       <div id="crash-multiplier-counter" class="crash-mult">x1.00</div>
-      <div id="crash-status-sub" style="color: #aaa; font-size: 1.2rem; z-index: 10;" data-i18n="crash_wait">ລໍຖ້າເລີ່ມເກມ...</div>
+      <div id="crash-status-sub" class="crash-sub" data-i18n="crash_wait">Waiting to launch...</div>
     </div>
     
-    <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 600px; margin: 10px 0;">
-      <span class="badge" style="background: #3498db; padding: 5px;" data-i18n="crash_low">Low (1.1-2x)</span>
-      <span class="badge" style="background: #f1c40f; color:#000; padding: 5px;" data-i18n="crash_med">Med (2-5x)</span>
-      <span class="badge" style="background: #e67e22; padding: 5px;" data-i18n="crash_high">High (5-10x)</span>
-      <span class="badge" style="background: #e74c3c; padding: 5px;" data-i18n="crash_ext">Extreme (10x+)</span>
+    <div class="crash-targets" id="crash-targets">
+      <button type="button" class="crash-tgt" data-at="1.5" onclick="setCrashAuto(1.5)" data-i18n="crash_low">Low 1.5x</button>
+      <button type="button" class="crash-tgt" data-at="3" onclick="setCrashAuto(3)" data-i18n="crash_med">Med 3x</button>
+      <button type="button" class="crash-tgt" data-at="7" onclick="setCrashAuto(7)" data-i18n="crash_high">High 7x</button>
+      <button type="button" class="crash-tgt" data-at="12" onclick="setCrashAuto(12)" data-i18n="crash_ext">Extreme 12x</button>
     </div>
+    <p class="crash-auto-hint" id="crash-auto-hint"></p>
 
     <div class="input-group" style="width: 100%; max-width: 300px;">
       <label data-i18n="stake">ຍອດເດີມພັນ (CR)</label>
@@ -1127,16 +1233,17 @@
     <h2 data-i18n="g_plinko">Plinko</h2>
   </div>
   <div class="play-area">
-    <div style="position: relative; width: 300px; height: 350px; background: #111; border-radius: 10px; border: 1px solid #333;">
-      <div id="plinko-ball" class="plinko-ball">🎱</div>
-      <div style="position: absolute; bottom: 0; width: 100%; display: flex; border-top: 1px solid #333;">
-        <div style="flex:1; background:#e74c3c; text-align:center; padding: 5px 0; font-size: 0.75rem; font-weight:bold;">8x</div>
-        <div style="flex:1; background:#e67e22; text-align:center; padding: 5px 0; font-size: 0.75rem;">2x</div>
-        <div style="flex:1; background:#f1c40f; color:#000; text-align:center; padding: 5px 0; font-size: 0.75rem;">0.8x</div>
-        <div style="flex:1; background:#2ecc71; text-align:center; padding: 5px 0; font-size: 0.75rem;">0.3x</div>
-        <div style="flex:1; background:#f1c40f; color:#000; text-align:center; padding: 5px 0; font-size: 0.75rem;">0.8x</div>
-        <div style="flex:1; background:#e67e22; text-align:center; padding: 5px 0; font-size: 0.75rem;">2x</div>
-        <div style="flex:1; background:#e74c3c; text-align:center; padding: 5px 0; font-size: 0.75rem; font-weight:bold;">8x</div>
+    <div class="plinko-board" id="plinko-board">
+      <div id="plinko-pegs" class="plinko-pegs"></div>
+      <div id="plinko-ball" class="plinko-ball" hidden></div>
+      <div class="plinko-slots" id="plinko-slots">
+        <span data-slot="0">8×</span>
+        <span data-slot="1">2×</span>
+        <span data-slot="2">0.8×</span>
+        <span data-slot="3">0.3×</span>
+        <span data-slot="4">0.8×</span>
+        <span data-slot="5">2×</span>
+        <span data-slot="6">8×</span>
       </div>
     </div>
     <div class="input-group" style="width: 100%; max-width: 300px; margin-top: 20px;">
@@ -1219,10 +1326,10 @@
       <input type="number" id="dt-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake" style="text-align: center; font-size: 1.2rem;">
     </div>
 
-    <div class="flex-row" style="width: 100%; max-width: 500px; margin-bottom: 20px;">
-      <button class="action-btn" id="dt-btn-dragon" type="button" style="flex: 1; background: #e74c3c; font-size: 1.2rem; padding: 15px;" onclick="selectDragonTigerSide('dragon')" data-i18n="dt_dragon">Dragon (1.95x)</button>
-      <button class="action-btn" id="dt-btn-tie" type="button" style="flex: 1; background: #2ecc71; font-size: 1.2rem; padding: 15px;" onclick="selectDragonTigerSide('tie')" data-i18n="dt_tie">Tie (8x)</button>
-      <button class="action-btn" id="dt-btn-tiger" type="button" style="flex: 1; background: #3498db; font-size: 1.2rem; padding: 15px;" onclick="selectDragonTigerSide('tiger')" data-i18n="dt_tiger">Tiger (1.95x)</button>
+    <div class="dt-sides">
+      <button class="dt-side dt-side-d" id="dt-btn-dragon" type="button" onclick="selectDragonTigerSide('dragon')" data-i18n="dt_dragon">Dragon (1.95x)</button>
+      <button class="dt-side dt-side-tie" id="dt-btn-tie" type="button" onclick="selectDragonTigerSide('tie')" data-i18n="dt_tie">Tie (8x)</button>
+      <button class="dt-side dt-side-t" id="dt-btn-tiger" type="button" onclick="selectDragonTigerSide('tiger')" data-i18n="dt_tiger">Tiger (1.95x)</button>
     </div>
 
     <button id="btn-play-dt" class="btn-gold" style="max-width: 300px;" onclick="playDragonTiger()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
@@ -1237,10 +1344,15 @@
     <h2 data-i18n="g_horse">Horse Racing</h2>
   </div>
   <div class="play-area">
-    <div id="derby-result-display" class="lux-horse-board">
-      <i class="fa-solid fa-horse"></i>
+    <div id="derby-result-display" class="derby-track">
+      <div class="derby-rail"></div>
+      <div class="derby-finish"><span>FIN</span></div>
+      <div class="derby-lane" data-horse="1"><b>1</b><i class="fa-solid fa-horse derby-horse" data-horse="1"></i></div>
+      <div class="derby-lane" data-horse="2"><b>2</b><i class="fa-solid fa-horse derby-horse" data-horse="2"></i></div>
+      <div class="derby-lane" data-horse="3"><b>3</b><i class="fa-solid fa-horse derby-horse" data-horse="3"></i></div>
+      <div class="derby-lane" data-horse="4"><b>4</b><i class="fa-solid fa-horse derby-horse" data-horse="4"></i></div>
     </div>
-    <p style="color: #aaa; text-align: center;" data-i18n="pick_horse">Pick the horse you think will win</p>
+    <p class="game-pick-hint" data-i18n="pick_horse">Pick the horse you think will win</p>
     <div class="lux-horse-grid">
       <button class="horse-opt-btn" id="horse-btn-1" type="button" onclick="selectHorse(1)"><i class="fa-solid fa-horse"></i> 1 · 2.8x</button>
       <button class="horse-opt-btn" id="horse-btn-2" type="button" onclick="selectHorse(2)"><i class="fa-solid fa-horse"></i> 2 · 4.5x</button>
@@ -1249,7 +1361,7 @@
     </div>
 
     <div class="input-group" style="width: 100%; max-width: 300px;">
-      <input type="number" id="derby-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
+      <input type="number" id="derby-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake" min="10" value="10">
     </div>
     <button id="btn-start-derby" class="btn-gold" style="max-width: 300px;" onclick="playHorseRacingGame()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
     <div id="derby-status-msg" class="status-msg"></div>
@@ -1263,10 +1375,14 @@
     <h2 data-i18n="g_pusher">Coin Pusher</h2>
   </div>
   <div class="play-area">
-    <div id="pusher-display" class="lux-stage-icon" style="margin-bottom: 20px;"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+    <div id="pusher-display" class="pusher-stage">
+      <div class="pusher-coin" id="pusher-coin"></div>
+      <div class="pusher-shelf"></div>
+      <div class="pusher-payout" id="pusher-payout"></div>
+    </div>
     <p style="color: #aaa;" data-i18n="pusher_rules">0–4x · Jackpot ×12</p>
     <div class="input-group" style="width: 100%; max-width: 300px;">
-      <input type="number" id="pusher-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
+      <input type="number" id="pusher-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake" min="10" value="10">
     </div>
     <button id="btn-drop-coinpusher" class="btn-gold" style="max-width: 300px;" onclick="playCoinPusherGame()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
     <div id="pusher-status-msg" class="status-msg"></div>
@@ -1280,16 +1396,17 @@
     <h2 data-i18n="g_duck">Duck Shooter</h2>
   </div>
   <div class="play-area">
-    <div id="duck-display" class="lux-duck-stage">
-      <i class="fa-solid fa-feather"></i>
-      <i class="fa-solid fa-crosshairs"></i>
-      <i class="fa-solid fa-feather"></i>
+    <div id="duck-display" class="duck-stage">
+      <i class="fa-solid fa-dove duck-fly" data-duck="1"></i>
+      <i class="fa-solid fa-dove duck-fly" data-duck="2"></i>
+      <i class="fa-solid fa-dove duck-fly" data-duck="3"></i>
+      <i class="fa-solid fa-dove duck-fly" data-duck="4"></i>
     </div>
     <p style="color: #aaa;" data-i18n="duck_rules">Bronze ×0.5 · silver ×1.5 · gold ×3.5 · crystal ×10</p>
     <div class="input-group" style="width: 100%; max-width: 300px;">
-      <input type="number" id="duck-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
+      <input type="number" id="duck-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake" min="10" value="10">
     </div>
-    <button class="btn-gold" style="max-width: 300px; background: #e74c3c; color: white;" onclick="playDuckShooterGame()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+    <button id="btn-shoot-duck" class="btn-gold" style="max-width: 300px; background: #e74c3c; color: white;" onclick="playDuckShooterGame()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
     <div id="duck-status-msg" class="status-msg"></div>
   </div>
 </section>
@@ -1300,9 +1417,10 @@
     <button class="action-btn game-shell-back" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
     <h2 data-i18n="g_chest">Mystery Chest</h2>
   </div>
-  <div class="play-area">
+  <div class="play-area chest-stage">
     <div id="mystery-chest-anim" class="chest-box-anim lux-stage-icon"><i class="fa-solid fa-box-open"></i></div>
-    <p style="color: #ffd700; font-size: 1.2rem;" data-i18n="chest_sub">Open a chest for free credits!</p>
+    <p class="chest-lead" data-i18n="chest_daily">Daily bonus chest</p>
+    <p class="chest-sub" data-i18n="cmd_daily">Claim free CR</p>
     <button id="btn-open-mystery-chest" class="btn-gold" style="max-width: 300px; padding: 15px; font-size: 1.2rem;" onclick="openDailyRewardModal()" data-i18n="chest_open">Open chest</button>
   </div>
 </section>
@@ -1335,18 +1453,13 @@
     </div>
     <!-- Games Column -->
     <div>
-      <div class="footer-col-title"><i class="fa-solid fa-gamepad"></i> <span data-i18n="foot_games">All games</span></div>
+      <div class="footer-col-title"><i class="fa-solid fa-ticket"></i> <span data-i18n="lobby_bet">Lottery rooms</span></div>
       <div class="footer-link-list">
+        <span class="footer-link" onclick="enterSoonestLotteryRoom()"><i class="fa-solid fa-bolt"></i> <span data-i18n="hero_enter">Enter rooms</span></span>
         <span class="footer-link" onclick="switchView('lobby')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="foot_thai">Thai lottery</span></span>
         <span class="footer-link" onclick="openVNLotteryRoom('vnfast')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="foot_vn">VN lottery</span></span>
-        <span class="footer-link" onclick="switchView('game-coinflip')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_coinflip">Coin Flip</span></span>
-        <span class="footer-link" onclick="switchView('game-slot')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_slot">Slot 777</span></span>
-        <span class="footer-link" onclick="switchView('game-crash')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_crash">Crash</span></span>
-        <span class="footer-link" onclick="switchView('game-mines')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_mines">Mines</span></span>
-        <span class="footer-link" onclick="switchView('game-dragontiger')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_dt">Dragon Tiger</span></span>
-        <span class="footer-link" onclick="switchView('game-horseracing')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_horse">Horse Racing</span></span>
-        <span class="footer-link" onclick="switchView('game-pokdeng')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_pokdeng">Pok Deng</span></span>
-        <span class="footer-link" onclick="switchView('game-wheel')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_wheel">Lucky Wheel</span></span>
+        <span class="footer-link" onclick="switchView('history')"><i class="fa-solid fa-clock-rotate-left"></i> <span data-i18n="history">History</span></span>
+        <span class="footer-link" onclick="scrollToMiniGames()"><i class="fa-solid fa-chess-knight"></i> <span data-i18n="minigames">Mini games</span></span>
       </div>
     </div>
     <!-- Support Column -->
@@ -1621,7 +1734,7 @@
     </div>
     <div class="lux-slip-actions">
       <button class="action-btn" type="button" onclick="closeModal('modal-thermal-ticket')" data-i18n="close">Close</button>
-      <button id="copyToClipboard" class="action-btn" type="button" onclick="openThermalTicketModal()" data-i18n="copy">Copy</button>
+      <button id="copyToClipboard" class="action-btn" type="button" onclick="copyTicketNumbers()" data-i18n="copy">Copy</button>
     </div>
   </div>
 </div>
@@ -1692,8 +1805,8 @@
   <i class="fa-solid fa-comments"></i>
 </button>
 
-<script src="i18n.js?v=1788648000"></script>
-<script src="main.js?v=1788648000"></script>
+<script src="i18n.js?v=1788669800"></script>
+<script src="main.js?v=1788669800"></script>
 
 <!-- ID Compatibility Layer - maps old IDs to keep main.js working -->
 <div id="cart-potential-win" style="display:none"></div>
@@ -1745,6 +1858,6 @@
 <button id="btn-bet-back" style="display:none"></button>
 <button id="btn-confirm-credit" style="display:none"></button>
 <span id="ai-win-prob" style="display:none"></span>
-<button id="btn-shoot-duck" style="display:none" onclick="playDuckShooterGame()"></button>
+<button type="button" style="display:none"></button>
 </body>
 </html>

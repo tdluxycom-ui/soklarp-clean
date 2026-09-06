@@ -92,6 +92,14 @@ await shot("v-hist.png", `switchView("history")`);
 await shot("v-admin.png", `switchView("admin")`);
 await shot("v-coin.png", `switchView("game-coinflip")`);
 await shot("v-mines.png", `switchView("game-mines")`);
+await shot("v-crash.png", `switchView("game-crash")`);
+await shot("v-plinko.png", `switchView("game-plinko")`);
+await shot("v-wheel.png", `switchView("game-wheel")`);
+await shot("v-horse.png", `switchView("game-horseracing")`);
+await shot("v-hilo.png", `switchView("game-hilo")`);
+await shot("v-dt.png", `switchView("game-dragontiger")`);
+await shot("v-pusher.png", `switchView("game-coinpusher")`);
+await shot("v-duck.png", `switchView("game-duckshooter")`);
 
 const health = await send("Runtime.evaluate", {
   returnByValue: true,
@@ -101,7 +109,7 @@ const health = await send("Runtime.evaluate", {
     fonts: document.fonts.status,
     fa: [...document.fonts].some(f => /Font Awesome/i.test(f.family)),
     daily: document.querySelector("#btn-daily-claim span")?.textContent,
-    cache: !!document.querySelector('link[href*="1788648000"]'),
+    cache: !!document.querySelector('link[href*="1788669800"]'),
     guides: document.querySelectorAll(".game-guide").length,
     mgHow: document.querySelectorAll(".mg-how").length,
     playBg: getComputedStyle(document.querySelector("#view-game-pokdeng .play-area") || document.body).backgroundImage.slice(0, 80),
