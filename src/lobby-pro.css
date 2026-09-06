@@ -7188,6 +7188,12 @@ body.in-app-page .pwa-install-bar { display: none !important; }
     overflow-x: auto;
     flex-wrap: nowrap !important;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  #view-lobby .lobby-tabs::-webkit-scrollbar { display: none; }
+  #view-lobby .lobby-tabs .tab-filter-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
   #view-betting.bet-room .betting-flex-wrap.bet-room-grid,
   #view-vnlotto.bet-room .betting-flex-wrap.bet-room-grid {
@@ -7195,5 +7201,23 @@ body.in-app-page .pwa-install-bar { display: none !important; }
     flex-direction: column !important;
     grid-template-columns: 1fr !important;
   }
+}
+
+#view-admin .admin-live-now {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 138, 128, .45);
+  background: rgba(180, 40, 40, .18);
+  color: #ffd0c8;
+  font-size: .82rem;
+  font-weight: 800;
+}
+#view-admin .admin-control-card.is-drawing {
+  border-color: rgba(255, 138, 128, .55) !important;
+  box-shadow: 0 0 18px rgba(180, 40, 40, .18);
+}
+#view-admin .admin-control-card.is-urgent {
+  border-color: rgba(255, 213, 106, .7) !important;
 }
 

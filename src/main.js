@@ -1080,7 +1080,8 @@ function renderHistoryTables() {
   const pendingFirst = (a, b) => {
     const pa = (!a.status || a.status === "pending") ? 0 : 1;
     const pb = (!b.status || b.status === "pending") ? 0 : 1;
-    return pa - pb;
+    if (pa !== pb) return pa - pb;
+    return Number(b.createdAt || 0) - Number(a.createdAt || 0);
   };
   const lotteryBets = allLotto.filter(pass).sort(filter === "all" ? pendingFirst : () => 0);
   const gameBets = allGames.filter(pass);
@@ -1545,7 +1546,7 @@ function paintLobbyPressure() {
   const hot = hotLotteryRooms();
   const countEl = document.getElementById("cmd-rooms");
   if (countEl) {
-    countEl.textContent = String(hot.length || list.length);
+    countEl.textContent = String(hot.length);
     countEl.closest(".cmd-card")?.classList.toggle("is-hot", hot.length > 0);
   }
   const cmdHint = document.getElementById("cmd-rooms-hint");
@@ -1662,8 +1663,12 @@ function renderLobby() {
   if (category === "yeekee") list = list.filter(l => l.type === "yeekee");
   if (category === "scheduled") list = list.filter(l => l.type === "scheduled");
   if (category === "vietlottery") list = list.filter(l => l.type === "vietlottery");
-  const vnList = list.filter(l => l.type === "vietlottery");
-  const thaiList = list.filter(l => l.type !== "vietlottery");
+  const byUrgency = (a, b) => {
+    const diff = roomUrgencyRank(a) - roomUrgencyRank(b);
+    return diff || String(a.id).localeCompare(String(b.id));
+  };
+  const vnList = list.filter(l => l.type === "vietlottery").sort(byUrgency);
+  const thaiList = list.filter(l => l.type !== "vietlottery").sort(byUrgency);
 
   thaiList.forEach(l => {
     const card = document.createElement("div");
@@ -1738,8 +1743,7 @@ function renderLobby() {
       </div>`;
     grid.appendChild(vnDivider);
 
-    const sortedVN = [...vnList].sort((a, b) => (a.interval ? -1 : 1));
-    sortedVN.forEach(l => {
+    vnList.forEach(l => {
       const card = document.createElement("div");
       const isFast = !!l.interval;
       const secs = countdownSeconds(l);
@@ -2183,7 +2187,7 @@ async function loadAdminPanel() {
       el("admin-total-revenue").textContent = netProfit.toLocaleString() + " CR";
       el("admin-total-revenue").style.color = netProfit >= 0 ? "#2ecc71" : "#e74c3c";
     }
-    if (el("admin-active-draws")) el("admin-active-draws").textContent = Number(stats.openRooms || (state.lotteries || []).length).toLocaleString();
+    if (el("admin-active-draws")) el("admin-active-draws").textContent = String(hotLotteryRooms().length);
     if (el("admin-pending-bets")) el("admin-pending-bets").textContent = Number(stats.pendingBets || 0).toLocaleString();
     if (el("admin-banned-users")) el("admin-banned-users").textContent = Number(stats.bannedUsers || 0).toLocaleString();
     state.adminRoomOps = data.roomOps || [];
@@ -2311,12 +2315,16 @@ function renderAdminDrawControls() {
     const last = (l.lastResults || [])[0];
     const lastLine = adminLastResultLine(last, l.id);
     const sim = isSimVnRoom(l.id) ? `<span class="admin-pill is-sim">Mô phỏng</span>` : "";
+    const liveNow = isVnLiveDrawing(l)
+      ? `<div class="admin-live-now">Đang sổ ${escapeHtml(vnPrizeLabel(l.liveDraw.current))} · ${escapeHtml(formatTime(liveDrawRemainingSecs(l.liveDraw)))}</div>`
+      : "";
     const last3 = (l.lastResults || []).slice(0, 3).map((r) => {
       return `<div class="admin-result-row"><span>${escapeHtml((r.drawId || "").split("-").pop() || "—")}</span><b class="gold-text">${escapeHtml(adminLastResultLine(r, l.id))}</b></div>`;
     }).join("") || `<div class="admin-result-row">Chưa có lịch sử</div>`;
     const ops = (state.adminRoomOps || []).find((r) => r.id === l.id) || {};
     card.innerHTML = `
       <h4>${escapeHtml(adminRoomLabel(l.id))} ${sim}</h4>
+      ${liveNow}
       <div class="admin-control-meta">
         <div>Kỳ tiếp: <b class="gold-text">${escapeHtml(l.nextDrawId || "-")}</b></div>
         <div>Đóng nhận: <b class="admin-cd${(l.countdown || 0) < 30 || isVnLiveDrawing(l) ? " is-urgent" : ""}" id="admin-cd-${l.id}">${escapeHtml(isVnLiveDrawing(l) ? `${t("vn_drawing")} ${formatTime(liveDrawRemainingSecs(l.liveDraw))}` : formatTime(l.countdown || 0))}</b></div>
