@@ -328,8 +328,8 @@
       <div class="mini-game-card mg-hilo" onclick="switchView('game-hilo')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-dice"></i></span>
         <span class="mg-label" data-i18n="g_hilo">ໄຮໂລ</span>
-        <span class="mg-odds">×1.95–40</span>
-        <span class="mg-how" data-i18n="how_hilo">High/Low ×1.95 · exactly 11 ×6 · triple ×40.</span>
+        <span class="mg-odds">×1.95–33</span>
+        <span class="mg-how" data-i18n="how_hilo">Low ×1.95 · high ×2.6 · exactly 11 ×6 · triple ×33.</span>
         <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       </div>
       <div class="mini-game-card mg-wheel" onclick="switchView('game-wheel')">
@@ -384,8 +384,8 @@
       <div class="mini-game-card mg-horse" onclick="switchView('game-horseracing')">
         <span class="mg-icon lux-seal"><i class="fa-solid fa-horse"></i></span>
         <span class="mg-label" data-i18n="g_horse">ແຂ່ງມ້າ</span>
-        <span class="mg-odds">×2.8–14</span>
-        <span class="mg-how" data-i18n="how_horse">Pick 1 of 4 horses: ×2.8 · ×4.5 · ×7 · ×14.</span>
+        <span class="mg-odds">×2.4–9.6</span>
+        <span class="mg-how" data-i18n="how_horse">Pick 1 of 4 horses: ×2.4 · ×3.2 · ×4.8 · ×9.6.</span>
         <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
       </div>
       <div class="mini-game-card mg-push" onclick="switchView('game-coinpusher')">
@@ -1077,10 +1077,10 @@
       <span id="hilo-d3" class="lux-die">?</span>
     </div>
     <div class="hilo-opts">
-      <button type="button" class="hilo-opt-btn active" id="hilo-btn-high" onclick="selectHiloType('high')" data-i18n="hilo_high">High (12-18) — 1.95x</button>
+      <button type="button" class="hilo-opt-btn active" id="hilo-btn-high" onclick="selectHiloType('high')" data-i18n="hilo_high">High (12-18) — 2.6x</button>
       <button type="button" class="hilo-opt-btn" id="hilo-btn-low" onclick="selectHiloType('low')" data-i18n="hilo_low">Low (3-10) — 1.95x</button>
       <button type="button" class="hilo-opt-btn" id="hilo-btn-hilo11" onclick="selectHiloType('hilo11')" data-i18n="hilo_11">Exactly 11 — 6x</button>
-      <button type="button" class="hilo-opt-btn" id="hilo-btn-triple" onclick="selectHiloType('triple')" data-i18n="hilo_triple">Triple — 40x</button>
+      <button type="button" class="hilo-opt-btn" id="hilo-btn-triple" onclick="selectHiloType('triple')" data-i18n="hilo_triple">Triple — 33x</button>
     </div>
     <select id="hilo-type-select" hidden>
       <option value="high">high</option>
@@ -1255,11 +1255,11 @@
       <div id="plinko-ball" class="plinko-ball" hidden></div>
       <div class="plinko-slots" id="plinko-slots">
         <span data-slot="0">8×</span>
-        <span data-slot="1">2×</span>
-        <span data-slot="2">0.8×</span>
-        <span data-slot="3">0.3×</span>
-        <span data-slot="4">0.8×</span>
-        <span data-slot="5">2×</span>
+        <span data-slot="1">1.5×</span>
+        <span data-slot="2">0.7×</span>
+        <span data-slot="3">0.2×</span>
+        <span data-slot="4">0.7×</span>
+        <span data-slot="5">1.5×</span>
         <span data-slot="6">8×</span>
       </div>
     </div>
@@ -1371,10 +1371,10 @@
     </div>
     <p class="game-pick-hint" data-i18n="pick_horse">Pick the horse you think will win</p>
     <div class="lux-horse-grid">
-      <button class="horse-opt-btn" id="horse-btn-1" type="button" onclick="selectHorse(1)"><i class="fa-solid fa-horse"></i> 1 · 2.8x</button>
-      <button class="horse-opt-btn" id="horse-btn-2" type="button" onclick="selectHorse(2)"><i class="fa-solid fa-horse"></i> 2 · 4.5x</button>
-      <button class="horse-opt-btn" id="horse-btn-3" type="button" onclick="selectHorse(3)"><i class="fa-solid fa-horse"></i> 3 · 7x</button>
-      <button class="horse-opt-btn" id="horse-btn-4" type="button" onclick="selectHorse(4)"><i class="fa-solid fa-horse"></i> 4 · 14x</button>
+      <button class="horse-opt-btn" id="horse-btn-1" type="button" onclick="selectHorse(1)"><i class="fa-solid fa-horse"></i> 1 · 2.4x</button>
+      <button class="horse-opt-btn" id="horse-btn-2" type="button" onclick="selectHorse(2)"><i class="fa-solid fa-horse"></i> 2 · 3.2x</button>
+      <button class="horse-opt-btn" id="horse-btn-3" type="button" onclick="selectHorse(3)"><i class="fa-solid fa-horse"></i> 3 · 4.8x</button>
+      <button class="horse-opt-btn" id="horse-btn-4" type="button" onclick="selectHorse(4)"><i class="fa-solid fa-horse"></i> 4 · 9.6x</button>
     </div>
 
     <div class="input-group" style="width: 100%; max-width: 300px;">
