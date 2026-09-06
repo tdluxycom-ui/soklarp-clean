@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { createDbProxy } from "../db-proxy.mjs";
+import { sanitizeNickname } from "../../lib/sanitize.mjs";
 
 export function registerAuthRoutes(app, { authenticate, getDb, saveDb, hashPassword, verifyPassword, sessionTtlMs }) {
   const db = createDbProxy(getDb);
@@ -14,13 +15,17 @@ export function registerAuthRoutes(app, { authenticate, getDb, saveDb, hashPassw
     if (!/^[a-z0-9_]{3,32}$/.test(cleanUsername) || password.trim().length < 10 || nickname.trim().length > 40) {
       return res.status(400).json({ success: false, message: "Username must be 3-32 characters; password must be at least 10 characters." });
     }
+    const cleanNickname = sanitizeNickname(nickname);
+    if (!cleanNickname) {
+      return res.status(400).json({ success: false, message: "Display name must contain at least one usable character" });
+    }
     if (db.users.some((u) => u.username === cleanUsername)) {
       return res.status(400).json({ success: false, message: "Username already in use" });
     }
     db.users.push({
       username: cleanUsername,
       password: hashPassword(password.trim()),
-      nickname: nickname.trim(),
+      nickname: cleanNickname,
       balance: 50000,
       role: "user",
       status: "active"
