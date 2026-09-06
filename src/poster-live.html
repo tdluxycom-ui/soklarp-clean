@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>Poster LIVE หวยลาวพัฒนา</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Kanit',sans-serif;background:#000;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
+.poster{
+  width:1280px;height:720px;
+  background:linear-gradient(180deg,#040818 0%,#0a1228 40%,#060e20 100%);
+  position:relative;overflow:hidden;border-radius:8px;
+  border:2px solid rgba(60,140,255,.2);
+  box-shadow:0 0 60px rgba(20,80,200,.15),0 0 120px rgba(0,0,0,.5);
+}
+/* Subtle glow overlay */
+.poster::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(40,100,220,.06) 0%,transparent 60%);pointer-events:none;z-index:0}
+
+/* ═══ HEADER ═══ */
+.header{
+  position:absolute;top:0;left:0;right:0;height:58px;z-index:10;
+  background:linear-gradient(135deg,#0d1a3a 0%,#162448 50%,#0d1a3a 100%);
+  border-bottom:2px solid rgba(60,140,255,.2);
+  display:flex;align-items:center;padding:0 20px;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+}
+.header::after{content:'';position:absolute;bottom:-2px;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,rgba(255,215,0,.15),transparent)}
+.h-flags{display:flex;gap:8px;font-size:28px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+.h-center{flex:1;text-align:center}
+.h-title{font-size:24px;font-weight:900;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,.2);letter-spacing:.02em}
+.h-sub{font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.06em}
+.h-live{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#dd1133,#ff2244);color:#fff;font-size:14px;font-weight:800;padding:5px 16px;border-radius:20px;box-shadow:0 0 20px rgba(255,34,68,.3);margin-left:10px;vertical-align:middle}
+.h-live::before{content:'';width:8px;height:8px;background:#fff;border-radius:50%;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.h-logo{text-align:right;min-width:120px}
+.h-logo .logo-text{font-size:18px;font-weight:900;color:#ffd700;text-shadow:0 0 12px rgba(255,215,0,.15)}
+.h-logo .logo-url{font-size:8px;color:rgba(255,255,255,.3)}
+
+/* ═══ MAIN AREA ═══ */
+.main{position:absolute;top:62px;left:0;right:0;bottom:88px;display:flex;gap:10px;padding:10px;z-index:5}
+
+/* ═══ PANEL CARD ═══ */
+.panel{
+  background:linear-gradient(180deg,rgba(15,25,50,.9),rgba(8,15,35,.95));
+  border:1px solid rgba(60,140,255,.12);
+  border-radius:10px;overflow:hidden;
+  box-shadow:0 2px 12px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.02);
+}
+.panel-head{
+  background:linear-gradient(135deg,rgba(20,40,80,.8),rgba(15,30,60,.8));
+  padding:7px 12px;font-size:10px;font-weight:700;color:rgba(255,215,0,.7);
+  border-bottom:1px solid rgba(60,140,255,.08);
+  display:flex;align-items:center;gap:5px;
+}
+
+/* ─── LEFT COL ─── */
+.col-left{width:195px;display:flex;flex-direction:column;gap:8px}
+.dt-box{text-align:center;padding:10px 8px}
+.dt-label{font-size:9px;color:rgba(255,255,255,.3)}
+.dt-date{font-size:15px;font-weight:700;color:#ffd700}
+.dt-clock{font-size:36px;font-weight:900;color:#ff2244;text-shadow:0 0 30px rgba(255,34,68,.3);font-variant-numeric:tabular-nums;line-height:1;margin:4px 0}
+.prev-row{display:flex;justify-content:space-between;padding:3px 10px;font-size:10px;border-bottom:1px solid rgba(255,255,255,.02)}
+.prev-row .l{color:rgba(255,255,255,.35)}.prev-row .v{font-weight:800;color:#ffd700;font-variant-numeric:tabular-nums}
+.bonus-box{
+  background:linear-gradient(135deg,#1a0800,#2a1000);
+  border:1px solid rgba(255,215,0,.12);border-radius:8px;
+  padding:10px;text-align:center;margin:0 8px;
+}
+.bonus-box .bl{font-size:9px;color:rgba(255,255,255,.4)}
+.bonus-box .bv{font-size:32px;font-weight:900;color:#ffd700;text-shadow:0 0 25px rgba(255,215,0,.25);line-height:1}
+.bonus-box .bs{font-size:10px;color:rgba(255,215,0,.5)}
+
+/* ─── CENTER COL ─── */
+.col-center{flex:1;display:flex;flex-direction:column}
+.result-head{
+  background:linear-gradient(135deg,rgba(20,40,80,.9),rgba(30,50,90,.9));
+  padding:10px 16px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:2px solid rgba(60,140,255,.1);
+}
+.result-head h2{font-size:16px;font-weight:800;color:#ffd700;display:flex;align-items:center;gap:8px}
+.result-tbl{width:100%;border-collapse:collapse}
+.result-tbl th{
+  background:rgba(255,215,0,.03);color:rgba(255,215,0,.35);
+  font-size:9px;font-weight:600;padding:6px 10px;text-align:center;
+  border-bottom:1px solid rgba(60,140,255,.06);letter-spacing:.08em;text-transform:uppercase
+}
+.result-tbl td{padding:7px 10px;text-align:center;border-bottom:1px solid rgba(255,255,255,.015);vertical-align:middle}
+.result-tbl tr:nth-child(1){background:linear-gradient(90deg,rgba(255,34,68,.06),rgba(255,34,68,.01))}
+.result-tbl tr:nth-child(2){background:linear-gradient(90deg,rgba(255,215,0,.04),rgba(255,215,0,.01))}
+.result-tbl tr:last-child{background:rgba(26,188,156,.03)}
+.rw-label{font-size:11px;font-weight:600;color:rgba(255,255,255,.45);text-align:left!important;padding-left:16px!important}
+.rw-label.db{color:#ff4466;font-weight:800}.rw-label.g1{color:#ffd700;font-weight:800}.rw-label.run{color:#1abc9c}
+.rw-nums{font-size:28px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:.12em}
+.rw-nums.db{font-size:34px;color:#ff2244;text-shadow:0 0 16px rgba(255,34,68,.2)}
+.rw-nums.g1{font-size:30px;color:#ffd700}
+.rw-nums.run{color:#1abc9c}
+.rw-time{font-size:9px;color:rgba(255,255,255,.25);font-variant-numeric:tabular-nums}
+.rw-live{display:inline-flex;align-items:center;gap:3px;background:#ff2244;color:#fff;font-size:8px;font-weight:800;padding:2px 8px;border-radius:10px;box-shadow:0 0 8px rgba(255,34,68,.2)}
+.rw-live::before{content:'';width:4px;height:4px;background:#fff;border-radius:50%;animation:blink 1s infinite}
+
+/* ─── RIGHT COL ─── */
+.col-right{width:195px;display:flex;flex-direction:column;gap:8px}
+.pay-row{display:flex;justify-content:space-between;padding:4px 10px;font-size:11px;border-bottom:1px solid rgba(255,255,255,.015)}
+.pay-row .t{color:rgba(255,255,255,.4)}.pay-row .r{font-weight:800;color:#ffd700}
+.qr-panel{padding:10px;text-align:center}
+.qr-panel .qr-title{font-size:9px;color:rgba(255,215,0,.6);margin-bottom:6px}
+.qr-box{width:90px;height:90px;background:#fff;border-radius:6px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#333;font-weight:700;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.qr-sub{font-size:8px;color:rgba(255,255,255,.3);line-height:1.3}
+.wa-panel{padding:10px;text-align:center}
+.wa-icon{font-size:20px;color:#25d366;margin-bottom:2px}
+.wa-label{font-size:8px;color:rgba(255,255,255,.3)}
+.wa-num{font-size:16px;font-weight:900;color:#fff;letter-spacing:.04em;text-shadow:0 1px 4px rgba(0,0,0,.3)}
+
+/* ═══ INFO BAR ═══ */
+.info-bar{
+  position:absolute;bottom:32px;left:0;right:0;height:48px;z-index:10;
+  display:flex;gap:8px;padding:0 10px;
+}
+.info-item{
+  flex:1;background:linear-gradient(180deg,rgba(15,25,50,.8),rgba(10,18,40,.9));
+  border:1px solid rgba(60,140,255,.08);border-radius:8px;
+  display:flex;align-items:center;gap:8px;padding:0 12px;
+}
+.info-item .ii-icon{font-size:16px;color:#ffd700;opacity:.7}
+.info-item .ii-text .t1{font-size:10px;font-weight:700;color:rgba(255,255,255,.55)}
+.info-item .ii-text .t2{font-size:7px;color:rgba(255,255,255,.25)}
+
+/* ═══ FOOTER ═══ */
+.footer{
+  position:absolute;bottom:0;left:0;right:0;height:28px;z-index:10;
+  background:linear-gradient(90deg,#6b0022,#ff2244,#6b0022);
+  display:flex;align-items:center;justify-content:center;gap:30px;
+}
+.footer span{font-size:10px;font-weight:700;color:#fff;letter-spacing:.03em}
+</style>
+</head>
+<body>
+<div class="poster">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="h-flags">🇱🇦 🇻🇳</div>
+    <div class="h-center">
+      <span class="h-title">หวยลาวพัฒนา ถ่ายทอดสด</span>
+      <span class="h-live"><span style="display:inline-block;width:6px;height:6px;background:#fff;border-radius:50%;animation:blink 1s infinite"></span> LIVE</span>
+      <div class="h-sub">เปิดทุกวัน จันทร์ - ศุกร์ เวลา 14:30 น.</div>
+    </div>
+    <div class="h-logo">
+      <div class="logo-text">🐉 SOKLARP</div>
+      <div class="logo-url">www.soklarp.org</div>
+    </div>
+  </div>
+
+  <!-- MAIN 3-COL -->
+  <div class="main">
+    <!-- LEFT -->
+    <div class="col-left" style="display:flex;flex-direction:column;gap:8px">
+      <div class="panel" style="flex:0 0 auto">
+        <div class="panel-head">📅 วันที่</div>
+        <div class="dt-box">
+          <div class="dt-label">วันที่</div>
+          <div class="dt-date">14/08/2026</div>
+          <div class="dt-label" style="margin-top:4px">เวลา</div>
+          <div class="dt-clock">14:30:15</div>
+        </div>
+      </div>
+      <div class="panel" style="flex:1">
+        <div class="panel-head">🕐 ผลรางวัลล่าสุด</div>
+        <div style="padding:4px 0">
+          <div style="font-size:8px;color:rgba(255,255,255,.2);padding:2px 10px">งวดวันที่ 13/08/2026</div>
+          <div class="prev-row"><span class="l">เลข 6 ตัว</span><span class="v">638726</span></div>
+          <div class="prev-row"><span class="l">เลข 5 ตัว</span><span class="v">38726</span></div>
+          <div class="prev-row"><span class="l">เลข 4 ตัว</span><span class="v">8726</span></div>
+          <div class="prev-row"><span class="l">เลข 3 ตัว</span><span class="v">726</span></div>
+          <div class="prev-row"><span class="l">เลข 2 ตัว</span><span class="v">26</span></div>
+        </div>
+      </div>
+      <div class="bonus-box">
+        <div class="bl">🎁 สมาชิกใหม่ รับโบนัสฟรี!</div>
+        <div class="bv">50,000</div>
+        <div class="bs">กีบ</div>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="col-center panel">
+      <div class="result-head">
+        <h2>ผลหวยลาวพัฒนา <span class="h-live" style="font-size:10px;padding:3px 10px">● LIVE</span></h2>
+      </div>
+      <table class="result-tbl">
+        <thead><tr><th style="width:90px;text-align:left;padding-left:16px">รางวัล</th><th>ผลรางวัล</th><th style="width:70px">เวลาออก</th><th style="width:50px">สถานะ</th></tr></thead>
+        <tbody>
+          <tr><td class="rw-label db">🏆 เลข 6 ตัว</td><td><span class="rw-nums db">4 2 1 5 6 7</span></td><td class="rw-time">14:30:00</td><td><span class="rw-live">LIVE</span></td></tr>
+          <tr><td class="rw-label g1">⭐ เลข 5 ตัว</td><td><span class="rw-nums g1">2 1 5 6 7</span></td><td class="rw-time">14:30:00</td><td><span class="rw-live">LIVE</span></td></tr>
+          <tr><td class="rw-label">เลข 4 ตัว</td><td><span class="rw-nums">1 5 6 7</span></td><td class="rw-time">14:30:00</td><td><span class="rw-live">LIVE</span></td></tr>
+          <tr><td class="rw-label">เลข 3 ตัว</td><td><span class="rw-nums">5 6 7</span></td><td class="rw-time">14:30:00</td><td><span class="rw-live">LIVE</span></td></tr>
+          <tr><td class="rw-label">เลข 2 ตัว</td><td><span class="rw-nums">6 7</span></td><td class="rw-time">14:30:00</td><td><span class="rw-live">LIVE</span></td></tr>
+          <tr><td class="rw-label run">เลขวิ่ง</td><td><span class="rw-nums run">7</span></td><td class="rw-time">14:30:00</td><td><span class="rw-live">LIVE</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="col-right" style="display:flex;flex-direction:column;gap:8px">
+      <div class="panel" style="flex:0 0 auto">
+        <div class="panel-head">💰 อัตราจ่าย (บาทละ)</div>
+        <div style="padding:2px 0">
+          <div class="pay-row"><span class="t">6 ตัว</span><span class="r">100</span></div>
+          <div class="pay-row"><span class="t">5 ตัว</span><span class="r">100</span></div>
+          <div class="pay-row"><span class="t">4 ตัว</span><span class="r">100</span></div>
+          <div class="pay-row"><span class="t">3 ตัว</span><span class="r">100</span></div>
+          <div class="pay-row"><span class="t">2 ตัว</span><span class="r">100</span></div>
+          <div class="pay-row" style="border:none"><span class="t">เลขวิ่ง</span><span class="r">3.2</span></div>
+        </div>
+      </div>
+      <div class="panel" style="flex:1">
+        <div class="panel-head">📱 สมัครสมาชิก / เข้ากลุ่ม</div>
+        <div class="qr-panel">
+          <div class="qr-box">
+            <div>
+              <div style="width:70px;height:70px;background:repeating-conic-gradient(#333 0% 25%,#fff 0% 50%) 0 0/14px 14px;border-radius:2px"></div>
+            </div>
+          </div>
+          <div class="qr-title">สแกน QR CODE</div>
+          <div class="qr-sub">เข้ากลุ่มรับเลขเด็ด<br>และกิจกรรมพิเศษ!</div>
+        </div>
+      </div>
+      <div class="panel" style="flex:0 0 auto">
+        <div class="panel-head">📞 ติดต่อสอบถาม</div>
+        <div class="wa-panel">
+          <div class="wa-icon">💬</div>
+          <div class="wa-label">WhatsApp</div>
+          <div class="wa-num">020 9121 8984</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFO BAR -->
+  <div class="info-bar">
+    <div class="info-item">
+      <span class="ii-icon">🛡️</span>
+      <div class="ii-text"><div class="t1">มั่นคง ปลอดภัย</div><div class="t2">ระบบมาตรฐานสากล</div></div>
+    </div>
+    <div class="info-item">
+      <span class="ii-icon">⚡</span>
+      <div class="ii-text"><div class="t1">อัพเดทผลเร็ว</div><div class="t2">ก่อนใครทุกวัน</div></div>
+    </div>
+    <div class="info-item">
+      <span class="ii-icon">🏆</span>
+      <div class="ii-text"><div class="t1">จ่ายจริง โอนไว</div><div class="t2">มั่นใจ 100%</div></div>
+    </div>
+    <div class="info-item">
+      <span class="ii-icon">👥</span>
+      <div class="ii-text"><div class="t1">ทีมงานมืออาชีพ</div><div class="t2">บริการ 24 ชั่วโมง</div></div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <span>เว็บสายตรง มั่นคง เชื่อถือได้</span>
+    <span>•</span>
+    <span>เปิดให้บริการมากกว่า 5 ปี</span>
+    <span>•</span>
+    <span>แทงง่าย จ่ายจริง โอนไว 100%</span>
+  </div>
+</div>
+</body>
+</html>

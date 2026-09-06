@@ -1,0 +1,161 @@
+.cta-complete {
+  position: relative;
+  margin: 28px auto 24px;
+  max-width: 1180px;
+  padding: 0 16px;
+}
+
+/* Prevent viewport locking that can clip homepage sections on some devices. */
+body.home-page {
+  height: auto !important;
+  min-height: 100vh;
+  overflow-y: auto !important;
+}
+
+body.home-page .main,
+body.home-page .main-inner {
+  min-height: auto !important;
+}
+
+html,
+body,
+button,
+input,
+textarea,
+select,
+a,
+.title01,
+.title02,
+.footer-title,
+.footer-list a,
+.partner-name,
+.phishing-title,
+.cta-complete-card,
+.cta-complete-card h3,
+.cta-complete-card p,
+.access-text,
+.btn-signup button,
+.contact-footer button,
+.customer-service,
+.customer-service p,
+.customer-service h2 {
+  font-family: "SF Pro Display", sans-serif;
+}
+
+.footer-title,
+.title01,
+.title02,
+.cta-complete-card h3,
+.phishing-title {
+  letter-spacing: 0;
+}
+
+.scan-title,
+.platform-icon,
+.platform-icon img,
+.install-btn,
+.install-btn button,
+.install-btn .app-name,
+.install-btn .app-name p,
+.install-btn .install-text,
+#noApp,
+#noApp p,
+#noApp .install-text,
+.custom-pc .btn-web,
+.register-btn button {
+  font-family: "SF Pro Display", sans-serif;
+}
+
+.install-btn .app-name,
+#noApp,
+#noApp p,
+#noApp .install-text {
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.cta-complete-inner {
+  border: 1px solid rgba(255, 213, 111, 0.35);
+  background: linear-gradient(180deg, rgba(36, 9, 8, 0.95) 0%, rgba(20, 5, 4, 0.96) 100%);
+  border-radius: 18px;
+  padding: 20px 18px 18px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+}
+
+.cta-complete-inner h2 {
+  margin: 0 0 8px;
+  color: #ffd56f;
+  font-size: clamp(20px, 2.3vw, 28px);
+  line-height: 1.2;
+}
+
+.cta-complete-inner > p {
+  margin: 0 0 14px;
+  color: rgba(255, 229, 183, 0.92);
+  font-size: 15px;
+}
+
+.cta-complete-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cta-complete-card {
+  display: block;
+  text-decoration: none;
+  border: 1px solid rgba(255, 213, 111, 0.28);
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.cta-complete-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 213, 111, 0.55);
+  background: rgba(255, 213, 111, 0.07);
+}
+
+.cta-complete-card .badge {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 213, 111, 0.18);
+  color: #ffeec7;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.cta-complete-card h3 {
+  margin: 0 0 4px;
+  color: #ffd56f;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.cta-complete-card p {
+  margin: 0;
+  color: rgba(255, 229, 183, 0.92);
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .cta-complete-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Keep legacy chat-button visibility behavior after deduplicating IDs. */
+#openChatBtnSide,
+#openChatBtnFooter {
+  display: none;
+}
+
+#openChatBtnSide.show-chat,
+#openChatBtnFooter.show-chat {
+  display: block;
+}

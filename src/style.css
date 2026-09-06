@@ -1,0 +1,4036 @@
+/* Critical: set html bg first to prevent white flash */
+html { background: #1e0610; height: 100%; }
+
+:root {
+  /* ─── Primary tokens (aligned with live-laos plum VIP) ─── */
+  --plum: #1e0610;
+  --plum2: #2a0a1a;
+  --plum3: #3d1228;
+  --bg: #1e0610;
+  --bg-card: #2a0a1a;
+  --bg-input: #3d1228;
+  --gold: #ffd700;
+  --gold-light: #ffe766;
+  --gold-dark: #c9a800;
+  --gold-grad: linear-gradient(135deg, #ffe766 0%, #ffd700 40%, #c9a800 80%, #8a7000 100%);
+  --gold-glow: 0 0 20px rgba(255,215,0,.28);
+  --border: rgba(255,180,200,.12);
+  --text: #fff8f0;
+  --muted: rgba(255,255,255,.45);
+  --win: #1abc9c;
+  --lose: #ff2244;
+  --radius-card: 18px;
+  --radius-btn: 12px;
+  --wine: #8b2252;
+
+  /* ─── Legacy aliases (used by JS-rendered HTML) ─── */
+  --bg-primary: #1e0610;
+  --bg-secondary: #2a0a1a;
+  --bg-tertiary: #3d1228;
+  --gold-primary: #ffd700;
+  --gold-gradient: linear-gradient(135deg, #ffe766 0%, #ffd700 40%, #c9a800 80%, #8a7000 100%);
+  --border-color: rgba(255,180,200,.12);
+  --text-main: #fff8f0;
+  --text-muted: rgba(255,255,255,.45);
+  --color-win: #1abc9c;
+  --color-lose: #ff2244;
+  --color-pending: #ffd700;
+}
+
+/* SECTION 1: Reset & Base */
+html {
+  background: #1e0610;
+  height: 100%;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans Lao', 'Kanit', sans-serif;
+  background: #060006;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* SECTION 2: Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(245,200,66,.2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(245,200,66,.4); }
+::selection { background: rgba(245,200,66,.25); color: #fff; }
+
+/* SECTION 3: Background glow */
+.glow-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: 
+    radial-gradient(ellipse 60% 40% at 20% 15%, rgba(100,0,0,.15) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 85%, rgba(60,0,80,.1) 0%, transparent 70%);
+}
+
+/* SECTION 4: Typography utilities */
+.gold-text { color: var(--gold); }
+.win-text { color: var(--win); }
+.lose-text { color: var(--lose); }
+.muted-text { color: var(--muted); }
+.hidden { display: none !important; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 99px; font-size: .7rem; font-weight: 700; }
+.badge-pending { background: rgba(255,200,0,.12); border: 1px solid rgba(255,200,0,.2); color: #ffd700; }
+.badge-win { background: rgba(0,230,118,.12); border: 1px solid rgba(0,230,118,.18); color: #00e676; }
+.badge-lose { background: rgba(255,68,68,.1); border: 1px solid rgba(255,68,68,.18); color: #ff6060; }
+
+/* SECTION 5: Header */
+.luxury-header {
+  position: sticky; top: 0; z-index: 1000; width: 100%;
+  background: linear-gradient(90deg, rgba(8,0,6,.97) 0%, rgba(6,0,8,.97) 100%);
+  border-bottom: 1px solid rgba(245,200,66,.08);
+  backdrop-filter: blur(12px);
+}
+.header-inner {
+  max-width: 1400px; margin: 0 auto; padding: 0 24px; height: 62px; display: flex; align-items: center; gap: 12px;
+}
+.header-logo {
+  display: flex; align-items: center; gap: 8px; font-size: 1.15rem; font-weight: 900; background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-decoration: none;
+}
+.header-logo i { -webkit-text-fill-color: var(--gold); }
+.header-user-info { display: flex; align-items: center; gap: 8px; }
+.h-nickname { font-size: .85rem; font-weight: 700; color: #fdf3e0; }
+.h-vip-icon { color: var(--gold); font-size: .9rem; }
+.h-vip-name { font-size: .75rem; font-weight: 700; color: var(--gold); text-transform: uppercase; }
+.role-badge { padding: 3px 8px; border-radius: 99px; font-size: .65rem; font-weight: 800; background: rgba(245,200,66,.15); color: var(--gold); }
+.header-spacer { flex: 1; }
+.header-balance-box {
+  display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 99px; border: 1px solid rgba(245,200,66,.2); background: rgba(0,0,0,.4); height: 36px;
+}
+.h-balance { font-size: .9rem; font-weight: 800; color: var(--gold); }
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.btn-icon-hdr { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); color: rgba(255,255,255,.6); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s; font-size: 1rem; }
+.btn-icon-hdr:hover { background: rgba(245,200,66,.1); color: var(--gold); border-color: rgba(245,200,66,.25); }
+.btn-hdr-pill, .btn-daily-pill, .btn-admin-pill, .btn-logout-hdr {
+  height: 36px; padding: 0 14px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); color: rgba(255,255,255,.7); font-family: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all .2s; text-decoration: none;
+}
+.btn-hdr-pill:hover, .btn-daily-pill:hover, .btn-admin-pill:hover, .btn-logout-hdr:hover {
+  background: rgba(245,200,66,.1); color: var(--gold); border-color: rgba(245,200,66,.25);
+}
+.hdr-cart-btn { position: relative; }
+.cart-badge { position: absolute; top: -4px; right: -4px; background: #ff4444; color: #fff; font-size: .6rem; font-weight: 900; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+/* SECTION 6: Live Ticker */
+.live-ticker { background: rgba(0,0,0,.5); border-bottom: 1px solid rgba(245,200,66,.06); padding: 7px 20px; display: flex; align-items: center; gap: 14px; overflow: hidden; }
+.ticker-label { font-size: .75rem; font-weight: 800; color: var(--gold); text-transform: uppercase; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
+.ticker-text { font-size: .82rem; color: rgba(245,200,66,.55); white-space: nowrap; animation: ticker-scroll 35s linear infinite; }
+@keyframes ticker-scroll { from { transform: translateX(100vw); } to { transform: translateX(-100%); } }
+
+/* SECTION 7: View Sections */
+.view-section {
+  width: 100%;
+  flex: 1;
+}
+.view-section:not(.auth-split) {
+  padding: 0;
+  min-height: calc(100vh - 62px);
+}
+.inner-wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+}
+
+/* SECTION 8: Auth Page */
+.auth-split { display: flex; min-height: 100dvh; min-height: 100vh; }
+.auth-left-panel { flex: 1.1; background: linear-gradient(160deg, #1e0101 0%, #0a0000 60%, #140000 100%); display: flex; align-items: center; justify-content: center; padding: 48px 40px; position: relative; overflow: hidden; }
+.auth-left-panel::before { content: ''; position: absolute; top: -100px; left: -100px; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(180,0,0,.12), transparent 70%); pointer-events: none; }
+.auth-left-inner { width: 100%; max-width: 380px; position: relative; z-index: 2; }
+.auth-big-dragon { font-size: 7rem; display: block; margin-bottom: 18px; animation: dragon-breathe 3.5s ease-in-out infinite; filter: drop-shadow(0 0 20px rgba(180,0,0,.4)); line-height: 1; }
+@keyframes dragon-breathe { 0%,100%{ transform: scale(1) rotate(-3deg); filter: drop-shadow(0 0 20px rgba(180,0,0,.4)); } 50% { transform: scale(1.08) rotate(3deg); filter: drop-shadow(0 0 50px rgba(255,100,0,.6)); } }
+.auth-brand-name { font-size: clamp(2.2rem, 4vw, 3.2rem); font-weight: 900; background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -.03em; line-height: 1.1; margin-bottom: 8px; }
+.auth-brand-tagline { font-size: .92rem; color: rgba(245,200,66,.45); margin-bottom: 32px; }
+.auth-feature-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px; }
+.auth-feat-item { display: flex; align-items: center; gap: 14px; font-size: .9rem; color: rgba(255,220,170,.65); }
+.auth-feat-check { width: 28px; height: 28px; border-radius: 50%; background: rgba(245,200,66,.08); border: 1.5px solid rgba(245,200,66,.25); display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: .7rem; flex-shrink: 0; }
+.auth-left-divider { border: none; border-top: 1px solid rgba(245,200,66,.08); margin: 26px 0; }
+.auth-trust-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
+.auth-trust-badge { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); border-radius: 9px; padding: 6px 13px; font-size: .72rem; color: rgba(255,255,255,.4); display: flex; align-items: center; gap: 5px; }
+.auth-trust-badge i { color: var(--gold); }
+.auth-stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.auth-stat-box { background: rgba(245,200,66,.04); border: 1px solid rgba(245,200,66,.1); border-radius: 14px; padding: 14px 8px; text-align: center; }
+.auth-stat-num { font-size: 1.4rem; font-weight: 900; color: var(--gold); display: block; }
+.auth-stat-label { font-size: .65rem; color: rgba(245,200,66,.35); margin-top: 3px; display: block; }
+.auth-right-panel { flex: 1; background: linear-gradient(155deg, #07000a 0%, #040006 100%); display: flex; align-items: center; justify-content: center; padding: 48px 36px; position: relative; overflow: hidden; }
+.auth-right-panel::before { content: ''; position: absolute; bottom: -80px; right: -80px; width: 350px; height: 350px; border-radius: 50%; background: radial-gradient(circle, rgba(80,0,100,.1), transparent 70%); pointer-events: none; }
+.auth-form-card { width: 100%; max-width: 440px; background: rgba(255,255,255,.022); border: 1px solid rgba(245,200,66,.1); border-radius: 26px; padding: 40px 36px; position: relative; overflow: hidden; box-shadow: 0 25px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(245,200,66,.08); }
+.auth-form-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, rgba(245,200,66,.65), transparent); }
+.auth-tab-row { display: flex; background: rgba(0,0,0,.45); border: 1px solid rgba(245,200,66,.08); border-radius: 14px; padding: 4px; gap: 4px; margin-bottom: 30px; }
+.auth-tab { flex: 1; padding: 11px 8px; border-radius: 10px; background: transparent; border: none; font-family: inherit; font-size: .88rem; font-weight: 700; color: rgba(255,255,255,.28); display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all .25s ease; }
+.auth-tab.active { background: var(--gold-grad); color: #1a0000; box-shadow: 0 4px 18px rgba(200,150,0,.3); }
+.auth-tab:not(.active):hover { color: rgba(245,200,66,.65); background: rgba(245,200,66,.05); }
+.auth-welcome { margin-bottom: 24px; }
+.auth-welcome-title { font-size: 1.25rem; font-weight: 900; color: #fdf0dc; margin-bottom: 5px; }
+.auth-welcome-sub { font-size: .8rem; color: rgba(245,200,66,.38); }
+.form-field { margin-bottom: 18px; }
+.form-field label { display: flex; align-items: center; gap: 7px; font-size: .76rem; font-weight: 600; color: rgba(245,200,66,.55); margin-bottom: 8px; }
+.form-field input { width: 100%; padding: 14px 18px; background: rgba(0,0,0,.55); border: 1.5px solid rgba(245,200,66,.1); border-radius: 13px; color: #fdf3e0; font-family: inherit; font-size: .95rem; transition: border-color .2s, box-shadow .2s; }
+.form-field input:focus { outline: none; border-color: rgba(245,200,66,.5); box-shadow: 0 0 0 3px rgba(245,200,66,.07); }
+.form-field input::placeholder { color: rgba(255,255,255,.18); }
+.btn-auth-submit { width: 100%; padding: 15px; border-radius: 14px; background: var(--gold-grad); color: #1a0000; font-family: inherit; font-size: 1rem; font-weight: 900; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 9px; box-shadow: 0 6px 24px rgba(200,150,0,.4); transition: all .2s ease; margin-top: 10px; letter-spacing: .02em; }
+.btn-auth-submit:hover { filter: brightness(1.1); transform: translateY(-2px); }
+.btn-quick-admin { width: 100%; margin-top: 10px; padding: 10px; border-radius: 11px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); color: rgba(255,255,255,.35); font-family: inherit; font-size: .82rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all .2s; }
+.btn-quick-admin:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.65); }
+.auth-register-bonus { background: linear-gradient(135deg, rgba(140,0,0,.18), rgba(50,0,0,.12)); border: 1px solid rgba(255,100,50,.16); border-radius: 12px; padding: 12px 16px; font-size: .82rem; color: #ffb090; display: flex; align-items: center; gap: 9px; margin-bottom: 20px; }
+.auth-register-bonus .bonus-amount { font-size: 1.05rem; font-weight: 900; color: var(--gold); }
+.auth-mobile-brand { display: none; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 24px; }
+.auth-mobile-dragon { font-size: 3rem; animation: dragon-breathe 3.5s ease-in-out infinite; }
+.auth-mobile-title { font-size: 1.6rem; font-weight: 900; background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.auth-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
+
+/* SECTION 9: Lobby */
+/* Jackpot Banner */
+.jackpot-banner {
+  background: linear-gradient(135deg, #3a0000 0%, #1a0000 50%, #300020 100%);
+  border-bottom: 2px solid rgba(245,200,66,.2);
+  padding: 28px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.jackpot-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(245,200,66,.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.jackpot-label {
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  color: rgba(245,200,66,.55);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.jackpot-number {
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 900;
+  background: var(--gold-grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+  display: block;
+  animation: jackpot-glow 2s ease-in-out infinite alternate;
+  letter-spacing: -.02em;
+}
+@keyframes jackpot-glow {
+  from { filter: drop-shadow(0 0 8px rgba(245,200,66,.3)); }
+  to { filter: drop-shadow(0 0 30px rgba(245,200,66,.8)); }
+}
+.jackpot-sub { font-size: .82rem; color: rgba(255,255,255,.3); margin-top: 6px; }
+
+/* Lobby heading */
+.lobby-heading {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--gold);
+  padding: 22px 24px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(245,200,66,.06);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+/* Lottery Grid */
+.lottery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  padding: 18px 24px;
+}
+
+/* Lottery card */
+.lottery-card {
+  background: linear-gradient(145deg, #160000, #0d000d);
+  border: 1px solid rgba(245,200,66,.1);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+  position: relative;
+  overflow: hidden;
+}
+.lottery-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--gold-grad);
+  opacity: 0;
+  transition: opacity .22s;
+}
+.lottery-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(245,200,66,.18);
+}
+.lottery-card:hover::before { opacity: 1; }
+.lottery-card h3 { font-size: 1rem; font-weight: 800; color: #fdf3e0; margin: 0; }
+.lottery-card .lc-meta { font-size: .75rem; color: rgba(245,200,66,.4); }
+.lottery-card .lc-prize { font-size: 1.1rem; font-weight: 900; color: var(--gold); }
+.lottery-card .lc-btn {
+  background: var(--gold-grad);
+  color: #1a0000;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: .85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: auto;
+}
+.lottery-card .lc-btn:hover { filter: brightness(1.12); }
+
+/* VN section */
+.vn-section-banner {
+  background: linear-gradient(135deg, #00100a, #000a06);
+  border-top: 1px solid rgba(245,200,66,.06);
+  border-bottom: 1px solid rgba(245,200,66,.06);
+  padding: 14px 24px;
+  font-size: .8rem;
+  color: rgba(255,255,255,.4);
+}
+.vn-section-banner strong { color: rgba(245,200,66,.7); font-size: .88rem; }
+
+/* Mini games */
+.mini-games-section { padding: 8px 24px 28px; }
+.section-title {
+  font-size: .78rem;
+  font-weight: 800;
+  color: rgba(245,200,66,.55);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(245,200,66,.06);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.mini-games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+}
+.mini-game-card {
+  background: linear-gradient(145deg, #140010, #0a000a);
+  border: 1px solid rgba(245,200,66,.08);
+  border-radius: 16px;
+  padding: 18px 10px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.mini-game-card:hover {
+  transform: translateY(-4px);
+  background: rgba(245,200,66,.05);
+  border-color: rgba(245,200,66,.25);
+  box-shadow: 0 10px 28px rgba(0,0,0,.5);
+}
+.mg-icon { font-size: 2.2rem; line-height: 1; display: block; }
+.mg-label { font-size: .75rem; font-weight: 700; color: rgba(255,255,255,.5); text-align: center; line-height: 1.3; }
+.mini-game-card:hover .mg-label { color: rgba(245,200,66,.8); }
+.mg-play-btn {
+  width: 100%;
+  padding: 7px 4px;
+  background: var(--gold-grad);
+  border: none;
+  border-radius: 8px;
+  color: #1a0000;
+  font-family: inherit;
+  font-size: .72rem;
+  font-weight: 900;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: filter .15s;
+}
+.mg-play-btn:hover { filter: brightness(1.1); }
+
+/* SECTION 10: Betting Room */
+.betting-flex-wrap { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; padding: 20px 24px; }
+.ai-panel-card { flex: 1; min-width: 220px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 20px; }
+.ai-panel-card h3 { font-size: .9rem; color: var(--gold); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.betting-form-card { flex: 2; min-width: 280px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 20px; }
+.cart-card { flex: 1; min-width: 240px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 20px; }
+.cart-card h3, .betting-form-card h3 { font-size: .9rem; color: var(--gold); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.room-info-bar { background: rgba(0,0,0,.3); border: 1px solid rgba(245,200,66,.08); border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 24px 16px; }
+
+/* SECTION 11: Form controls */
+.input-group { margin-bottom: 16px; }
+.input-group label { display: block; font-size: .76rem; color: rgba(245,200,66,.55); font-weight: 600; margin-bottom: 7px; }
+.input-group input, .input-group select, .form-field input, .form-field select {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(0,0,0,.5);
+  border: 1.5px solid rgba(245,200,66,.1);
+  border-radius: 12px;
+  color: #fdf3e0;
+  font-family: inherit;
+  font-size: .9rem;
+  transition: border-color .2s, box-shadow .2s;
+}
+.input-group input:focus, .form-field input:focus { outline: none; border-color: rgba(245,200,66,.5); box-shadow: 0 0 0 3px rgba(245,200,66,.07); }
+.input-group input::placeholder, .form-field input::placeholder { color: rgba(255,255,255,.18); }
+
+/* SECTION 12: Buttons */
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 20px;
+  border-radius: var(--radius-btn);
+  background: var(--gold-grad);
+  color: #1a0000;
+  font-family: inherit;
+  font-size: .95rem;
+  font-weight: 900;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 5px 20px rgba(200,150,0,.3);
+  transition: all .2s ease;
+  letter-spacing: .02em;
+}
+.btn-gold:hover { filter: brightness(1.1); transform: translateY(-2px); }
+.btn-gold:disabled { filter: grayscale(.7); opacity: .5; cursor: not-allowed; transform: none; }
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.09);
+  color: rgba(255,255,255,.55);
+  font-family: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+}
+.action-btn:hover { background: rgba(245,200,66,.1); color: rgba(245,200,66,.8); border-color: rgba(245,200,66,.25); }
+
+.quick-btn {
+  padding: 7px 15px;
+  border-radius: 9px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  color: rgba(255,255,255,.5);
+  font-family: inherit;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.quick-btn:hover, .quick-btn.active { background: rgba(245,200,66,.12); color: rgba(245,200,66,.85); border-color: rgba(245,200,66,.3); }
+
+.bet-cat-btn { padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); color: rgba(255,255,255,.4); font-family: inherit; font-size: .78rem; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all .2s; display: inline-flex; align-items: center; gap: 6px; }
+.bet-cat-btn.active { background: var(--gold-grad); color: #1a0000; border-color: transparent; }
+.bet-cat-btn:not(.active):hover { background: rgba(245,200,66,.1); color: rgba(245,200,66,.8); border-color: rgba(245,200,66,.25); }
+
+.tab-btn { padding: 9px 20px; background: transparent; border: none; border-bottom: 2px solid transparent; color: rgba(255,255,255,.35); font-family: inherit; font-size: .88rem; font-weight: 700; cursor: pointer; transition: all .2s; }
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* SECTION 13: Game views shared */
+.game-view-wrap { max-width: 860px; margin: 0 auto; padding: 22px 20px 48px; width: 100%; }
+.game-nav-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid rgba(245,200,66,.07); }
+.game-back-btn { background: rgba(245,200,66,.07); border: 1px solid rgba(245,200,66,.18); color: rgba(245,200,66,.7); padding: 7px 18px; border-radius: 99px; font-size: .78rem; display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-family: inherit; transition: all .2s; }
+.game-back-btn:hover { background: rgba(245,200,66,.14); color: var(--gold); }
+.game-nav-title { font-size: 1.1rem; font-weight: 900; color: var(--gold); display: flex; align-items: center; gap: 8px; flex: 1; }
+.game-panel { background: linear-gradient(145deg, #140010, #0a000a); border: 1px solid rgba(245,200,66,.1); border-radius: 22px; overflow: hidden; margin-bottom: 16px; }
+.game-panel-body { padding: 24px 22px; }
+.game-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid rgba(245,200,66,.07); }
+.game-header h2 { font-size: clamp(1rem,2.5vw,1.35rem); font-weight: 900; color: var(--gold); margin: 0; }
+.payout-info-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 16px 0; }
+.payout-chip { background: rgba(245,200,66,.06); border: 1px solid rgba(245,200,66,.13); border-radius: 11px; padding: 9px 16px; text-align: center; min-width: 72px; }
+.payout-chip-label { font-size: .62rem; color: rgba(255,255,255,.32); display: block; margin-bottom: 3px; }
+.payout-chip-rate { font-size: .95rem; font-weight: 900; color: var(--gold); }
+.game-quick-bets { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 12px 0; }
+.game-qbet { background: rgba(0,0,0,.4); border: 1px solid rgba(245,200,66,.1); color: rgba(245,200,66,.6); padding: 6px 13px; border-radius: 8px; font-size: .76rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: all .15s; }
+.game-qbet:hover { background: rgba(245,200,66,.12); color: var(--gold); border-color: rgba(245,200,66,.35); }
+.game-qbet:active { transform: scale(.93); }
+.game-amount-group { margin: 16px 0; text-align: center; }
+.game-amount-label { font-size: .76rem; color: rgba(245,200,66,.5); margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; }
+.game-amt-input { width: 100%; max-width: 300px; padding: 13px 18px; background: rgba(0,0,0,.5); border: 1.5px solid rgba(245,200,66,.12); border-radius: 13px; color: #fdf3e0; font-family: inherit; font-size: 1.05rem; text-align: center; transition: border-color .2s; }
+.game-amt-input:focus { outline: none; border-color: rgba(245,200,66,.5); box-shadow: 0 0 0 3px rgba(245,200,66,.07); }
+.btn-game-play { min-width: 200px; padding: 14px 30px; border-radius: 14px; background: var(--gold-grad); color: #1a0000; font-family: inherit; font-size: 1rem; font-weight: 900; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 9px; box-shadow: 0 6px 22px rgba(200,150,0,.35); transition: all .2s ease; letter-spacing: .02em; }
+.btn-game-play:hover { filter: brightness(1.1); transform: translateY(-2px); }
+.btn-game-play:disabled { filter: grayscale(.7); opacity: .5; cursor: not-allowed; transform: none; }
+.game-status-msg { text-align: center; padding: 12px; font-size: .9rem; font-weight: 700; min-height: 24px; color: rgba(245,200,66,.6); }
+.play-area { display: flex; flex-direction: column; align-items: center; gap: 18px; background: rgba(0,0,0,.25); border: 1px solid rgba(245,200,66,.07); border-radius: 18px; padding: 28px 22px; margin-bottom: 16px; }
+.big-display { font-size: 5rem; line-height: 1; text-align: center; margin: 8px 0; }
+.flex-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; width: 100%; }
+.status-msg { text-align: center; padding: 10px; font-size: .9rem; font-weight: 700; min-height: 24px; color: var(--gold); }
+.history-box { background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.05); border-radius: 13px; padding: 13px; max-height: 180px; overflow-y: auto; width: 100%; font-size: .78rem; }
+
+/* SECTION 14: Individual Games */
+/* Coin flip */
+.coin-anim { font-size: 5rem; display: block; text-align: center; margin: 16px 0; animation: coin-spin 4s ease-in-out infinite; }
+@keyframes coin-spin { 0%,100%{transform:rotateY(0)} 50%{transform:rotateY(180deg)} }
+.coin-selector { display: flex; gap: 14px; justify-content: center; margin: 14px 0; }
+#coin-btn-head, #coin-btn-tail { flex: 1; max-width: 160px; padding: 16px; border-radius: 16px; border: 2px solid transparent; font-family: inherit; font-size: .95rem; font-weight: 800; cursor: pointer; transition: all .22s; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#coin-btn-head { background: rgba(245,200,66,.08); border-color: rgba(245,200,66,.2); color: rgba(245,200,66,.75); }
+#coin-btn-tail { background: rgba(180,180,220,.08); border-color: rgba(180,180,220,.2); color: rgba(200,200,240,.7); }
+#coin-btn-head.selected, #coin-btn-head:hover { background: rgba(245,200,66,.18); border-color: var(--gold); color: var(--gold); box-shadow: 0 0 22px rgba(245,200,66,.18); }
+#coin-btn-tail.selected, #coin-btn-tail:hover { background: rgba(180,180,255,.15); border-color: #aaaaff; color: #ccccff; }
+#btn-spin-coin { min-width: 180px; padding: 13px 24px; border-radius: 13px; background: var(--gold-grad); color: #1a0000; font-family: inherit; font-size: .95rem; font-weight: 900; border: none; cursor: pointer; box-shadow: 0 5px 18px rgba(200,150,0,.3); transition: all .2s; display: inline-flex; align-items: center; gap: 8px; }
+#btn-spin-coin:hover { filter: brightness(1.1); transform: translateY(-2px); }
+
+/* Slot machine */
+.slot-machine-wrap { background: linear-gradient(160deg,rgba(60,5,5,.5),rgba(25,0,0,.75)); border: 2px solid rgba(245,200,66,.18); border-radius: 20px; padding: 26px 22px; margin-bottom: 18px; }
+.slot-lights { display: flex; justify-content: center; gap: 10px; margin-bottom: 16px; }
+.slot-light { width: 9px; height: 9px; border-radius: 50%; animation: blink 1.5s ease-in-out infinite; }
+.slot-light:nth-child(odd) { background: var(--gold); }
+.slot-light:nth-child(even) { background: #ff4444; animation-delay: .75s; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.12} }
+.slot-reels { display: flex; gap: 16px; justify-content: center; }
+.slot-reel { width: 96px; height: 96px; font-size: 3rem; background: linear-gradient(180deg,#1a0000,#050000); border: 2px solid rgba(245,200,66,.22); border-radius: 16px; box-shadow: inset 0 4px 12px rgba(0,0,0,.8); display: flex; align-items: center; justify-content: center; transition: all .3s; }
+.slot-reel.slot-spinning { animation: reel-shake .08s linear infinite; }
+@keyframes reel-shake { 0%{transform:translateY(-3px)} 50%{transform:translateY(3px)} 100%{transform:translateY(-3px)} }
+
+/* Crash */
+.crash-visual { background: linear-gradient(180deg,rgba(0,0,15,.92),rgba(20,0,5,.7)); border: 1px solid rgba(245,200,66,.07); border-radius: 18px; padding: 36px 22px; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 18px; }
+.crash-grid-lines { position: absolute; inset: 0; background-image: linear-gradient(rgba(245,200,66,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(245,200,66,.03) 1px,transparent 1px); background-size: 44px 44px; pointer-events: none; }
+.crash-rocket { font-size: 3.2rem; display: block; margin-bottom: 8px; position: relative; z-index: 2; }
+.crash-mult { font-size: 4rem; font-weight: 900; font-family: monospace; background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; position: relative; z-index: 2; animation: mult-glow .6s ease-in-out infinite alternate; }
+@keyframes mult-glow { from{filter:drop-shadow(0 0 8px rgba(245,200,66,.3))} to{filter:drop-shadow(0 0 26px rgba(245,200,66,.8))} }
+.crash-status-sub { font-size: .82rem; color: rgba(255,255,255,.32); margin-top: 8px; z-index: 2; }
+
+/* Mines */
+.mines-layout { display: grid; grid-template-columns: 1fr 270px; gap: 18px; align-items: start; }
+.mines-board-wrap { background: rgba(0,0,0,.3); border: 1px solid rgba(245,200,66,.07); border-radius: 18px; padding: 20px; }
+.mines-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 9px; }
+.mines-tile { aspect-ratio: 1; border-radius: 12px; font-size: 1.5rem; background: linear-gradient(145deg,rgba(40,5,5,.9),rgba(20,0,0,.95)); border: 1.5px solid rgba(245,200,66,.1); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; user-select: none; }
+.mines-tile:hover:not([disabled]) { background: rgba(245,200,66,.1); border-color: rgba(245,200,66,.4); transform: scale(1.07); box-shadow: 0 4px 14px rgba(0,0,0,.5); }
+.mines-control-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 13px; }
+.mines-stat { background: rgba(0,0,0,.4); border: 1px solid rgba(245,200,66,.07); border-radius: 11px; padding: 11px 16px; }
+.mines-stat-label { font-size: .65rem; color: rgba(255,255,255,.28); margin-bottom: 3px; }
+.mines-stat-value { font-size: 1.15rem; font-weight: 900; color: var(--gold); }
+.btn-cashout { width: 100%; padding: 13px; border-radius: 12px; background: linear-gradient(135deg,#00c853,#00e676); color: #001a0a; font-family: inherit; font-size: .92rem; font-weight: 900; border: none; cursor: pointer; transition: all .2s; }
+.btn-cashout:hover { filter: brightness(1.12); }
+.btn-cashout:disabled { filter: grayscale(.8); opacity: .4; cursor: not-allowed; }
+.btn-cashout-mines { width: 100%; padding: 13px; border-radius: 12px; background: linear-gradient(135deg,#00c853,#00e676); color: #001a0a; font-family: inherit; font-size: .92rem; font-weight: 900; border: none; cursor: pointer; transition: all .2s; }
+.btn-cashout-mines:hover { filter: brightness(1.12); }
+.btn-cashout-mines:disabled { filter: grayscale(.8); opacity: .4; cursor: not-allowed; }
+
+/* Plinko */
+.plinko-board { background: rgba(0,0,0,.4); border: 1px solid rgba(245,200,66,.09); border-radius: 18px; padding: 22px; margin-bottom: 16px; }
+.plinko-ball { font-size: 1.8rem; display: block; text-align: center; margin: 10px 0; animation: ball-float 2s ease-in-out infinite; }
+@keyframes ball-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+.plinko-peg-row { display: flex; justify-content: center; gap: 18px; margin-bottom: 10px; }
+.plinko-peg { width: 10px; height: 10px; border-radius: 50%; background: rgba(245,200,66,.35); box-shadow: 0 0 5px rgba(245,200,66,.2); }
+.plinko-slots { display: flex; gap: 5px; margin-top: 12px; overflow-x: auto; }
+.plinko-slot { flex: 1; padding: 8px 2px; border-radius: 8px; text-align: center; font-size: .68rem; font-weight: 800; min-width: 32px; }
+.plinko-slot-low { background: rgba(255,68,68,.18); border: 1px solid rgba(255,68,68,.2); color: #ff8080; }
+.plinko-slot-mid { background: rgba(245,200,66,.1); border: 1px solid rgba(245,200,66,.16); color: var(--gold); }
+.plinko-slot-hi { background: rgba(0,230,118,.13); border: 1px solid rgba(0,230,118,.18); color: #00e676; }
+.plinko-slot-max { background: rgba(100,100,255,.18); border: 1px solid rgba(100,100,255,.25); color: #99aaff; }
+
+/* Dragon Tiger */
+.dt-arena { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: stretch; margin-bottom: 18px; }
+.dt-fighter-card { border-radius: 20px; padding: 22px 16px; text-align: center; cursor: pointer; transition: all .25s; position: relative; overflow: hidden; border: 2px solid transparent; }
+.dt-fighter-card.dragon-card { background: linear-gradient(135deg,rgba(80,0,0,.5),rgba(30,0,0,.85)); border-color: rgba(255,60,60,.15); }
+.dt-fighter-card.tiger-card { background: linear-gradient(135deg,rgba(0,60,20,.5),rgba(0,20,10,.85)); border-color: rgba(60,200,100,.15); }
+.dt-fighter-card.dragon-card.selected { border-color: #ff6060; box-shadow: 0 0 22px rgba(255,80,80,.3); }
+.dt-fighter-card.tiger-card.selected { border-color: #60ff90; box-shadow: 0 0 22px rgba(60,255,100,.3); }
+.dt-fighter-emoji { font-size: 3.2rem; display: block; margin-bottom: 10px; }
+.dt-fighter-name { font-size: .95rem; font-weight: 800; margin-bottom: 5px; }
+.dragon-card .dt-fighter-name { color: #ff8080; }
+.tiger-card .dt-fighter-name { color: #80ff90; }
+.dt-odds { font-size: .72rem; color: rgba(255,255,255,.32); margin-bottom: 13px; }
+.dt-card-display { font-size: 2.2rem; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+.dt-divider { display: flex; align-items: center; justify-content: center; }
+.dt-vs { width: 48px; height: 48px; border-radius: 50%; background: rgba(245,200,66,.07); border: 1px solid rgba(245,200,66,.18); display: flex; align-items: center; justify-content: center; font-size: .78rem; font-weight: 900; color: var(--gold); }
+.dt-btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 14px 0; }
+.dt-bet-btn { padding: 10px 22px; border-radius: 12px; font-family: inherit; font-size: .85rem; font-weight: 800; cursor: pointer; border: 1.5px solid transparent; transition: all .2s; }
+.dt-bet-dragon,.dt-dragon-side { background: rgba(255,80,80,.1); border-color: rgba(255,80,80,.22); color: #ff8080; }
+.dt-bet-dragon:hover,.dt-dragon-side:hover,.dt-bet-dragon.active,.dt-dragon-side.active { background: rgba(255,80,80,.25); border-color: #ff6060; }
+.dt-bet-tiger,.dt-tiger-side { background: rgba(60,200,100,.1); border-color: rgba(60,200,100,.22); color: #80ff90; }
+.dt-bet-tiger:hover,.dt-tiger-side:hover,.dt-bet-tiger.active,.dt-tiger-side.active { background: rgba(60,200,100,.25); border-color: #60ff90; }
+.dt-bet-tie { background: rgba(245,200,66,.07); border-color: rgba(245,200,66,.18); color: rgba(245,200,66,.7); }
+.dt-bet-tie:hover,.dt-bet-tie.active { background: rgba(245,200,66,.16); border-color: var(--gold); color: var(--gold); }
+
+/* Pokdeng */
+.pokdeng-table { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+.pokdeng-side { background: rgba(0,0,0,.35); border: 1px solid rgba(245,200,66,.09); border-radius: 18px; padding: 20px; text-align: center; }
+.pokdeng-side-title { font-size: .76rem; font-weight: 800; color: rgba(245,200,66,.48); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; }
+.pok-cards-area { display: flex; gap: 9px; justify-content: center; min-height: 70px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.pok-card { width: 48px; height: 68px; border-radius: 9px; background: #fff; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 3px 10px rgba(0,0,0,.4); animation: card-appear .4s ease; }
+@keyframes card-appear { from{transform:rotateY(90deg) scale(.8);opacity:0} to{transform:rotateY(0deg) scale(1);opacity:1} }
+.pok-score { font-size: 1.5rem; font-weight: 900; color: var(--gold); }
+
+/* Horse racing */
+.horse-race-field { display: flex; gap: 9px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; margin-bottom: 14px; }
+.horse-card,.horse-opt-btn { background: rgba(0,0,0,.4); border: 1.5px solid rgba(245,200,66,.09); border-radius: 13px; padding: 13px 11px; text-align: center; cursor: pointer; min-width: 92px; flex-shrink: 0; transition: all .2s; font-family: inherit; }
+.horse-card:hover,.horse-opt-btn:hover { border-color: rgba(245,200,66,.38); background: rgba(245,200,66,.07); }
+.horse-card.selected,.horse-opt-btn.active { border-color: var(--gold); background: rgba(245,200,66,.11); box-shadow: 0 0 18px rgba(245,200,66,.18); }
+.horse-emoji { font-size: 2rem; display: block; margin-bottom: 5px; }
+.horse-num { font-size: .74rem; font-weight: 800; color: var(--gold); }
+.horse-odds { font-size: .66rem; color: rgba(255,255,255,.32); margin-top: 2px; }
+
+/* Coin pusher & Duck shooter */
+.pusher-display { background: rgba(0,0,0,.4); border: 1px solid rgba(245,200,66,.09); border-radius: 18px; padding: 26px; text-align: center; font-size: 2.6rem; letter-spacing: 6px; margin-bottom: 16px; min-height: 96px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; }
+.duck-game-area { background: linear-gradient(180deg,rgba(0,50,120,.5) 0%,rgba(0,120,60,.3) 60%,rgba(80,40,0,.3) 100%); border: 1px solid rgba(100,180,255,.1); border-radius: 18px; padding: 26px 22px; text-align: center; margin-bottom: 16px; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.duck-targets { display: flex; gap: 20px; justify-content: center; font-size: 2.2rem; }
+.duck-target { cursor: pointer; animation: duck-bob 1.5s ease-in-out infinite; }
+.duck-target:nth-child(even) { animation-delay: .75s; }
+@keyframes duck-bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+
+/* Chest */
+.chest-box-anim { font-size: 6.5rem; display: block; text-align: center; margin: 22px 0; animation: chest-glow 2s ease-in-out infinite; }
+@keyframes chest-glow { 0%,100%{filter:drop-shadow(0 0 12px rgba(245,200,66,.3))} 50%{filter:drop-shadow(0 0 36px rgba(245,200,66,.75)) drop-shadow(0 0 55px rgba(200,100,0,.4))} }
+
+/* HiLo dice */
+.dice-row { display: flex; gap: 18px; justify-content: center; margin: 22px 0; }
+.dice-display { font-size: 3.8rem; line-height: 1; animation: dice-float 2s ease-in-out infinite; }
+.dice-display:nth-child(2){animation-delay:.4s} .dice-display:nth-child(3){animation-delay:.8s}
+@keyframes dice-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+.hilo-type-btn { padding: 9px 20px; border-radius: 11px; background: rgba(0,0,0,.4); border: 1.5px solid rgba(245,200,66,.1); color: rgba(255,255,255,.4); font-family: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; transition: all .2s; }
+.hilo-type-btn.active { background: rgba(245,200,66,.14); border-color: var(--gold); color: var(--gold); }
+
+/* Wheel */
+.wheel-disc { font-size: 5.5rem; display: block; text-align: center; margin: 18px 0; animation: wheel-spin-idle 6s linear infinite; }
+@keyframes wheel-spin-idle { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+/* SECTION 15: History & Admin */
+.luxury-table-container { overflow-x: auto; border-radius: 16px; border: 1px solid var(--border); }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { padding: 13px 18px; background: rgba(0,0,0,.4); text-align: left; font-size: .74rem; color: rgba(245,200,66,.52); text-transform: uppercase; letter-spacing: .09em; font-weight: 700; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.data-table td { padding: 12px 18px; font-size: .82rem; border-bottom: 1px solid rgba(255,255,255,.03); color: rgba(255,255,255,.7); }
+.data-table tr:hover td { background: rgba(245,200,66,.03); }
+#view-history table, #view-admin table { width: 100%; border-collapse: collapse; background: var(--bg-card); }
+#view-history th, #view-admin th { padding: 12px 16px; background: rgba(0,0,0,.4); color: rgba(245,200,66,.52); font-size: .74rem; text-align: left; border-bottom: 1px solid var(--border); }
+#view-history td, #view-admin td { padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,.03); color: rgba(255,255,255,.7); font-size: .82rem; }
+#view-history tr:hover td, #view-admin tr:hover td { background: rgba(245,200,66,.03); }
+.admin-stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+.admin-stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 22px; text-align: center; }
+.admin-stat-card h3 { font-size: .74rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 9px; }
+.admin-stat-card .stat-value { font-size: 2rem; font-weight: 900; color: var(--gold); }
+.admin-tab { padding: 9px 20px; border-radius: 10px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); color: rgba(255,255,255,.38); font-family: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; transition: all .2s; display: inline-flex; align-items: center; gap: 6px; }
+.admin-tab.active { background: var(--gold-grad); color: #1a0000; border-color: transparent; }
+.admin-tab:not(.active):hover { background: rgba(245,200,66,.09); color: rgba(245,200,66,.8); }
+#view-admin h1, #view-history h2 { color: var(--gold); margin-bottom: 20px; font-size: 1.3rem; }
+
+/* SECTION 16: Modals */
+.modal, .modal, .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.78); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 9000; padding: 20px; }
+.modal-overlay.open { display: flex !important; }
+.modal.active { display: flex !important; position: fixed !important; z-index: 9000 !important; }
+.modal-content, .modal-card { background: linear-gradient(160deg, #13000f, #09000a); border: 1px solid rgba(245,200,66,.13); border-radius: 24px; padding: 34px 30px; width: min(480px, calc(100vw - 32px)); max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 32px 80px rgba(0,0,0,.7); }
+.modal-content::before, .modal-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg,transparent,rgba(245,200,66,.62),transparent); border-radius: 24px 24px 0 0; }
+.modal-content h2, .modal-content h3, .modal-card h3 { color: #fdf3e0; margin-bottom: 18px; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
+.modal-content p, .modal-card p { color: rgba(255,255,255,.5); font-size: .85rem; line-height: 1.65; }
+.modal-x-btn { position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border-radius: 9px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); color: rgba(255,255,255,.38); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: .85rem; transition: all .2s; }
+.modal-x-btn:hover { background: rgba(255,50,50,.1); color: #ff6060; border-color: rgba(255,50,50,.25); }
+.btn-modal-ok { padding: 10px 24px; border-radius: 11px; background: var(--gold-grad); color: #1a0000; font-family: inherit; font-size: .88rem; font-weight: 900; border: none; cursor: pointer; transition: filter .15s; }
+.btn-modal-ok:hover { filter: brightness(1.1); }
+.btn-modal-cancel { padding: 10px 24px; border-radius: 11px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); color: rgba(255,255,255,.4); font-family: inherit; font-size: .88rem; cursor: pointer; }
+.glass-card { background: rgba(255,255,255,.022); border: 1px solid rgba(245,200,66,.1); border-radius: 22px; padding: 32px 28px; position: relative; overflow: hidden; }
+
+/* SECTION 17: Toast & Chat */
+.toast-container { position: fixed; bottom: 26px; right: 22px; z-index: 99999; display: flex; flex-direction: column-reverse; gap: 9px; max-width: min(360px,calc(100vw - 32px)); pointer-events: none; }
+.toast { background: linear-gradient(135deg,rgba(18,0,14,.96),rgba(9,0,10,.98)); border: 1px solid rgba(245,200,66,.13); border-radius: 16px; padding: 15px 20px; display: flex; align-items: flex-start; gap: 13px; box-shadow: 0 10px 36px rgba(0,0,0,.5); animation: toast-in .35s cubic-bezier(.34,1.56,.64,1); pointer-events: all; min-width: 240px; }
+.toast-icon { font-size: 1.15rem; flex-shrink: 0; margin-top: 1px; }
+.toast-title { font-size: .83rem; font-weight: 800; color: #fdf3e0; margin-bottom: 2px; }
+.toast-msg { font-size: .76rem; color: rgba(255,255,255,.42); line-height: 1.45; }
+.toast-success { border-color: rgba(0,230,118,.22); }
+.toast-danger { border-color: rgba(255,68,68,.22); }
+.toast-info { border-color: rgba(41,182,246,.22); }
+@keyframes toast-in { from{transform:translateX(110%) scale(.85);opacity:0} to{transform:translateX(0) scale(1);opacity:1} }
+.chat-drawer-panel, #chat-drawer { position: fixed; right: -100%; top: 0; width: min(360px,calc(100vw - 20px)); height: 100%; background: linear-gradient(180deg,#0c000c,#070007); border-left: 1px solid rgba(245,200,66,.09); transition: right .3s cubic-bezier(.4,0,.2,1); z-index: 8000; display: flex; flex-direction: column; box-shadow: -12px 0 44px rgba(0,0,0,.5); }
+.chat-drawer-panel.open, #chat-drawer.open { right: 0; }
+.chat-drawer-hd { padding: 17px 22px; border-bottom: 1px solid rgba(245,200,66,.07); display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,.3); flex-shrink: 0; }
+.chat-msgs-area { flex: 1; overflow-y: auto; padding: 17px; display: flex; flex-direction: column; gap: 11px; }
+.chat-msg { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.05); border-radius: 13px; padding: 11px 15px; }
+.chat-msg-user { font-size: .75rem; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
+.chat-msg-text { font-size: .83rem; color: rgba(255,255,255,.68); line-height: 1.5; }
+.chat-input-row { padding: 13px 18px; border-top: 1px solid rgba(245,200,66,.07); display: flex; gap: 9px; flex-shrink: 0; background: rgba(0,0,0,.2); }
+.chat-input-row input { flex: 1; padding: 11px 15px; background: rgba(0,0,0,.4); border: 1px solid rgba(245,200,66,.1); border-radius: 11px; color: #fdf3e0; font-family: inherit; font-size: .85rem; }
+.chat-input-row input:focus { outline: none; border-color: rgba(245,200,66,.4); }
+.btn-chat-send { width: 40px; height: 40px; border-radius: 11px; background: var(--gold-grad); border: none; color: #1a0000; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: .92rem; flex-shrink: 0; }
+
+/* SECTION 18: Footer */
+.site-footer { background: linear-gradient(180deg,#0b0006 0%,#060003 100%); border-top: 1px solid rgba(245,200,66,.06); margin-top: 40px; flex-shrink: 0; }
+.footer-top { max-width: 1200px; margin: 0 auto; padding: 52px 28px 38px; display: grid; grid-template-columns: 1.65fr 1fr 1fr 1fr; gap: 44px; }
+.footer-logo { display: flex; align-items: center; gap: 10px; font-size: 1.25rem; font-weight: 900; margin-bottom: 14px; background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.footer-logo i { -webkit-text-fill-color: var(--gold); }
+.footer-desc { font-size: .8rem; color: rgba(255,255,255,.3); line-height: 1.8; margin-bottom: 20px; max-width: 260px; }
+.footer-trust-badges { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 18px; }
+.footer-trust-badge { background: rgba(245,200,66,.04); border: 1px solid rgba(245,200,66,.09); border-radius: 9px; padding: 6px 12px; font-size: .71rem; color: rgba(245,200,66,.48); display: flex; align-items: center; gap: 5px; }
+.footer-trust-badge i { color: var(--gold); }
+.footer-payment-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+.footer-payment-chip { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 8px; padding: 5px 11px; font-size: .7rem; color: rgba(255,255,255,.33); display: flex; align-items: center; gap: 5px; }
+.footer-socials { display: flex; gap: 9px; }
+.footer-social-btn { width: 38px; height: 38px; border-radius: 11px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07); color: rgba(255,255,255,.33); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s; font-size: .9rem; }
+.footer-social-btn:hover { background: rgba(245,200,66,.1); color: var(--gold); border-color: rgba(245,200,66,.28); }
+.footer-col-title { font-size: .75rem; font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid rgba(245,200,66,.09); display: flex; align-items: center; gap: 7px; }
+.footer-link-list { display: flex; flex-direction: column; gap: 11px; }
+.footer-link { display: flex; align-items: center; gap: 8px; font-size: .8rem; color: rgba(255,255,255,.33); cursor: pointer; transition: color .2s; }
+.footer-link i { font-size: .7rem; color: rgba(245,200,66,.28); width: 14px; flex-shrink: 0; }
+.footer-link:hover { color: rgba(245,200,66,.72); }
+.footer-link:hover i { color: var(--gold); }
+.footer-contact-item { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 15px; }
+.footer-contact-icon { width: 32px; height: 32px; border-radius: 10px; background: rgba(245,200,66,.06); border: 1px solid rgba(245,200,66,.11); display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: .77rem; flex-shrink: 0; }
+.footer-contact-info { flex: 1; min-width: 0; }
+.footer-contact-label { font-size: .67rem; color: rgba(245,200,66,.38); margin-bottom: 2px; font-weight: 600; }
+.footer-contact-value { font-size: .82rem; color: rgba(255,255,255,.58); font-weight: 600; }
+.footer-live-badge { display: inline-flex; align-items: center; gap: 7px; background: rgba(0,200,80,.07); border: 1px solid rgba(0,200,80,.16); border-radius: 99px; padding: 5px 14px; font-size: .69rem; color: #00e676; font-weight: 700; margin-top: 7px; }
+.footer-live-dot { width: 7px; height: 7px; border-radius: 50%; background: #00e676; animation: pulse-dot 1.2s infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.7)} }
+.footer-bottom { border-top: 1px solid rgba(255,255,255,.04); background: rgba(0,0,0,.3); }
+.footer-bottom-inner { max-width: 1200px; margin: 0 auto; padding: 17px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.footer-copy { font-size: .72rem; color: rgba(255,255,255,.2); }
+.footer-copy span { color: rgba(245,200,66,.42); }
+.footer-bottom-links { display: flex; gap: 20px; }
+.footer-bottom-link { font-size: .72rem; color: rgba(255,255,255,.2); cursor: pointer; transition: color .2s; }
+.footer-bottom-link:hover { color: rgba(245,200,66,.58); }
+.footer-18-badge { background: rgba(255,68,68,.07); border: 1px solid rgba(255,68,68,.16); border-radius: 7px; padding: 3px 10px; font-size: .68rem; color: rgba(255,80,80,.52); font-weight: 800; }
+
+/* SECTION 19: Keypad & misc */
+.keypad-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 9px; }
+.kp-btn { height: 48px; border-radius: 11px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); color: rgba(255,255,255,.7); font-family: inherit; font-size: .95rem; font-weight: 700; cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; }
+.kp-btn:hover { background: rgba(245,200,66,.1); color: var(--gold); border-color: rgba(245,200,66,.3); }
+.kp-btn:active { transform: scale(.94); }
+.game-select { width: 100%; padding: 12px 16px; background: rgba(0,0,0,.5); border: 1.5px solid rgba(245,200,66,.1); border-radius: 12px; color: #fdf3e0; font-family: inherit; font-size: .9rem; cursor: pointer; }
+.game-select:focus { outline: none; border-color: rgba(245,200,66,.5); }
+.game-select option { background: #0a0000; }
+.balance-box { display: flex; align-items: center; gap: 9px; background: rgba(0,0,0,.4); border: 1px solid rgba(245,200,66,.18); border-radius: 99px; padding: 7px 16px; font-size: .92rem; }
+.user-controls { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.grid-container { display: grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap: 16px; padding: 16px 0; }
+.live-ball { width: 38px; height: 38px; border-radius: 50%; background: var(--gold-grad); color: #1a0000; font-weight: 900; font-size: .88rem; /* display:JS */ align-items: center; justify-content: center; flex-shrink: 0; }
+.loading-spinner { display: flex; align-items: center; justify-content: center; gap: 11px; padding: 44px; color: rgba(245,200,66,.4); font-size: .9rem; }
+.result-win { background: linear-gradient(135deg,rgba(0,100,50,.25),rgba(0,50,25,.15)); border: 1px solid rgba(0,230,118,.22); border-radius: 15px; padding: 18px; text-align: center; margin-top: 14px; animation: result-pop .5s cubic-bezier(.34,1.56,.64,1); }
+.result-lose { background: rgba(80,0,0,.2); border: 1px solid rgba(255,68,68,.18); border-radius: 15px; padding: 13px; text-align: center; margin-top: 13px; }
+@keyframes result-pop { from{transform:scale(.85);opacity:0} to{transform:scale(1);opacity:1} }
+.vn-bet-type-btn { padding: 8px 17px; border-radius: 11px; background: rgba(0,0,0,.4); border: 1.5px solid rgba(245,200,66,.1); color: rgba(255,255,255,.38); font-family: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; transition: all .2s; }
+.vn-bet-type-btn.active { background: rgba(245,200,66,.14); border-color: var(--gold); color: var(--gold); }
+.btn-spin-slot, .btn-spin-wheel, .btn-shake-hilo, .btn-drop-plinko, .btn-launch-crash, .btn-deal-pokdeng, .btn-drop-coinpusher, .btn-start-derby, .btn-start-mines, #btn-claim-chest, #btn-submit-all-bets { min-width: 180px; padding: 13px 26px; border-radius: 13px; background: var(--gold-grad); color: #1a0000; font-family: inherit; font-size: .95rem; font-weight: 900; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 5px 18px rgba(200,150,0,.3); transition: all .2s ease; }
+.btn-spin-slot:hover, .btn-spin-wheel:hover, .btn-shake-hilo:hover, .btn-drop-plinko:hover, .btn-launch-crash:hover, .btn-deal-pokdeng:hover, .btn-drop-coinpusher:hover, .btn-start-derby:hover, .btn-start-mines:hover, #btn-claim-chest:hover, #btn-submit-all-bets:hover { filter: brightness(1.1); transform: translateY(-2px); }
+.btn-spin-slot:disabled, .btn-launch-crash:disabled, .btn-start-mines:disabled { filter: grayscale(.7); opacity: .5; cursor: not-allowed; transform: none; }
+
+/* SECTION 20: Theme variants */
+[data-theme="cyberpunk"] {
+  --bg: #010012;
+  --bg-card: #050018;
+  --gold: #00ffff;
+  --gold-grad: linear-gradient(135deg,#80ffff,#00ffff,#0088cc);
+  --gold-glow: 0 0 22px rgba(0,255,255,.28);
+  --border: rgba(0,255,255,.1);
+  --muted: rgba(0,255,255,.3);
+}
+[data-theme="emerald"] {
+  --bg: #000c04;
+  --bg-card: #001a0b;
+  --gold: #00e676;
+  --gold-grad: linear-gradient(135deg,#80ffb3,#00e676,#00a152);
+  --gold-glow: 0 0 22px rgba(0,230,118,.28);
+  --border: rgba(0,230,118,.1);
+  --muted: rgba(0,230,118,.32);
+}
+
+/* SECTION 21: Loading screen */
+#app-loading-screen {
+  position: fixed;
+  inset: 0;
+  background: #060006;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 22px;
+  font-family: 'Kanit', sans-serif;
+}
+#app-loading-screen .ls-dragon { font-size: 5rem; animation: dragon-breathe 3s ease-in-out infinite; filter: drop-shadow(0 0 20px rgba(200,0,0,.4)); }
+#app-loading-screen .ls-name { font-size: 1.6rem; font-weight: 900; background: var(--gold-grad,linear-gradient(135deg,#ffe87a,#f5c842,#c49b0a)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -.02em; }
+#app-loading-screen .ls-sub { font-size: .8rem; color: rgba(245,200,66,.35); letter-spacing: .12em; text-transform: uppercase; }
+
+/* SECTION 22: Responsive breakpoints */
+@media (max-width: 1200px) {
+  .footer-top { grid-template-columns: 1fr 1fr; gap: 28px; }
+  .admin-stats-grid { grid-template-columns: repeat(2,1fr); }
+  .mines-layout { grid-template-columns: 1fr; }
+  .dt-arena { gap: 10px; }
+}
+@media (max-width: 900px) {
+  .betting-flex-wrap { flex-direction: column; }
+  .ai-panel-card, .betting-form-card, .cart-card { min-width: unset; width: 100%; }
+  .pokdeng-table { grid-template-columns: 1fr; }
+  .footer-top { grid-template-columns: 1fr 1fr; gap: 22px; }
+}
+@media (max-width: 768px) {
+  .auth-split { flex-direction: column; }
+  .auth-left-panel { display: none !important; }
+  .auth-right-panel { width: 100% !important; min-height: 100dvh; padding: 28px 18px; }
+  .auth-mobile-brand { display: flex !important; }
+  .auth-form-card { padding: 28px 22px; }
+  
+  .header-inner { padding: 0 14px; gap: 8px; }
+  .btn-hdr-pill span { display: none; }
+  .h-vip-name, .h-nickname { font-size: .8rem; }
+  .header-user-info { gap: 5px; }
+  
+  .jackpot-number { font-size: 2.2rem; }
+  .lottery-grid { grid-template-columns: repeat(auto-fill,minmax(180px,1fr)); gap: 12px; padding: 14px 16px; }
+  .mini-games-grid { grid-template-columns: repeat(auto-fill,minmax(90px,1fr)); gap: 8px; }
+  .mini-games-section { padding: 8px 16px 22px; }
+  .lobby-heading { padding: 18px 16px 10px; font-size: .95rem; }
+  
+  .footer-top { grid-template-columns: 1fr; gap: 22px; padding: 28px 18px; }
+  .footer-bottom-inner { flex-direction: column; text-align: center; gap: 9px; }
+  .footer-bottom-links { flex-wrap: wrap; justify-content: center; gap: 12px; }
+  
+  .game-view-wrap { padding: 16px 14px 36px; }
+  .slot-reel { width: 80px; height: 80px; font-size: 2.4rem; }
+  .crash-mult { font-size: 3rem; }
+  .dt-arena { grid-template-columns: 1fr 38px 1fr; gap: 8px; }
+  .dt-fighter-emoji { font-size: 2.6rem; }
+  .admin-stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  
+  .modal-content, .modal-card { padding: 26px 20px; }
+  .toast-container { right: 12px; bottom: 18px; }
+}
+@media (max-width: 480px) {
+  .auth-form-card { padding: 22px 16px; border-radius: 20px; }
+  .auth-brand-name { font-size: 1.9rem; }
+  .jackpot-number { font-size: 1.9rem; }
+  .lottery-grid { grid-template-columns: 1fr 1fr; gap: 9px; padding: 12px 12px; }
+  .mini-games-grid { grid-template-columns: repeat(4,1fr); gap: 7px; }
+  .mg-icon { font-size: 1.7rem; }
+  .mg-label { font-size: .68rem; }
+  .mg-play-btn { font-size: .65rem; padding: 6px 3px; }
+  .slot-reels { gap: 9px; }
+  .slot-reel { width: 72px; height: 72px; font-size: 2.1rem; }
+  .big-display { font-size: 4rem; }
+  .footer-top { padding: 24px 14px; gap: 20px; }
+  .modal-content, .modal-card { padding: 20px 14px; border-radius: 18px; }
+  .admin-stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .admin-stat-card { padding: 16px 12px; }
+  .admin-stat-card .stat-value { font-size: 1.6rem; }
+}
+
+/* ═══════════════════════════════════════
+   SIZE & VISUAL IMPACT FIXES
+═══════════════════════════════════════ */
+
+/* game-card — used by JS-generated lottery/game cards */
+.game-card {
+  background: linear-gradient(145deg, #160000, #0d000d);
+  border: 1px solid rgba(245,200,66,.1);
+  border-radius: 20px;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+.game-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--gold-grad);
+  opacity: 0;
+  transition: opacity .22s;
+}
+.game-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(245,200,66,.18);
+}
+.game-card:hover::before { opacity: 1; }
+.game-card h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fdf3e0;
+  margin: 0;
+}
+.game-card p {
+  font-size: .82rem;
+  color: rgba(255,255,255,.4);
+  margin: 0;
+  line-height: 1.4;
+}
+.game-card .emoji {
+  font-size: 2.8rem;
+  display: block;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.game-card .btn-gold {
+  width: 100%;
+  padding: 10px 16px !important;
+  margin-top: 6px !important;
+  font-size: .85rem;
+}
+
+/* grid-container — used for lobby game grids (old class) */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 18px 24px;
+}
+
+/* Bigger jackpot */
+.jackpot-banner {
+  padding: 36px 24px !important;
+}
+.jackpot-number {
+  font-size: clamp(2.8rem, 6vw, 4.5rem) !important;
+}
+
+/* Bigger mini-game cards */
+.mini-games-grid {
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+  gap: 12px !important;
+}
+.mg-icon {
+  font-size: 2.6rem !important;
+}
+.mg-label {
+  font-size: .78rem !important;
+}
+.mg-play-btn {
+  padding: 8px 6px !important;
+  font-size: .75rem !important;
+}
+
+/* Lobby headings — bigger and bolder */
+.lobby-heading {
+  font-size: 1.25rem !important;
+  padding: 28px 24px 14px !important;
+}
+
+/* Section title bigger */
+.section-title {
+  font-size: .88rem !important;
+  margin-bottom: 18px !important;
+}
+
+/* Lottery cards inner padding */
+.lottery-card {
+  padding: 22px 20px !important;
+}
+.lottery-card h3 {
+  font-size: 1.05rem !important;
+}
+
+/* VN section banner bigger */
+.vn-section-banner {
+  padding: 16px 24px !important;
+  font-size: .88rem !important;
+}
+
+/* Body base font larger */
+body {
+  font-size: 15px;
+}
+
+/* Header balance bigger */
+.h-balance {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--gold);
+}
+.header-balance-box {
+  background: rgba(0,0,0,.45);
+  border: 1.5px solid rgba(245,200,66,.2);
+  border-radius: 99px;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .92rem;
+}
+
+/* Header logo bigger */
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: var(--gold);
+  cursor: pointer;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.header-logo i {
+  font-size: 1.3rem;
+}
+
+/* Header pill buttons */
+.btn-hdr-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.07);
+  color: rgba(255,255,255,.45);
+  font-family: inherit;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.btn-hdr-pill:hover {
+  background: rgba(245,200,66,.08);
+  color: rgba(245,200,66,.7);
+  border-color: rgba(245,200,66,.2);
+}
+.btn-daily-pill {
+  background: rgba(245,200,66,.06);
+  border-color: rgba(245,200,66,.15);
+  color: rgba(245,200,66,.65);
+}
+
+/* Icon buttons in header */
+.btn-icon-hdr {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.07);
+  color: rgba(255,255,255,.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .2s;
+  font-size: .82rem;
+  flex-shrink: 0;
+}
+.btn-icon-hdr:hover {
+  background: rgba(245,200,66,.08);
+  color: rgba(245,200,66,.7);
+  border-color: rgba(245,200,66,.2);
+}
+.btn-logout-hdr:hover {
+  background: rgba(255,50,50,.08);
+  color: #ff6060;
+  border-color: rgba(255,50,50,.2);
+}
+
+/* Header user info */
+.header-user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.h-nickname {
+  font-size: .88rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.7);
+}
+.h-vip-icon { font-size: .85rem; }
+.h-vip-name {
+  font-size: .72rem;
+  font-weight: 700;
+  color: rgba(245,200,66,.55);
+  background: rgba(245,200,66,.06);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.role-badge {
+  font-size: .65rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(245,200,66,.08);
+  color: rgba(245,200,66,.5);
+}
+.role-badge.admin-badge {
+  background: rgba(255,50,50,.1);
+  color: #ff8080;
+}
+.header-spacer { flex: 1; min-width: 0; }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+/* Cart button */
+.hdr-cart-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(245,200,66,.06);
+  border: 1.5px solid rgba(245,200,66,.15);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.hdr-cart-btn:hover {
+  background: rgba(245,200,66,.12);
+  border-color: rgba(245,200,66,.35);
+}
+.cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 99px;
+  background: #ff4444;
+  color: #fff;
+  font-size: .62rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+/* VN lotto cards from JS use .game-card as well */
+#vn-lotto-lobby .game-card,
+#lottery-lobby-grid .game-card {
+  text-align: left;
+  align-items: flex-start;
+}
+#vn-lotto-lobby .game-card h3,
+#lottery-lobby-grid .game-card h3 {
+  font-size: .95rem;
+}
+
+/* Inline style overrides for JS-generated content */
+[style*="color: #ffd700"] { color: var(--gold) !important; }
+[style*="color: #aaa"] { color: var(--muted) !important; }
+[style*="background: #222"] { background: var(--bg-card) !important; }
+[style*="background: #111"] { background: rgba(0,0,0,.4) !important; }
+[style*="border: 1px solid #333"] { border-color: var(--border) !important; }
+[style*="border-bottom: 2px solid #ffd700"] { border-color: var(--gold) !important; }
+
+/* Make lobby section h2 headings look good (inline-styled in HTML) */
+#view-lobby > h2 {
+  font-size: 1.2rem !important;
+  font-weight: 900 !important;
+  color: var(--gold) !important;
+  padding: 24px 24px 12px !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(245,200,66,.06) !important;
+}
+
+@media (max-width: 768px) {
+  .grid-container { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; padding: 14px 16px; }
+  .mini-games-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important; }
+  .game-card .emoji { font-size: 2.2rem; }
+  .header-user-info { display: none; }
+  .btn-hdr-pill span { display: none; }
+  .header-actions { gap: 5px; }
+}
+@media (max-width: 480px) {
+  .grid-container { grid-template-columns: 1fr 1fr; gap: 9px; padding: 12px 12px; }
+  .mini-games-grid { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)) !important; gap: 8px !important; }
+  .game-card { padding: 16px 14px; }
+  .game-card h3 { font-size: .88rem; }
+}
+
+/* ═══════════════════════════════════════════════════
+   JS-RENDERED LOBBY CARD STYLES
+   These classes are generated by renderLobby() in main.js
+═══════════════════════════════════════════════════ */
+
+/* Thai Lottery Cards */
+.lottery-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.lottery-card-header h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fdf3e0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lottery-badge {
+  font-size: .62rem;
+  font-weight: 700;
+  background: rgba(245,200,66,.08);
+  border: 1px solid rgba(245,200,66,.15);
+  color: rgba(245,200,66,.6);
+  padding: 3px 10px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+.lottery-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+.time-display-box {
+  font-size: .82rem;
+  color: rgba(255,255,255,.5);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.time-display-box b, .time-display-box .countdown-text {
+  color: var(--gold);
+  font-size: .95rem;
+}
+.card-rate-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.rate-pill {
+  font-size: .65rem;
+  font-weight: 700;
+  background: rgba(245,200,66,.06);
+  border: 1px solid rgba(245,200,66,.1);
+  color: rgba(245,200,66,.55);
+  padding: 3px 9px;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+.lottery-card-footer {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+.btn-play-lottery {
+  flex: 1;
+  padding: 10px 16px;
+  background: var(--gold-grad, linear-gradient(135deg,#ffe87a,#f5c842,#c49b0a,#7d5c00));
+  color: #1a0000;
+  border: none;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: .82rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: filter .15s, transform .15s;
+  letter-spacing: .01em;
+}
+.btn-play-lottery:hover {
+  filter: brightness(1.12);
+  transform: translateY(-2px);
+}
+.btn-history-draw {
+  background: rgba(255,255,255,.05) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  color: rgba(255,255,255,.45) !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+  cursor: pointer;
+  transition: all .2s;
+  font-size: .82rem;
+}
+.btn-history-draw:hover {
+  background: rgba(245,200,66,.08) !important;
+  color: var(--gold) !important;
+  border-color: rgba(245,200,66,.2) !important;
+}
+
+/* Result display */
+.last-result-display {
+  background: rgba(0,0,0,.3);
+  border: 1px solid rgba(245,200,66,.07);
+  border-radius: 12px;
+  padding: 12px;
+}
+.last-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: .7rem;
+  color: rgba(255,255,255,.3);
+}
+.result-numbers-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.result-label {
+  font-size: .65rem;
+  color: rgba(255,255,255,.3);
+  margin-right: 2px;
+}
+.result-number {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: 2px;
+}
+.waiting-next-display {
+  text-align: center;
+  padding: 12px;
+}
+.waiting-icon {
+  font-size: 1.8rem;
+  margin-bottom: 6px;
+  display: block;
+}
+.waiting-note {
+  font-size: .78rem;
+  color: rgba(255,255,255,.35);
+}
+.waiting-rate {
+  font-size: .78rem;
+  color: rgba(255,255,255,.3);
+  margin-top: 4px;
+}
+.recent-rounds-ticker {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,.04);
+}
+.ticker-sub-title {
+  font-size: .62rem;
+  color: rgba(255,255,255,.2);
+  margin-bottom: 5px;
+}
+.rounds-list-inline {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.round-chip {
+  font-size: .65rem;
+  color: rgba(255,255,255,.4);
+  background: rgba(0,0,0,.3);
+  border: 1px solid rgba(255,255,255,.04);
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.round-chip small {
+  color: rgba(255,255,255,.2);
+  margin-right: 3px;
+}
+.gold-text { color: var(--gold) !important; }
+.green-text { color: #00e676 !important; }
+
+/* ─── VN LOTTERY CARDS ─── */
+.vn-section-divider {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 0;
+  border-top: 1px solid rgba(245,200,66,.06);
+  border-bottom: 1px solid rgba(245,200,66,.06);
+  margin: 8px 0;
+}
+.vn-divider-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.vn-divider-flag {
+  font-size: 1.8rem;
+}
+.vn-divider-title {
+  font-size: .92rem;
+  font-weight: 900;
+  color: rgba(255,255,255,.7);
+}
+.vn-divider-sub {
+  font-size: .72rem;
+  color: rgba(255,255,255,.3);
+}
+.vn-divider-rates {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.vn-rate-badge {
+  font-size: .68rem;
+  font-weight: 700;
+  background: rgba(245,200,66,.05);
+  border: 1px solid rgba(245,200,66,.08);
+  padding: 4px 10px;
+  border-radius: 8px;
+  color: rgba(245,200,66,.5);
+  white-space: nowrap;
+}
+
+/* VN Card Variants */
+.vn-card {
+  border-left: 3px solid transparent;
+}
+.vn-card-fast {
+  border-left-color: rgba(255,68,68,.5);
+}
+.vn-card-daily {
+  border-left-color: rgba(0,230,118,.3);
+}
+.vn-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.vn-card-region {
+  font-size: .78rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.6);
+}
+.vn-type-badge {
+  font-size: .62rem;
+  font-weight: 700;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.07);
+  padding: 3px 9px;
+  border-radius: 7px;
+  color: rgba(255,255,255,.35);
+}
+.vn-card-title {
+  font-size: .88rem;
+  font-weight: 800;
+  color: #fdf3e0;
+  margin: 0 0 8px;
+}
+.vn-card-time {
+  font-size: .78rem;
+  color: rgba(255,255,255,.4);
+  margin-bottom: 10px;
+}
+.vn-time-fast b, .vn-time-sched b {
+  color: var(--gold);
+}
+.vn-prize-mini {
+  background: rgba(0,0,0,.3);
+  border: 1px solid rgba(255,255,255,.04);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.vn-prize-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: .72rem;
+  color: rgba(255,255,255,.5);
+}
+.vn-prize-row + .vn-prize-row {
+  border-top: 1px solid rgba(255,255,255,.03);
+}
+.vn-db-row {
+  font-weight: 800;
+}
+.vn-prize-label {
+  color: rgba(255,255,255,.35);
+}
+.vn-prize-nums {
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: 1px;
+  font-size: .82rem;
+}
+.vn-payout-preview {
+  background: rgba(0,0,0,.25);
+  border: 1px solid rgba(255,255,255,.04);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.vn-payout-title {
+  font-size: .62rem;
+  color: rgba(255,255,255,.2);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.vn-payout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+.vn-payout-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: .7rem;
+  padding: 3px 0;
+}
+.vn-payout-name {
+  color: rgba(255,255,255,.35);
+}
+.vn-payout-rate {
+  font-weight: 800;
+  color: var(--gold);
+}
+.vn-play-btn {
+  width: 100%;
+  margin-top: auto;
+}
+
+/* ─── COUNTDOWN in cards ─── */
+.countdown-text {
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  color: var(--gold) !important;
+}
+
+/* ─── Tab filter buttons ─── */
+.tab-filter-btn {
+  padding: 8px 18px;
+  border-radius: 99px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.07);
+  color: rgba(255,255,255,.35);
+  font-family: inherit;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.tab-filter-btn.active {
+  background: var(--gold-grad, linear-gradient(135deg,#ffe87a,#f5c842,#c49b0a));
+  color: #1a0000;
+  border-color: transparent;
+}
+.tab-filter-btn:not(.active):hover {
+  background: rgba(245,200,66,.08);
+  color: rgba(245,200,66,.7);
+  border-color: rgba(245,200,66,.2);
+}
+
+/* ─── #lottery-lobby-grid specific ─── */
+#lottery-lobby-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+  gap: 16px !important;
+  padding: 18px 24px !important;
+}
+#lottery-lobby-grid .lottery-card {
+  background: linear-gradient(145deg, #160000, #0d000d) !important;
+  border: 1px solid rgba(245,200,66,.1) !important;
+  border-radius: 20px !important;
+  padding: 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  transition: transform .22s, box-shadow .22s !important;
+}
+#lottery-lobby-grid .lottery-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.5) !important;
+  border-color: rgba(245,200,66,.22) !important;
+}
+
+@media (max-width: 768px) {
+  #lottery-lobby-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+    gap: 12px !important;
+    padding: 14px 16px !important;
+  }
+  .vn-section-divider { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .vn-divider-rates { gap: 5px; }
+}
+@media (max-width: 480px) {
+  #lottery-lobby-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 12px 12px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   HARMONY & BALANCE OVERHAUL
+═══════════════════════════════════════════════════ */
+
+/* ─── Consistent section padding ─── */
+#view-lobby > * {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+#view-lobby > .jackpot-banner {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+#lottery-lobby-grid {
+  padding: 20px 24px !important;
+  gap: 18px !important;
+}
+
+/* ─── Fix lottery cards same height ─── */
+#lottery-lobby-grid .lottery-card {
+  min-height: 220px;
+}
+
+/* ─── Mini-games section — MUCH bigger cards ─── */
+.mini-games-section {
+  padding: 24px 24px 40px !important;
+}
+.section-title {
+  font-size: .95rem !important;
+  margin-bottom: 22px !important;
+  padding-bottom: 12px !important;
+}
+.mini-games-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+  gap: 14px !important;
+}
+.mini-game-card {
+  padding: 24px 14px 18px !important;
+  border-radius: 18px !important;
+  min-height: 160px;
+  justify-content: center;
+}
+.mg-icon {
+  font-size: 3rem !important;
+  margin-bottom: 4px;
+}
+.mg-label {
+  font-size: .82rem !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  color: rgba(255,255,255,.6) !important;
+}
+.mg-play-btn {
+  width: 100% !important;
+  padding: 9px 8px !important;
+  font-size: .78rem !important;
+  border-radius: 10px !important;
+  margin-top: 8px !important;
+  background: var(--gold-grad, linear-gradient(135deg,#ffe87a,#f5c842,#c49b0a)) !important;
+  color: #1a0000 !important;
+  border: none !important;
+}
+
+/* ─── VN section spacing ─── */
+.vn-section-divider {
+  margin: 12px 0 !important;
+  padding: 16px 0 !important;
+}
+
+/* ─── Jackpot banner ─── */
+.jackpot-banner {
+  padding: 40px 24px !important;
+  margin: 0 !important;
+}
+
+/* ─── Lobby heading uniform ─── */
+.lobby-heading, #view-lobby > h2 {
+  font-size: 1.15rem !important;
+  padding: 24px 24px 14px !important;
+  margin: 0 !important;
+  border-bottom: 1px solid rgba(245,200,66,.06) !important;
+  color: var(--gold) !important;
+  font-weight: 900 !important;
+  letter-spacing: .04em !important;
+  text-transform: uppercase !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+/* ─── Footer spacing ─── */
+.site-footer {
+  margin-top: 0 !important;
+}
+
+/* ─── Responsive adjustments ─── */
+@media (max-width: 1200px) {
+  .mini-games-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+  }
+}
+@media (max-width: 768px) {
+  #view-lobby > *,
+  #view-lobby > .jackpot-banner,
+  .mini-games-section,
+  .lobby-heading, #view-lobby > h2 {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  #lottery-lobby-grid {
+    padding: 16px !important;
+    gap: 12px !important;
+  }
+  .mini-games-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
+    gap: 10px !important;
+  }
+  .mini-game-card {
+    padding: 18px 10px 14px !important;
+    min-height: 130px;
+  }
+  .mg-icon { font-size: 2.4rem !important; }
+  .mg-label { font-size: .74rem !important; }
+}
+@media (max-width: 480px) {
+  .mini-games-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+  }
+  .mini-game-card {
+    padding: 14px 8px 12px !important;
+    min-height: 110px;
+  }
+  .mg-icon { font-size: 2rem !important; }
+  .mg-label { font-size: .68rem !important; }
+  .mg-play-btn { font-size: .68rem !important; padding: 7px 4px !important; }
+  #lottery-lobby-grid {
+    grid-template-columns: 1fr !important;
+    padding: 12px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   FULL-WIDTH BALANCED LAYOUT + LOTTERY BALL NUMBERS
+═══════════════════════════════════════════════════ */
+
+/* Force all lobby grids to stretch full width */
+#lottery-lobby-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 18px !important;
+  padding: 22px 28px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* VN lottery cards grid */
+#lottery-lobby-grid .vn-card,
+#lottery-lobby-grid .lottery-card {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Mini-games grid full width */
+.mini-games-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+  gap: 14px !important;
+  width: 100% !important;
+}
+.mini-games-section {
+  padding: 28px 28px 44px !important;
+  width: 100% !important;
+}
+
+/* VN section divider full width */
+.vn-section-divider {
+  padding: 18px 28px !important;
+}
+
+/* Lobby padding uniform */
+.lobby-heading, #view-lobby > h2 {
+  padding: 28px 28px 14px !important;
+}
+
+/* Jackpot full width */
+.jackpot-banner {
+  width: 100% !important;
+  padding: 44px 28px !important;
+}
+
+/* ─── LOTTERY BALL NUMBERS (bóng tròn) ─── */
+.result-numbers-row {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+}
+
+/* Number balls */
+.num-ball {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .88rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  box-shadow: inset 0 -3px 6px rgba(0,0,0,.3), 0 2px 8px rgba(0,0,0,.3);
+  border: 2px solid rgba(255,255,255,.15);
+}
+.num-ball-gold {
+  background: linear-gradient(135deg, #ffe87a, #f5c842, #c49b0a);
+  color: #1a0000;
+  border-color: rgba(255,220,100,.4);
+  box-shadow: inset 0 -3px 6px rgba(0,0,0,.25), 0 2px 12px rgba(245,200,66,.35);
+}
+.num-ball-red {
+  background: linear-gradient(135deg, #ff6b6b, #e53935, #b71c1c);
+  color: #fff;
+  border-color: rgba(255,120,120,.3);
+  box-shadow: inset 0 -3px 6px rgba(0,0,0,.3), 0 2px 10px rgba(255,60,60,.3);
+}
+.num-ball-green {
+  background: linear-gradient(135deg, #69f0ae, #00c853, #00793a);
+  color: #002a10;
+  border-color: rgba(100,255,160,.3);
+  box-shadow: inset 0 -3px 6px rgba(0,0,0,.25), 0 2px 10px rgba(0,200,80,.3);
+}
+.num-ball-blue {
+  background: linear-gradient(135deg, #90caf9, #42a5f5, #1565c0);
+  color: #fff;
+  border-color: rgba(120,180,255,.3);
+}
+.num-ball-purple {
+  background: linear-gradient(135deg, #ce93d8, #ab47bc, #6a1b9a);
+  color: #fff;
+  border-color: rgba(180,120,220,.3);
+}
+
+/* Separator between top3 and bottom2 */
+.num-separator {
+  color: rgba(245,200,66,.3);
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 0 4px;
+}
+
+/* Override the plain .result-number to use ball style */
+.result-number {
+  display: inline-flex !important;
+  gap: 5px !important;
+  align-items: center !important;
+}
+
+/* Live ball class — do NOT force display, JS controls visibility */
+.live-ball {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--gold-grad, linear-gradient(135deg,#ffe87a,#f5c842,#c49b0a));
+  color: #1a0000;
+  font-weight: 900;
+  font-size: .88rem;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 -3px 6px rgba(0,0,0,.2), 0 2px 10px rgba(245,200,66,.3);
+  border: 2px solid rgba(255,220,100,.35);
+}
+
+/* VN prize numbers as balls */
+.vn-prize-nums {
+  display: inline-flex !important;
+  gap: 4px !important;
+  align-items: center !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* ─── Responsive full-width fixes ─── */
+@media (min-width: 1400px) {
+  #lottery-lobby-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+  }
+  .mini-games-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+  }
+}
+@media (min-width: 1800px) {
+  #lottery-lobby-grid {
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)) !important;
+  }
+}
+@media (max-width: 768px) {
+  #lottery-lobby-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important;
+    padding: 16px !important;
+  }
+  .mini-games-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+  }
+  .num-ball { width: 30px; height: 30px; font-size: .78rem; }
+}
+@media (max-width: 480px) {
+  #lottery-lobby-grid {
+    grid-template-columns: 1fr !important;
+    padding: 12px !important;
+  }
+  .mini-games-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   🔥 FINAL MASTER OVERRIDE — HARMONY & BALANCE
+   This block has highest precedence (last in cascade)
+═══════════════════════════════════════════════════ */
+
+/* ALL lobby content wrapped in consistent width */
+#view-lobby {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Jackpot — full width, centered content */
+#view-lobby .jackpot-banner {
+  width: 100% !important;
+  padding: 44px 32px !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+}
+
+/* ALL grids inside lobby — same max-width, centered */
+#view-lobby .lobby-heading,
+#view-lobby > h2 {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 28px 32px 14px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+#lottery-lobby-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  gap: 20px !important;
+  padding: 22px 32px !important;
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* VN section divider — same width */
+#lottery-lobby-grid [style*="grid-column"] {
+  grid-column: 1 / -1 !important;
+}
+
+/* Mini-games section — same max-width */
+#view-lobby .mini-games-section {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 28px 32px 48px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+#view-lobby .mini-games-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+  gap: 14px !important;
+  width: 100% !important;
+}
+
+/* VN section banner — same width */
+#view-lobby .vn-section-banner {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 14px 32px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* VN lottery info bar */
+#view-lobby .vn-section-divider {
+  max-width: 100% !important;
+  padding: 18px 0 !important;
+}
+
+/* Lottery card styling */
+#lottery-lobby-grid > .lottery-card {
+  background: linear-gradient(145deg, #160000, #0d000d) !important;
+  border: 1px solid rgba(245,200,66,.1) !important;
+  border-radius: 20px !important;
+  padding: 22px 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  transition: transform .22s, box-shadow .22s !important;
+}
+#lottery-lobby-grid > .lottery-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.5) !important;
+  border-color: rgba(245,200,66,.22) !important;
+}
+
+/* Mini game card consistent sizing */
+#view-lobby .mini-game-card {
+  padding: 22px 14px 16px !important;
+  border-radius: 18px !important;
+  background: linear-gradient(145deg, #140010, #0a000a) !important;
+  border: 1px solid rgba(245,200,66,.08) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: all .2s !important;
+}
+#view-lobby .mini-game-card:hover {
+  transform: translateY(-4px) !important;
+  background: rgba(245,200,66,.05) !important;
+  border-color: rgba(245,200,66,.25) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.5) !important;
+}
+#view-lobby .mg-icon {
+  font-size: 2.8rem !important;
+  line-height: 1 !important;
+}
+#view-lobby .mg-label {
+  font-size: .78rem !important;
+  font-weight: 700 !important;
+  color: rgba(255,255,255,.55) !important;
+  text-align: center !important;
+  line-height: 1.3 !important;
+}
+#view-lobby .mg-play-btn {
+  width: 100% !important;
+  padding: 9px 8px !important;
+  font-size: .75rem !important;
+  border-radius: 10px !important;
+  background: var(--gold-grad) !important;
+  color: #1a0000 !important;
+  border: none !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  margin-top: auto !important;
+}
+
+/* Number balls — smaller to fit cards */
+.num-ball {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: .75rem !important;
+  border-radius: 50% !important;
+}
+
+/* Footer — same max-width */
+.site-footer .footer-top {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+}
+.site-footer .footer-bottom-inner {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+}
+
+/* Header inner — same max-width */
+.header-inner {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+}
+
+/* ─── Responsive harmony ─── */
+@media (max-width: 1200px) {
+  #lottery-lobby-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important;
+    padding: 18px 24px !important;
+  }
+}
+@media (max-width: 768px) {
+  #lottery-lobby-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+    padding: 14px 16px !important;
+    gap: 12px !important;
+  }
+  #view-lobby .mini-games-section {
+    padding: 20px 16px 36px !important;
+  }
+  #view-lobby .mini-games-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+    gap: 10px !important;
+  }
+  #view-lobby .lobby-heading,
+  #view-lobby > h2 {
+    padding: 22px 16px 12px !important;
+  }
+  #view-lobby .vn-section-banner {
+    padding: 12px 16px !important;
+  }
+  .num-ball {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: .68rem !important;
+  }
+}
+@media (max-width: 480px) {
+  #lottery-lobby-grid {
+    grid-template-columns: 1fr !important;
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+  #view-lobby .mini-games-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+  }
+  #view-lobby .mg-icon {
+    font-size: 2rem !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   🎨 VISUAL POLISH ROUND — HARMONY UPGRADE
+═══════════════════════════════════════════════════ */
+
+/* ─── Mini-games: 5 per row on desktop for balance ─── */
+#view-lobby .mini-games-grid {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+  gap: 16px !important;
+}
+
+/* Mini-game card — taller, more premium */
+#view-lobby .mini-game-card {
+  padding: 28px 16px 18px !important;
+  border-radius: 20px !important;
+  background: linear-gradient(160deg, #1a0012 0%, #0c000c 100%) !important;
+  border: 1px solid rgba(245,200,66,.06) !important;
+  min-height: 185px !important;
+  justify-content: space-between !important;
+}
+#view-lobby .mini-game-card:hover {
+  border-color: rgba(245,200,66,.3) !important;
+  background: linear-gradient(160deg, #220018 0%, #120012 100%) !important;
+  box-shadow: 0 12px 36px rgba(0,0,0,.6), 0 0 20px rgba(245,200,66,.06) !important;
+}
+
+/* Mini-game icon — bigger with glow background */
+#view-lobby .mg-icon {
+  font-size: 3.2rem !important;
+  width: 72px !important;
+  height: 72px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: radial-gradient(circle, rgba(245,200,66,.06) 0%, transparent 70%) !important;
+  border-radius: 50% !important;
+  margin: 0 auto 6px !important;
+}
+
+/* Mini-game label — slightly bigger */
+#view-lobby .mg-label {
+  font-size: .82rem !important;
+  font-weight: 700 !important;
+  color: rgba(255,255,255,.65) !important;
+  text-align: center !important;
+  min-height: 34px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Mini-game button — rounded pill */
+#view-lobby .mg-play-btn {
+  padding: 10px 12px !important;
+  font-size: .78rem !important;
+  border-radius: 12px !important;
+  letter-spacing: .03em !important;
+  transition: filter .15s, transform .15s !important;
+}
+#view-lobby .mg-play-btn:hover {
+  filter: brightness(1.15) !important;
+  transform: scale(1.03) !important;
+}
+
+/* ─── Rate pills — bigger & more readable ─── */
+.rate-pill {
+  font-size: .72rem !important;
+  padding: 4px 10px !important;
+  border-radius: 8px !important;
+  background: rgba(245,200,66,.08) !important;
+  border: 1px solid rgba(245,200,66,.12) !important;
+  color: rgba(245,200,66,.65) !important;
+}
+
+/* ─── Section spacing uniform ─── */
+.lobby-heading, #view-lobby > h2 {
+  margin-bottom: 0 !important;
+  font-size: 1.1rem !important;
+  letter-spacing: .06em !important;
+}
+.mini-games-section {
+  border-top: 1px solid rgba(245,200,66,.04) !important;
+}
+
+/* ─── Lottery card result text — hide redundant plain numbers ─── */
+.last-result-header + .result-numbers-row > .result-label,
+.last-result-display > div > .result-label {
+  font-size: .6rem !important;
+  color: rgba(255,255,255,.2) !important;
+}
+
+/* ─── Jackpot banner glow effect ─── */
+.jackpot-banner {
+  background: linear-gradient(135deg, #3a0000 0%, #1a0000 40%, #300020 100%) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+.jackpot-banner::after {
+  content: '' !important;
+  position: absolute !important;
+  top: -50% !important;
+  left: -50% !important;
+  right: -50% !important;
+  bottom: -50% !important;
+  background: radial-gradient(ellipse at center, rgba(245,200,66,.04) 0%, transparent 60%) !important;
+  pointer-events: none !important;
+}
+
+/* ─── VN section banner — better visual separator ─── */
+.vn-section-divider {
+  background: linear-gradient(90deg, rgba(245,200,66,.03) 0%, transparent 50%, rgba(245,200,66,.03) 100%) !important;
+  border-radius: 12px !important;
+  margin: 8px 0 !important;
+}
+
+/* ─── Lottery card header — cleaner ─── */
+.lottery-card-header h3 {
+  font-size: 1.05rem !important;
+}
+.lottery-card-header h3 i {
+  font-size: .85rem !important;
+}
+
+/* ─── Number balls — consistent spacing ─── */
+.recent-rounds-ticker {
+  margin-top: 10px !important;
+}
+.rounds-list-inline {
+  gap: 8px !important;
+}
+.round-chip {
+  padding: 4px 8px !important;
+  border-radius: 8px !important;
+  background: rgba(0,0,0,.4) !important;
+}
+
+/* ─── VN card button — match Thai card button ─── */
+.vn-play-btn {
+  padding: 12px 16px !important;
+  font-size: .85rem !important;
+}
+
+/* ─── Footer section — subtle top border ─── */
+.site-footer {
+  border-top: 1px solid rgba(245,200,66,.06) !important;
+  margin-top: 20px !important;
+}
+
+/* ─── Section headings icon ─── */
+.lobby-heading::before,
+#view-lobby > h2::before {
+  display: none !important;
+}
+
+/* ─── Responsive polish ─── */
+@media (min-width: 1400px) {
+  #view-lobby .mini-games-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;
+  }
+}
+@media (max-width: 768px) {
+  #view-lobby .mini-games-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
+    gap: 10px !important;
+  }
+  #view-lobby .mini-game-card {
+    padding: 18px 10px 14px !important;
+    min-height: 140px !important;
+  }
+  #view-lobby .mg-icon {
+    font-size: 2.4rem !important;
+    width: 52px !important;
+    height: 52px !important;
+  }
+  #view-lobby .mg-label {
+    font-size: .72rem !important;
+    min-height: 28px !important;
+  }
+}
+@media (max-width: 480px) {
+  #view-lobby .mini-games-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+  }
+  #view-lobby .mini-game-card {
+    min-height: 120px !important;
+    padding: 14px 8px 12px !important;
+  }
+  #view-lobby .mg-icon {
+    font-size: 2rem !important;
+    width: 44px !important;
+    height: 44px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   👑 VIP PREMIUM HEADER & JACKPOT UPGRADE
+═══════════════════════════════════════════════════ */
+
+/* ─── HEADER — Glass Premium ─── */
+.luxury-header {
+  background: linear-gradient(180deg, rgba(20,0,15,.97) 0%, rgba(6,0,6,.98) 100%) !important;
+  backdrop-filter: blur(20px) saturate(1.3) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.3) !important;
+  border-bottom: 1px solid rgba(245,200,66,.1) !important;
+  box-shadow: 0 4px 30px rgba(0,0,0,.5), 0 1px 0 rgba(245,200,66,.05) inset !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+  padding: 0 !important;
+}
+
+/* Gold accent line at top of header */
+.luxury-header::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 2px !important;
+  background: linear-gradient(90deg, transparent, rgba(245,200,66,.5), #f5c842, rgba(245,200,66,.5), transparent) !important;
+}
+
+.header-inner {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 10px 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+}
+
+/* Logo — premium dragon */
+.header-logo {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+}
+.header-logo i {
+  font-size: 1.4rem !important;
+  background: var(--gold-grad) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  filter: drop-shadow(0 0 6px rgba(245,200,66,.3)) !important;
+}
+.header-logo span {
+  font-size: 1.2rem !important;
+  font-weight: 900 !important;
+  background: var(--gold-grad) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  letter-spacing: .04em !important;
+}
+
+/* VIP badge */
+.h-vip-name {
+  font-size: .68rem !important;
+  font-weight: 800 !important;
+  background: linear-gradient(135deg, rgba(245,200,66,.12), rgba(245,200,66,.04)) !important;
+  border: 1px solid rgba(245,200,66,.15) !important;
+  padding: 3px 10px !important;
+  border-radius: 99px !important;
+  color: var(--gold) !important;
+}
+
+/* Role badge */
+.role-badge {
+  font-size: .62rem !important;
+  font-weight: 800 !important;
+  padding: 3px 10px !important;
+  border-radius: 99px !important;
+}
+.role-badge.admin-badge,
+.role-badge[style*="background: rgba(255"] {
+  background: linear-gradient(135deg, rgba(255,60,60,.15), rgba(255,60,60,.05)) !important;
+  border: 1px solid rgba(255,60,60,.2) !important;
+  color: #ff8080 !important;
+}
+
+/* Balance box — premium glow */
+.header-balance-box {
+  background: linear-gradient(135deg, rgba(0,0,0,.5), rgba(20,0,15,.5)) !important;
+  border: 1.5px solid rgba(245,200,66,.18) !important;
+  border-radius: 99px !important;
+  padding: 7px 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,.3), inset 0 1px 0 rgba(245,200,66,.05) !important;
+}
+.h-balance {
+  font-size: 1.05rem !important;
+  font-weight: 900 !important;
+  color: var(--gold) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* Header action buttons — refined */
+.header-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+}
+.btn-hdr-pill {
+  padding: 8px 16px !important;
+  border-radius: 10px !important;
+  font-size: .78rem !important;
+  font-weight: 700 !important;
+  background: rgba(255,255,255,.03) !important;
+  border: 1px solid rgba(255,255,255,.06) !important;
+  color: rgba(255,255,255,.4) !important;
+  backdrop-filter: blur(4px) !important;
+  transition: all .2s !important;
+}
+.btn-hdr-pill:hover {
+  background: rgba(245,200,66,.08) !important;
+  border-color: rgba(245,200,66,.2) !important;
+  color: var(--gold) !important;
+}
+.btn-daily-pill {
+  background: rgba(245,200,66,.05) !important;
+  border-color: rgba(245,200,66,.12) !important;
+  color: rgba(245,200,66,.6) !important;
+}
+.btn-icon-hdr {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  background: rgba(255,255,255,.03) !important;
+  border: 1px solid rgba(255,255,255,.06) !important;
+  color: rgba(255,255,255,.35) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all .2s !important;
+}
+.btn-icon-hdr:hover {
+  background: rgba(245,200,66,.08) !important;
+  color: var(--gold) !important;
+  border-color: rgba(245,200,66,.2) !important;
+}
+
+/* Cart button — premium */
+.hdr-cart-btn {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 12px !important;
+  background: rgba(245,200,66,.06) !important;
+  border: 1.5px solid rgba(245,200,66,.15) !important;
+  color: var(--gold) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: all .2s !important;
+}
+.hdr-cart-btn:hover {
+  background: rgba(245,200,66,.12) !important;
+  border-color: rgba(245,200,66,.35) !important;
+  box-shadow: 0 0 16px rgba(245,200,66,.15) !important;
+}
+
+/* ─── JACKPOT BANNER — Premium VIP ─── */
+.jackpot-banner {
+  background: linear-gradient(135deg, #3a0000 0%, #250005 30%, #1a0015 60%, #300020 100%) !important;
+  padding: 52px 32px !important;
+  text-align: center !important;
+  position: relative !important;
+  overflow: hidden !important;
+  border-bottom: 2px solid rgba(245,200,66,.15) !important;
+}
+
+/* Animated shimmer overlay */
+.jackpot-banner::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important; left: -100% !important;
+  width: 200% !important; height: 100% !important;
+  background: linear-gradient(90deg, transparent 0%, rgba(245,200,66,.03) 25%, rgba(245,200,66,.06) 50%, rgba(245,200,66,.03) 75%, transparent 100%) !important;
+  animation: shimmer-sweep 6s ease-in-out infinite !important;
+  pointer-events: none !important;
+}
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-30%); }
+  50% { transform: translateX(30%); }
+  100% { transform: translateX(-30%); }
+}
+
+/* Jackpot label */
+.jackpot-label {
+  font-size: .82rem !important;
+  font-weight: 800 !important;
+  color: rgba(245,200,66,.55) !important;
+  letter-spacing: .2em !important;
+  text-transform: uppercase !important;
+  margin-bottom: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+.jackpot-label i {
+  font-size: .72rem !important;
+  color: rgba(245,200,66,.4) !important;
+}
+
+/* Jackpot number — MASSIVE gold gradient */
+.jackpot-number {
+  font-size: clamp(2.8rem, 7vw, 5rem) !important;
+  font-weight: 900 !important;
+  background: linear-gradient(135deg, #ffe87a 0%, #f5c842 30%, #c49b0a 60%, #f5c842 80%, #ffe87a 100%) !important;
+  background-size: 200% 100% !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  animation: gold-shimmer 4s linear infinite !important;
+  letter-spacing: .02em !important;
+  filter: drop-shadow(0 4px 20px rgba(245,200,66,.35)) !important;
+  position: relative !important;
+  z-index: 1 !important;
+  line-height: 1.1 !important;
+  font-variant-numeric: tabular-nums !important;
+  display: block !important;
+}
+@keyframes gold-shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* Jackpot subtitle */
+.jackpot-sub {
+  font-size: .78rem !important;
+  color: rgba(255,255,255,.25) !important;
+  margin-top: 12px !important;
+  letter-spacing: .04em !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* ─── MOBILE RESPONSIVE — Premium on small screens ─── */
+@media (max-width: 768px) {
+  .luxury-header {
+    padding: 0 !important;
+  }
+  .header-inner {
+    padding: 8px 14px !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+  .header-logo span {
+    font-size: 1rem !important;
+  }
+  .header-logo i {
+    font-size: 1.1rem !important;
+  }
+  .header-user-info {
+    display: none !important;
+  }
+  .header-spacer {
+    display: none !important;
+  }
+  .header-balance-box {
+    padding: 5px 12px !important;
+    font-size: .82rem !important;
+    order: 2 !important;
+  }
+  .h-balance {
+    font-size: .92rem !important;
+  }
+  .header-actions {
+    gap: 5px !important;
+    order: 3 !important;
+    flex-wrap: wrap !important;
+  }
+  .btn-hdr-pill {
+    padding: 6px 10px !important;
+    font-size: .72rem !important;
+  }
+  .btn-hdr-pill span {
+    display: none !important;
+  }
+  .btn-icon-hdr {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: .75rem !important;
+  }
+  .hdr-cart-btn {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  /* Jackpot mobile */
+  .jackpot-banner {
+    padding: 36px 16px !important;
+  }
+  .jackpot-number {
+    font-size: clamp(2rem, 10vw, 3.2rem) !important;
+  }
+  .jackpot-label {
+    font-size: .72rem !important;
+    letter-spacing: .12em !important;
+  }
+
+  /* Lobby sections mobile */
+  .lobby-heading, #view-lobby > h2 {
+    padding: 20px 16px 10px !important;
+    font-size: .95rem !important;
+  }
+
+  /* Cards mobile */
+  #lottery-lobby-grid > .lottery-card {
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+  .lottery-card-header h3 {
+    font-size: .9rem !important;
+  }
+  .rate-pill {
+    font-size: .62rem !important;
+    padding: 3px 7px !important;
+  }
+  .btn-play-lottery {
+    padding: 10px 14px !important;
+    font-size: .78rem !important;
+  }
+
+  /* VN cards mobile */
+  .vn-card-title {
+    font-size: .82rem !important;
+  }
+  .vn-play-btn {
+    padding: 10px 14px !important;
+    font-size: .78rem !important;
+  }
+
+  /* Footer mobile */
+  .footer-top {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+    padding: 36px 16px !important;
+  }
+  .footer-bottom-inner {
+    padding: 14px 16px !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    text-align: center !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-inner {
+    padding: 6px 10px !important;
+    gap: 6px !important;
+  }
+  .header-logo span {
+    font-size: .88rem !important;
+  }
+  .header-balance-box {
+    padding: 4px 10px !important;
+  }
+  .h-balance {
+    font-size: .82rem !important;
+  }
+  .btn-hdr-pill {
+    padding: 5px 8px !important;
+  }
+  .btn-icon-hdr {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: .68rem !important;
+  }
+
+  .jackpot-banner {
+    padding: 28px 12px !important;
+  }
+  .jackpot-number {
+    font-size: clamp(1.8rem, 12vw, 2.6rem) !important;
+  }
+  .jackpot-sub {
+    font-size: .68rem !important;
+  }
+}
+
+/* ─── Tablet (768-1024) ─── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .header-inner {
+    padding: 10px 20px !important;
+  }
+  .btn-hdr-pill span {
+    display: none !important;
+  }
+  #lottery-lobby-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   📱 MOBILE HEADER — CLEAN & PREMIUM
+═══════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* Header single line layout */
+  .header-inner {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    padding: 8px 12px !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+  .header-inner::-webkit-scrollbar { display: none !important; }
+
+  /* Logo compact */
+  .header-logo {
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+  }
+  .header-logo i { font-size: 1rem !important; }
+  .header-logo span { font-size: .92rem !important; }
+
+  /* Hide user info */
+  .header-user-info { display: none !important; }
+  .header-spacer { display: none !important; flex: 0 !important; min-width: 0 !important; width: 0 !important; }
+
+  /* Balance compact */
+  .header-balance-box {
+    padding: 4px 10px !important;
+    gap: 5px !important;
+    flex-shrink: 0 !important;
+    border-radius: 8px !important;
+    order: 1 !important;
+  }
+  .h-balance { font-size: .82rem !important; }
+  .header-balance-box > i { font-size: .65rem !important; }
+  .header-balance-box > span { font-size: .65rem !important; }
+  .header-balance-box > button { display: none !important; }
+
+  /* Cart compact */
+  .hdr-cart-btn {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
+    order: 2 !important;
+    font-size: .78rem !important;
+  }
+  .cart-badge {
+    min-width: 15px !important;
+    height: 15px !important;
+    font-size: .55rem !important;
+    top: -3px !important;
+    right: -3px !important;
+  }
+
+  /* Actions — hide secondary, show only essential */
+  .header-actions {
+    display: flex !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+    flex-wrap: nowrap !important;
+    order: 3 !important;
+  }
+
+  /* Hide text labels on ALL pill buttons */
+  .btn-hdr-pill span { display: none !important; }
+
+  /* Make pill buttons icon-only */
+  .btn-hdr-pill {
+    padding: 6px 8px !important;
+    min-width: 30px !important;
+    justify-content: center !important;
+  }
+
+  /* Hide secondary buttons on mobile */
+  #btn-theme-pill,
+  #btn-sound-pill,
+  #btn-admin-back,
+  #btn-history-back {
+    display: none !important;
+  }
+
+  /* Admin & logout — compact */
+  #btn-logout {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: .72rem !important;
+  }
+
+  /* Daily, History, Admin buttons — icon only, compact */
+  #btn-daily-claim,
+  #btn-go-history,
+  #btn-admin-view {
+    width: 30px !important;
+    height: 30px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 8px !important;
+    font-size: .75rem !important;
+  }
+}
+
+/* Extra small phones */
+@media (max-width: 380px) {
+  .header-logo span { font-size: .8rem !important; }
+  .header-logo i { font-size: .88rem !important; }
+  .header-balance-box { padding: 3px 8px !important; }
+  .h-balance { font-size: .75rem !important; }
+  .hdr-cart-btn { width: 28px !important; height: 28px !important; }
+  #btn-daily-claim, #btn-go-history, #btn-admin-view, #btn-logout {
+    width: 28px !important; height: 28px !important;
+  }
+}
+
+/* ─── Chat button — mobile position fix ─── */
+@media (max-width: 768px) {
+  .btn-gold[onclick*="toggleChat"],
+  button[onclick*="toggleChatDrawer"] {
+    width: 48px !important;
+    height: 48px !important;
+    bottom: 16px !important;
+    right: 12px !important;
+    font-size: 1.2rem !important;
+    z-index: 998 !important;
+  }
+}
+
+/* ─── Hide redundant plain result text on mobile ─── */
+@media (max-width: 768px) {
+  .last-result-display {
+    padding: 10px !important;
+  }
+}
+
+/* ─── VN section divider mobile ─── */
+@media (max-width: 768px) {
+  .vn-section-divider {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .vn-divider-rates {
+    gap: 4px !important;
+  }
+  .vn-rate-badge {
+    font-size: .6rem !important;
+    padding: 3px 7px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   🏆 JACKPOT BANNER — PREMIUM SPECTACULAR
+═══════════════════════════════════════════════════ */
+
+/* Jackpot — dramatic multi-layer gradient */
+.jackpot-banner {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(180,60,0,.25) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(120,0,60,.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(245,200,66,.06) 0%, transparent 40%),
+    linear-gradient(135deg, #3a0500 0%, #2a0008 25%, #1a0015 50%, #250020 75%, #3a0500 100%) !important;
+  padding: 60px 32px 40px !important;
+  border-bottom: 2px solid rgba(245,200,66,.18) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Sparkle decorations */
+.jp-sparkle {
+  position: absolute;
+  color: rgba(245,200,66,.3);
+  font-size: 1rem;
+  pointer-events: none;
+  z-index: 1;
+  animation: sparkle-float 4s ease-in-out infinite;
+}
+.jp-s1 { top: 15%; left: 8%; animation-delay: 0s; font-size: .8rem; }
+.jp-s2 { top: 25%; right: 12%; animation-delay: .8s; font-size: 1.2rem; color: rgba(245,200,66,.2); }
+.jp-s3 { bottom: 20%; left: 15%; animation-delay: 1.5s; font-size: .6rem; }
+.jp-s4 { top: 40%; right: 6%; animation-delay: 2.2s; font-size: .9rem; color: rgba(245,200,66,.15); }
+.jp-s5 { bottom: 30%; right: 18%; animation-delay: 3s; font-size: .7rem; color: rgba(245,200,66,.25); }
+.jp-s6 { top: 60%; left: 5%; animation-delay: 1s; font-size: 1rem; color: rgba(245,200,66,.12); }
+
+@keyframes sparkle-float {
+  0%, 100% { transform: translateY(0) scale(1); opacity: .3; }
+  50% { transform: translateY(-8px) scale(1.3); opacity: .7; }
+}
+
+/* Jackpot stats row */
+.jp-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  position: relative;
+  z-index: 1;
+}
+.jp-stat {
+  font-size: .72rem;
+  color: rgba(255,255,255,.3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.jp-stat i {
+  color: rgba(245,200,66,.35);
+  font-size: .65rem;
+}
+.jp-stat span {
+  font-weight: 800;
+  color: rgba(245,200,66,.55);
+}
+
+/* ═══════════════════════════════════════════════════
+   ✨ TRUST & PRIZE SHOWCASE
+═══════════════════════════════════════════════════ */
+
+.trust-showcase {
+  background: linear-gradient(180deg, rgba(30,0,20,.6) 0%, rgba(6,0,6,0) 100%);
+  padding: 0;
+  border-bottom: 1px solid rgba(245,200,66,.04);
+}
+
+.trust-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 28px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.trust-card {
+  background: linear-gradient(145deg, rgba(22,0,16,.8), rgba(10,0,10,.5));
+  border: 1px solid rgba(245,200,66,.06);
+  border-radius: 18px;
+  padding: 28px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: border-color .25s, transform .25s;
+  position: relative;
+  overflow: hidden;
+}
+.trust-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--gold-grad);
+  opacity: 0;
+  transition: opacity .25s;
+}
+.trust-card:hover {
+  border-color: rgba(245,200,66,.18);
+  transform: translateY(-3px);
+}
+.trust-card:hover::before { opacity: 1; }
+
+.trust-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(245,200,66,.1), rgba(245,200,66,.03));
+  border: 1px solid rgba(245,200,66,.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+
+.trust-card h4 {
+  font-size: .82rem;
+  font-weight: 800;
+  color: rgba(255,255,255,.7);
+  margin: 0;
+}
+
+.trust-highlight {
+  font-size: 1.6rem;
+  font-weight: 900;
+  background: var(--gold-grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.trust-card p {
+  font-size: .7rem;
+  color: rgba(255,255,255,.28);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Responsive trust section */
+@media (max-width: 900px) {
+  .trust-inner {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    padding: 24px 16px;
+  }
+}
+@media (max-width: 480px) {
+  .trust-inner {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 20px 12px;
+  }
+  .trust-card {
+    padding: 20px 14px;
+    border-radius: 14px;
+  }
+  .trust-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+    border-radius: 12px;
+  }
+  .trust-highlight {
+    font-size: 1.3rem;
+  }
+  .trust-card h4 {
+    font-size: .75rem;
+  }
+  .trust-card p {
+    font-size: .62rem;
+  }
+  .jp-stats-row {
+    gap: 12px;
+  }
+  .jp-stat {
+    font-size: .62rem;
+  }
+  .jp-sparkle { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════
+   💎 FINAL VIP POLISH — LAST ROUND
+═══════════════════════════════════════════════════ */
+
+/* ─── Smooth scrolling ─── */
+html { scroll-behavior: smooth !important; }
+
+/* ─── Selection color ─── */
+::selection {
+  background: rgba(245,200,66,.25);
+  color: #fff;
+}
+::-moz-selection {
+  background: rgba(245,200,66,.25);
+  color: #fff;
+}
+
+/* ─── Custom scrollbar ─── */
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: #060006; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(245,200,66,.2), rgba(245,200,66,.08));
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(245,200,66,.35); }
+
+/* ─── Better section dividers ─── */
+.lobby-heading, #view-lobby > h2 {
+  position: relative !important;
+  overflow: hidden !important;
+}
+.lobby-heading::after, #view-lobby > h2::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: 0 !important; left: 32px !important; right: 32px !important;
+  height: 1px !important;
+  background: linear-gradient(90deg, transparent, rgba(245,200,66,.12), transparent) !important;
+}
+
+/* ─── Lottery card subtle gradient border ─── */
+#lottery-lobby-grid > .lottery-card {
+  background: linear-gradient(145deg, #180002, #0e000e) !important;
+  border: 1px solid transparent !important;
+  background-clip: padding-box !important;
+  position: relative !important;
+}
+#lottery-lobby-grid > .lottery-card::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: -1px !important;
+  border-radius: 21px !important;
+  background: linear-gradient(145deg, rgba(245,200,66,.1), rgba(245,200,66,.02), rgba(245,200,66,.06)) !important;
+  z-index: -1 !important;
+  transition: opacity .25s !important;
+}
+#lottery-lobby-grid > .lottery-card:hover::after {
+  background: linear-gradient(145deg, rgba(245,200,66,.22), rgba(245,200,66,.06), rgba(245,200,66,.15)) !important;
+}
+
+/* ─── Trust cards gradient border ─── */
+.trust-card {
+  border: 1px solid transparent !important;
+  position: relative !important;
+}
+.trust-card::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: -1px !important;
+  border-radius: 19px !important;
+  background: linear-gradient(145deg, rgba(245,200,66,.08), rgba(245,200,66,.01), rgba(245,200,66,.05)) !important;
+  z-index: -1 !important;
+}
+
+/* ─── Mini-game cards gradient border ─── */
+#view-lobby .mini-game-card {
+  border: 1px solid transparent !important;
+  position: relative !important;
+}
+#view-lobby .mini-game-card::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: -1px !important;
+  border-radius: 21px !important;
+  background: linear-gradient(145deg, rgba(245,200,66,.06), transparent, rgba(245,200,66,.04)) !important;
+  z-index: -1 !important;
+  transition: opacity .25s !important;
+}
+#view-lobby .mini-game-card:hover::after {
+  background: linear-gradient(145deg, rgba(245,200,66,.2), rgba(245,200,66,.05), rgba(245,200,66,.12)) !important;
+}
+
+/* ─── Subtle noise texture on body ─── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23000'/%3E%3Crect width='1' height='1' fill='%23111' x='0' y='0'/%3E%3C/svg%3E");
+  opacity: .15;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ─── VN cards gradient left border ─── */
+.vn-card-fast {
+  border-left: 3px solid transparent !important;
+  border-image: linear-gradient(180deg, #ff4444, #ff8866) 1 !important;
+  border-image-slice: 1 !important;
+}
+.vn-card-daily {
+  border-left: 3px solid transparent !important;
+  border-image: linear-gradient(180deg, #00e676, #69f0ae) 1 !important;
+  border-image-slice: 1 !important;
+}
+
+/* ─── Jackpot number pulse glow ─── */
+.jackpot-number {
+  text-shadow: 0 0 40px rgba(245,200,66,.2), 0 0 80px rgba(245,200,66,.08) !important;
+}
+
+/* ─── Stats row separator dots ─── */
+.jp-stat + .jp-stat::before {
+  content: '·';
+  color: rgba(245,200,66,.15);
+  margin-right: 24px;
+  font-size: 1.2rem;
+}
+
+/* ─── Lobby heading icon glow ─── */
+.lobby-heading i, #view-lobby > h2 i {
+  filter: drop-shadow(0 0 4px rgba(245,200,66,.3));
+}
+
+/* ─── Trust icon animation on hover ─── */
+.trust-card:hover .trust-icon {
+  background: linear-gradient(135deg, rgba(245,200,66,.18), rgba(245,200,66,.06)) !important;
+  transform: scale(1.08);
+  transition: all .3s;
+}
+.trust-card:hover .trust-highlight {
+  filter: drop-shadow(0 0 8px rgba(245,200,66,.3));
+}
+
+/* ─── Better play button with arrow animation ─── */
+.btn-play-lottery i.fa-circle-chevron-right,
+.btn-play-lottery i.fa-chevron-right {
+  transition: transform .2s;
+}
+.btn-play-lottery:hover i.fa-circle-chevron-right,
+.btn-play-lottery:hover i.fa-chevron-right {
+  transform: translateX(3px);
+}
+
+/* ─── VN play button hover ─── */
+.vn-play-btn:hover i.fa-chevron-right {
+  transform: translateX(3px);
+  transition: transform .2s;
+}
+
+/* ─── Footer heading gold underline ─── */
+.footer-col-title, .site-footer h4 {
+  position: relative !important;
+  padding-bottom: 10px !important;
+}
+.footer-col-title::after, .site-footer h4::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: 0 !important; left: 0 !important;
+  width: 30px !important; height: 2px !important;
+  background: var(--gold-grad) !important;
+  border-radius: 2px !important;
+}
+
+/* ─── Chat button premium ─── */
+button[onclick*="toggleChatDrawer"],
+.btn-gold[onclick*="toggleChat"] {
+  background: var(--gold-grad) !important;
+  color: #1a0000 !important;
+  border: none !important;
+  box-shadow: 0 4px 20px rgba(245,200,66,.3), 0 0 0 3px rgba(245,200,66,.08) !important;
+  transition: all .25s !important;
+}
+button[onclick*="toggleChatDrawer"]:hover,
+.btn-gold[onclick*="toggleChat"]:hover {
+  box-shadow: 0 6px 28px rgba(245,200,66,.45), 0 0 0 5px rgba(245,200,66,.12) !important;
+  transform: scale(1.05) !important;
+}
+
+/* ─── Glow background — richer ─── */
+.glow-bg {
+  position: fixed !important;
+  inset: 0 !important;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(80,0,40,.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(40,0,60,.1) 0%, transparent 50%) !important;
+  pointer-events: none !important;
+  z-index: -2 !important;
+}
+
+/* ─── Loading screen premium ─── */
+#app-loading-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  background: #060006 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 16px !important;
+  z-index: 99999 !important;
+}
+.ls-dragon {
+  font-size: 4rem !important;
+  animation: pulse 2s ease-in-out infinite !important;
+}
+.ls-name {
+  font-size: 1.6rem !important;
+  font-weight: 900 !important;
+  background: var(--gold-grad) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  letter-spacing: .06em !important;
+}
+.ls-sub {
+  font-size: .82rem !important;
+  color: rgba(245,200,66,.35) !important;
+  letter-spacing: .1em !important;
+}
+
+/* ─── Section transitions — fade up ─── */
+.trust-card,
+#lottery-lobby-grid > .lottery-card,
+#view-lobby .mini-game-card {
+  animation: fadeUp .5s ease both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.trust-card:nth-child(1) { animation-delay: .05s; }
+.trust-card:nth-child(2) { animation-delay: .1s; }
+.trust-card:nth-child(3) { animation-delay: .15s; }
+.trust-card:nth-child(4) { animation-delay: .2s; }
+
+/* ─── Rate pill hover ─── */
+.rate-pill:hover {
+  background: rgba(245,200,66,.14) !important;
+  color: var(--gold) !important;
+  border-color: rgba(245,200,66,.2) !important;
+}
+
+/* ─── Mobile final tweaks ─── */
+@media (max-width: 768px) {
+  .jp-stats-row { gap: 10px; }
+  .jp-stat + .jp-stat::before { margin-right: 10px; font-size: .8rem; }
+  .trust-inner { padding: 20px 14px !important; gap: 10px !important; }
+  .lobby-heading::after, #view-lobby > h2::after { left: 16px !important; right: 16px !important; }
+}
+@media (max-width: 480px) {
+  .jp-stat + .jp-stat::before { display: none; }
+  .jp-stats-row { flex-direction: column; gap: 6px; }
+}
+
+/* ═══════════════════════════════════════════════════
+   🔥 COLOR REVOLUTION — WARM LUXURY GOLD THEME
+   Inspired by: rich burgundy + vibrant gold palette
+═══════════════════════════════════════════════════ */
+
+/* Override ALL color tokens */
+:root {
+  --bg: #0c0400 !important;
+  --bg-card: #1a0800 !important;
+  --bg-input: #120600 !important;
+  --gold: #ffc107 !important;
+  --gold-light: #ffd54f !important;
+  --gold-dark: #e6a000 !important;
+  --gold-grad: linear-gradient(135deg, #ffd54f 0%, #ffc107 30%, #e6a000 60%, #c68400 80%, #8b6914 100%) !important;
+  --gold-glow: 0 0 24px rgba(255,193,7,.35) !important;
+  --border: rgba(255,193,7,.12) !important;
+  --text: #fff5e0 !important;
+  --muted: rgba(255,193,7,.4) !important;
+  --win: #00e676 !important;
+  --lose: #ff4444 !important;
+  
+  --bg-primary: #0c0400 !important;
+  --bg-secondary: #1a0800 !important;
+  --bg-tertiary: #241000 !important;
+  --gold-primary: #ffc107 !important;
+  --gold-gradient: linear-gradient(135deg, #ffd54f 0%, #ffc107 30%, #e6a000 60%, #c68400 80%) !important;
+  --border-color: rgba(255,193,7,.12) !important;
+  --text-main: #fff5e0 !important;
+  --text-muted: rgba(255,193,7,.4) !important;
+  --color-win: #00e676 !important;
+  --color-lose: #ff4444 !important;
+  --color-pending: #ffc107 !important;
+}
+
+/* ─── BODY — warm dark background ─── */
+html { background: #0c0400 !important; }
+body { 
+  background: #0c0400 !important; 
+  color: #fff5e0 !important; 
+}
+
+/* ─── Glow background — warm red/gold ─── */
+.glow-bg {
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(180,60,0,.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 90%, rgba(120,40,0,.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(255,193,7,.03) 0%, transparent 40%) !important;
+}
+
+/* ─── HEADER — warm glass ─── */
+.luxury-header {
+  background: linear-gradient(180deg, rgba(26,8,0,.97) 0%, rgba(12,4,0,.98) 100%) !important;
+  border-bottom: 1px solid rgba(255,193,7,.12) !important;
+  box-shadow: 0 4px 30px rgba(0,0,0,.5), 0 1px 0 rgba(255,193,7,.06) inset !important;
+}
+.luxury-header::before {
+  background: linear-gradient(90deg, transparent, rgba(255,193,7,.4), #ffc107, rgba(255,193,7,.4), transparent) !important;
+}
+
+/* Logo — bright gold */
+.header-logo i, .header-logo span {
+  background: linear-gradient(135deg, #ffd54f, #ffc107, #e6a000) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  filter: drop-shadow(0 0 8px rgba(255,193,7,.4)) !important;
+}
+
+/* Balance bright */
+.h-balance { color: #ffc107 !important; }
+.header-balance-box {
+  border-color: rgba(255,193,7,.2) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,193,7,.08) !important;
+}
+
+/* ─── JACKPOT — SPECTACULAR WARM ─── */
+.jackpot-banner {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(220,80,0,.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(160,40,0,.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 40%, rgba(255,193,7,.08) 0%, transparent 35%),
+    linear-gradient(135deg, #2a0800 0%, #1a0400 25%, #140200 50%, #1a0600 75%, #2a0800 100%) !important;
+  border-bottom: 2px solid rgba(255,193,7,.2) !important;
+}
+.jackpot-number {
+  background: linear-gradient(135deg, #ffd54f 0%, #ffc107 25%, #e6a000 50%, #ffc107 75%, #ffd54f 100%) !important;
+  background-size: 200% 100% !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  filter: drop-shadow(0 6px 24px rgba(255,193,7,.4)) !important;
+  text-shadow: none !important;
+}
+.jackpot-label { color: rgba(255,193,7,.6) !important; }
+.jackpot-label i { color: rgba(255,193,7,.5) !important; }
+.jp-sparkle { color: rgba(255,193,7,.35) !important; }
+.jp-stat span { color: rgba(255,193,7,.6) !important; }
+.jp-stat i { color: rgba(255,193,7,.4) !important; }
+
+/* Shimmer brighter */
+.jackpot-banner::before {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,193,7,.04) 25%, rgba(255,193,7,.08) 50%, rgba(255,193,7,.04) 75%, transparent 100%) !important;
+}
+
+/* ─── TRUST SHOWCASE — warm ─── */
+.trust-showcase {
+  background: linear-gradient(180deg, rgba(40,10,0,.5) 0%, rgba(12,4,0,0) 100%) !important;
+}
+.trust-card {
+  background: linear-gradient(145deg, rgba(30,10,2,.8), rgba(16,5,0,.5)) !important;
+}
+.trust-icon {
+  background: linear-gradient(135deg, rgba(255,193,7,.12), rgba(255,193,7,.04)) !important;
+  border-color: rgba(255,193,7,.12) !important;
+  color: #ffc107 !important;
+}
+.trust-highlight {
+  background: linear-gradient(135deg, #ffd54f, #ffc107, #e6a000) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* ─── LOTTERY CARDS — warm burgundy ─── */
+#lottery-lobby-grid > .lottery-card {
+  background: linear-gradient(145deg, #1e0800, #120400) !important;
+}
+#lottery-lobby-grid > .lottery-card::after {
+  background: linear-gradient(145deg, rgba(255,193,7,.12), rgba(255,193,7,.03), rgba(255,193,7,.08)) !important;
+}
+#lottery-lobby-grid > .lottery-card:hover {
+  box-shadow: 0 16px 40px rgba(0,0,0,.5), 0 0 20px rgba(255,193,7,.08) !important;
+}
+#lottery-lobby-grid > .lottery-card:hover::after {
+  background: linear-gradient(145deg, rgba(255,193,7,.25), rgba(255,193,7,.08), rgba(255,193,7,.18)) !important;
+}
+
+/* ─── Rate pills ─── */
+.rate-pill {
+  background: rgba(255,193,7,.08) !important;
+  border-color: rgba(255,193,7,.14) !important;
+  color: rgba(255,193,7,.65) !important;
+}
+.lottery-badge {
+  background: rgba(255,193,7,.08) !important;
+  border-color: rgba(255,193,7,.15) !important;
+  color: rgba(255,193,7,.6) !important;
+}
+
+/* ─── Buttons — vibrant gold gradient ─── */
+.btn-play-lottery, .mg-play-btn, .vn-play-btn {
+  background: linear-gradient(135deg, #ffd54f, #ffc107, #e6a000, #c68400) !important;
+  color: #1a0000 !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,.15) !important;
+}
+.btn-play-lottery:hover, .mg-play-btn:hover, .vn-play-btn:hover {
+  filter: brightness(1.15) saturate(1.1) !important;
+  box-shadow: 0 4px 16px rgba(255,193,7,.35) !important;
+}
+
+/* ─── VIP badge ─── */
+.h-vip-name { color: #ffc107 !important; }
+.vn-rate-badge { color: rgba(255,193,7,.55) !important; }
+
+/* ─── MINI-GAME CARDS — warm ─── */
+#view-lobby .mini-game-card {
+  background: linear-gradient(145deg, #1e0a02, #100400) !important;
+}
+#view-lobby .mini-game-card:hover {
+  background: linear-gradient(145deg, #2a1004, #180800) !important;
+  border-color: rgba(255,193,7,.25) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.5), 0 0 16px rgba(255,193,7,.06) !important;
+}
+#view-lobby .mg-icon {
+  background: radial-gradient(circle, rgba(255,193,7,.08) 0%, transparent 70%) !important;
+}
+#view-lobby .mg-label { color: rgba(255,255,255,.6) !important; }
+
+/* ─── Number balls — brighter ─── */
+.num-ball-gold {
+  background: linear-gradient(135deg, #ffd54f, #ffc107, #e6a000) !important;
+  color: #1a0000 !important;
+  border-color: rgba(255,220,50,.5) !important;
+  box-shadow: inset 0 -3px 6px rgba(0,0,0,.2), 0 2px 12px rgba(255,193,7,.4) !important;
+}
+.num-ball-red {
+  background: linear-gradient(135deg, #ff6b6b, #e53935, #b71c1c) !important;
+  box-shadow: inset 0 -3px 6px rgba(0,0,0,.3), 0 2px 10px rgba(255,60,60,.35) !important;
+}
+.num-ball-green {
+  background: linear-gradient(135deg, #69f0ae, #00c853, #00793a) !important;
+  box-shadow: inset 0 -3px 6px rgba(0,0,0,.25), 0 2px 10px rgba(0,200,80,.35) !important;
+}
+
+/* ─── LOBBY HEADINGS — gold ─── */
+.lobby-heading, #view-lobby > h2 {
+  color: #ffc107 !important;
+}
+.lobby-heading::after, #view-lobby > h2::after {
+  background: linear-gradient(90deg, transparent, rgba(255,193,7,.15), transparent) !important;
+}
+.lobby-heading i, #view-lobby > h2 i {
+  filter: drop-shadow(0 0 6px rgba(255,193,7,.4)) !important;
+}
+
+/* ─── FOOTER — warm ─── */
+.site-footer {
+  background: linear-gradient(180deg, #160600 0%, #0a0200 100%) !important;
+  border-top: 1px solid rgba(255,193,7,.08) !important;
+}
+.site-footer h4, .footer-col-title {
+  color: #ffc107 !important;
+}
+.footer-col-title::after, .site-footer h4::after {
+  background: linear-gradient(90deg, #ffc107, #e6a000) !important;
+}
+
+/* ─── Scrollbar — gold ─── */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255,193,7,.25), rgba(255,193,7,.1)) !important;
+}
+::-webkit-scrollbar-track { background: #0c0400 !important; }
+
+/* ─── Selection — gold ─── */
+::selection { background: rgba(255,193,7,.3) !important; }
+
+/* ─── Auth page — warm ─── */
+.auth-split { background: #0c0400 !important; }
+.auth-form-card {
+  background: linear-gradient(160deg, #1a0800, #100400) !important;
+  border-color: rgba(255,193,7,.1) !important;
+}
+
+/* ─── Loading screen — warm ─── */
+#app-loading-screen { background: #0c0400 !important; }
+.ls-name {
+  background: linear-gradient(135deg, #ffd54f, #ffc107, #e6a000) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+.ls-sub { color: rgba(255,193,7,.35) !important; }
+
+/* ─── Modals — warm ─── */
+.modal-content, .modal-card {
+  background: linear-gradient(160deg, #1a0800, #0c0400) !important;
+  border-color: rgba(255,193,7,.12) !important;
+}
+.modal-content::before, .modal-card::before {
+  background: linear-gradient(90deg, transparent, rgba(255,193,7,.5), transparent) !important;
+}
+
+/* ─── Toast — warm ─── */
+.toast-item {
+  background: linear-gradient(135deg, #1e0800, #120400) !important;
+  border-color: rgba(255,193,7,.15) !important;
+}
+
+/* ─── Noise texture — warmer ─── */
+body::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%230c0400'/%3E%3Crect width='1' height='1' fill='%231a0800' x='0' y='0'/%3E%3C/svg%3E") !important;
+  opacity: .12 !important;
+}
+
+/* ─── Tab filter buttons ─── */
+.tab-filter-btn.active {
+  background: linear-gradient(135deg, #ffd54f, #ffc107, #e6a000) !important;
+  color: #1a0000 !important;
+}
+.tab-filter-btn:not(.active):hover {
+  background: rgba(255,193,7,.08) !important;
+  color: #ffc107 !important;
+  border-color: rgba(255,193,7,.2) !important;
+}
+
+/* ─── Header buttons — warm ─── */
+.btn-hdr-pill:hover, .btn-icon-hdr:hover {
+  background: rgba(255,193,7,.1) !important;
+  color: #ffc107 !important;
+  border-color: rgba(255,193,7,.2) !important;
+}
+.btn-daily-pill {
+  background: rgba(255,193,7,.06) !important;
+  border-color: rgba(255,193,7,.14) !important;
+  color: rgba(255,193,7,.65) !important;
+}
+
+/* ─── Chat button — warm gold ─── */
+button[onclick*="toggleChatDrawer"],
+.btn-gold[onclick*="toggleChat"] {
+  background: linear-gradient(135deg, #ffd54f, #ffc107, #e6a000) !important;
+  box-shadow: 0 4px 20px rgba(255,193,7,.35), 0 0 0 3px rgba(255,193,7,.1) !important;
+}
+
+/* ─── VN card borders — warmer ─── */
+.vn-card-fast { border-image: linear-gradient(180deg, #ff4444, #ff6b3b) 1 !important; }
+.vn-card-daily { border-image: linear-gradient(180deg, #00e676, #69f0ae) 1 !important; }
+
+/* ─── Gold text utility ─── */
+.gold-text { color: #ffc107 !important; }
+
+
+/* ═══════════════════════════════════════════════════
+   🔧 FIX: pointer-events on pseudo-elements
+═══════════════════════════════════════════════════ */
+#lottery-lobby-grid > .lottery-card::after,
+.trust-card::after,
+.trust-card::before,
+#view-lobby .mini-game-card::after,
+.jackpot-banner::before,
+.jackpot-banner::after,
+.jp-sparkle,
+body::before,
+.lobby-heading::after,
+#view-lobby > h2::after,
+.footer-col-title::after,
+.site-footer h4::after,
+.modal-content::before,
+.modal-card::before {
+  pointer-events: none !important;
+}
+
+/* Ensure all cards and buttons are clickable */
+.lottery-card,
+.mini-game-card,
+.trust-card,
+.btn-play-lottery,
+.mg-play-btn,
+.vn-play-btn,
+.btn-hdr-pill,
+.btn-icon-hdr,
+.hdr-cart-btn {
+  position: relative !important;
+  z-index: 1 !important;
+  cursor: pointer !important;
+}
+
+/* Buttons must be on top */
+.btn-play-lottery,
+.mg-play-btn,
+.vn-play-btn {
+  z-index: 2 !important;
+  position: relative !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   🔧 CLICK FIX — Remove all ::after overlays
+   Use border-image instead of pseudo-element borders
+═══════════════════════════════════════════════════ */
+
+/* KILL all card ::after pseudo-elements */
+#lottery-lobby-grid > .lottery-card::after {
+  display: none !important;
+  content: none !important;
+}
+#view-lobby .mini-game-card::after {
+  display: none !important;
+  content: none !important;
+}
+.trust-card::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Use proper border instead */
+#lottery-lobby-grid > .lottery-card {
+  border: 1px solid rgba(255,193,7,.1) !important;
+  transition: border-color .25s, transform .25s, box-shadow .25s !important;
+}
+#lottery-lobby-grid > .lottery-card:hover {
+  border-color: rgba(255,193,7,.25) !important;
+}
+
+#view-lobby .mini-game-card {
+  border: 1px solid rgba(255,193,7,.06) !important;
+}
+#view-lobby .mini-game-card:hover {
+  border-color: rgba(255,193,7,.22) !important;
+}
+
+.trust-card {
+  border: 1px solid rgba(255,193,7,.08) !important;
+}
+.trust-card:hover {
+  border-color: rgba(255,193,7,.2) !important;
+}
+
+/* Ensure ALL clickable elements work */
+.btn-play-lottery,
+.vn-play-btn,
+.mg-play-btn,
+.lc-btn,
+button,
+[onclick] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Make sure card body doesn't block button clicks */
+.lottery-card-footer {
+  position: relative !important;
+  z-index: 5 !important;
+}
+.lottery-card-header {
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+/* ALL pseudo-elements MUST be non-interactive */
+*::before, *::after {
+  pointer-events: none !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   ☢️ NUCLEAR CLICK FIX — EVERYTHING CLICKABLE
+═══════════════════════════════════════════════════ */
+
+/* body::before MUST NOT block clicks */
+body::before {
+  pointer-events: none !important;
+  z-index: -999 !important;
+}
+
+/* glow-bg MUST NOT block clicks */
+.glow-bg {
+  pointer-events: none !important;
+  z-index: -999 !important;
+}
+
+/* ALL fixed overlays that are decorative */
+body > .glow-bg,
+body::before,
+body::after {
+  pointer-events: none !important;
+}
+
+/* Loading screen - ensure it can be hidden */
+#app-loading-screen {
+  transition: opacity 0.4s ease !important;
+}
+#app-loading-screen[style*="opacity: 0"],
+#app-loading-screen[style*="display: none"] {
+  pointer-events: none !important;
+}
+
+/* EVERY button and interactive element */
+button,
+a,
+input,
+select,
+textarea,
+[onclick],
+[role="button"],
+.btn-play-lottery,
+.vn-play-btn,
+.mg-play-btn,
+.lc-btn,
+.btn-hdr-pill,
+.btn-icon-hdr,
+.hdr-cart-btn,
+.lottery-card[onclick],
+.mini-game-card[onclick],
+.rate-pill,
+.footer-link,
+.tab-filter-btn,
+.betting-type-tab,
+.number-grid-btn {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Card footers with buttons inside */
+.lottery-card-footer,
+.vn-card-footer {
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+/* Main content always above decorative layers */
+.luxury-header,
+#view-lobby,
+#view-betting,
+#view-history,
+#view-admin,
+.auth-split,
+.site-footer,
+.live-chat-drawer,
+.toast-container {
+  position: relative !important;
+  z-index: 1 !important;
+}
+.luxury-header {
+  z-index: 1000 !important;
+}
+.modal, .modal-overlay {
+  z-index: 9000 !important;
+}
+.toast-container {
+  z-index: 99999 !important;
+}
+
+
+/* ═══════════════════════════════════════════════════
+   🔢 NUMBER GRID + BULK TOOLS
+═══════════════════════════════════════════════════ */
+
+.num-grid-wrapper {
+  background: rgba(255,193,7,.03);
+  border: 1px solid rgba(255,193,7,.08);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.num-grid-title {
+  font-size: .75rem;
+  color: var(--gold-primary, #ffc107);
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+.num-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+}
+.num-grid-btn {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,193,7,.08);
+  border-radius: 6px;
+  color: rgba(255,255,255,.65);
+  font-size: .72rem;
+  font-weight: 600;
+  padding: 6px 0;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: 'Kanit', sans-serif;
+}
+.num-grid-btn:hover {
+  background: rgba(255,193,7,.12);
+  color: #ffc107;
+  border-color: rgba(255,193,7,.2);
+}
+.num-grid-btn:active {
+  transform: scale(.95);
+}
+.num-grid-btn.hot {
+  background: rgba(255,60,60,.12);
+  border-color: rgba(255,60,60,.2);
+  color: #ff6b6b;
+}
+
+/* Bulk tool buttons */
+.vn-bulk-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+.vn-bulk-btn {
+  background: rgba(255,193,7,.06);
+  border: 1px solid rgba(255,193,7,.12);
+  border-radius: 8px;
+  color: rgba(255,193,7,.7);
+  font-size: .72rem;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: 'Kanit', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.vn-bulk-btn:hover {
+  background: rgba(255,193,7,.12);
+  color: #ffc107;
+  border-color: rgba(255,193,7,.2);
+}
+.vn-bulk-btn i {
+  font-size: .65rem;
+}
+
+@media (max-width: 480px) {
+  .num-grid {
+    grid-template-columns: repeat(10, 1fr);
+    gap: 2px;
+  }
+  .num-grid-btn {
+    font-size: .6rem;
+    padding: 5px 0;
+  }
+  .vn-bulk-btn {
+    font-size: .62rem;
+    padding: 5px 8px;
+  }
+}
+
+/* VN Xiên tab buttons */
+.vn-tab-btn {
+  background: rgba(255,193,7,.06);
+  border: 1px solid rgba(255,193,7,.1);
+  border-radius: 8px;
+  color: rgba(255,193,7,.55);
+  font-size: .72rem;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: 'Kanit', sans-serif;
+}
+.vn-tab-btn.active {
+  background: var(--gold-grad, linear-gradient(135deg, #ffd54f, #ffc107));
+  color: #1a0000;
+  border-color: #ffc107;
+  font-weight: 700;
+}
+
+.stake-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.stake-chips .quick-btn {
+  min-width: 52px;
+}
+
+/* Shared GameShell */
+section[id^="view-game-"] {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 12px 16px 40px;
+}
+section[id^="view-game-"] .game-header {
+  position: relative;
+  justify-content: center;
+  min-height: 52px;
+  padding: 8px 72px 14px;
+}
+section[id^="view-game-"] .game-shell-back {
+  position: absolute;
+  left: 0;
+  top: 8px;
+}
+section[id^="view-game-"] .play-area {
+  gap: 16px;
+  padding: 24px 18px;
+  border-radius: 20px;
+  border-color: rgba(245,200,66,.14);
+  box-shadow: 0 12px 40px rgba(0,0,0,.35);
+}
+section[id^="view-game-"] .play-area .input-group,
+section[id^="view-game-"] .play-area .btn-gold,
+section[id^="view-game-"] .play-area .btn-cashout {
+  width: 100%;
+  max-width: 340px;
+}
+section[id^="view-game-"] .play-area .input-group {
+  background: rgba(0,0,0,.35);
+  border: 1px solid rgba(245,200,66,.16);
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+}
+.lang-toggle {
+  display: inline-flex;
+  gap: 4px;
+  background: rgba(0,0,0,.35);
+  border: 1px solid rgba(245,200,66,.18);
+  border-radius: 999px;
+  padding: 3px;
+}
+.lang-btn {
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,.7);
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.lang-btn.active {
+  background: linear-gradient(135deg, #ffd54f, #ffc107);
+  color: #1a0000;
+}
+.rocket-flying {
+  animation: rocket-fly 0.6s ease-in-out infinite alternate;
+}
+@keyframes rocket-fly {
+  from { transform: translateY(6px) rotate(-8deg); }
+  to { transform: translateY(-10px) rotate(8deg); }
+}
+#btn-cashout-crash {
+  max-width: 340px;
+}

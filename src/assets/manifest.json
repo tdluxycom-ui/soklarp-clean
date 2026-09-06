@@ -1,0 +1,29 @@
+{
+  "name": "Sunwin – Nền Tảng Giải Trí Trực Tuyến Chính Thức",
+  "short_name": "Sunwin",
+  "description": "Sunwin xây dựng hệ thống giải trí trực tuyến an toàn, minh bạch, với các trò chơi và ứng dụng được phát triển mang lại trải nghiệm ổn định và đáng tin cậy.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090f",
+  "theme_color": "#0a0a0f",
+  "orientation": "portrait-primary",
+  "lang": "vi-VN",
+  "dir": "ltr",
+  "categories": ["entertainment", "games", "utilities"],
+  "screenshots": [],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/assets/logo-CbTpCeN4.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/logo-CbTpCeN4.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    }
+  ]
+}

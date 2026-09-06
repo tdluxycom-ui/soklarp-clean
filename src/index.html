@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOKLARP.ORG — ແພລດຟອມເກມເຄຣດິດເສມືອນ</title>
+  <meta name="description" content="SOKLARP.ORG ແພລດຟອມເກມເຄຣດິດເສມືອນ ສຳລັບຄວາມບັນເທີງ">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;family=Noto+Sans+Lao:wght@400;600;700&amp;family=Be+Vietnam+Pro:wght@500;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="libs/fontawesome/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css?v=1788648000">
+  <link rel="stylesheet" href="lobby-pro.css?v=1788648000">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+<div class="glow-bg"></div>
+
+<!-- LOADING SCREEN -->
+<div id="app-loading-screen">
+  <div class="ls-dragon lux-crest"><i class="fa-solid fa-dragon"></i></div>
+  <div class="ls-name">SOKLARP.ORG</div>
+  <div class="ls-sub" data-i18n="loading">ກຳລັງໂຫຼດ...</div>
+</div>
+
+<!-- HEADER -->
+<header class="luxury-header" id="user-profile-bar" style="display:none;">
+  <div class="header-inner">
+    <a class="header-logo" onclick="switchView('lobby')">
+      <i class="fa-solid fa-dragon"></i>
+      <span>SOKLARP.ORG</span>
+    </a>
+    <div class="header-user-info">
+      <span id="header-vip-icon" class="h-vip-icon"><i class="fa-solid fa-crown"></i></span>
+      <span id="header-nickname" class="h-nickname">User</span>
+      <span id="header-vip-name" class="h-vip-name">VIP 1</span>
+      <span id="header-role" class="role-badge">Member</span>
+      <span id="header-theme-name" style="display:none;"></span>
+    </div>
+    <div class="header-spacer"></div>
+    <div class="header-balance-box">
+      <i class="fa-solid fa-coins" style="color:var(--gold-primary);font-size:.8rem;"></i>
+      <span id="header-balance" class="h-balance">0.00</span>
+      <span style="color:var(--gold-primary);font-size:.78rem;">CR</span>
+      <button id="btn-refresh-balance" class="btn-icon-hdr" style="width:24px;height:24px;" title="Refresh"><i class="fa-solid fa-rotate-right" style="font-size:.7rem;"></i></button>
+    </div>
+    <div class="header-actions">
+      <button id="btn-daily-claim" class="btn-hdr-pill btn-daily-pill" onclick="openDailyRewardModal()"><i class="fa-solid fa-gift"></i> <span data-i18n="daily">ລາງວັນປະຈຳວັນ</span></button>
+      <button id="btn-go-history" class="btn-hdr-pill" onclick="switchView('history')"><i class="fa-solid fa-clock-rotate-left"></i> <span data-i18n="history">ປະຫວັດ</span></button>
+      <button id="btn-admin-view" class="btn-hdr-pill btn-admin-pill" style="display:none;" onclick="switchView('admin')"><i class="fa-solid fa-shield-halved"></i> <span>Quản trị</span></button>
+      <button id="btn-admin-back" class="btn-icon-hdr" style="display:none;" onclick="switchView('lobby')" title="Về sảnh"><i class="fa-solid fa-arrow-left"></i></button>
+      <button id="btn-history-back" class="btn-icon-hdr" style="display:none;" onclick="switchView('lobby')" title="Back"><i class="fa-solid fa-arrow-left"></i></button>
+      <button id="btn-theme-pill" class="btn-icon-hdr" title="Theme" onclick="cycleThemeMode()"><i class="fa-solid fa-palette"></i></button>
+      <button id="btn-sound-pill" class="btn-icon-hdr" title="Sound" onclick="if(typeof soundEnabled!=='undefined'){soundEnabled=!soundEnabled;this.querySelector('i').className=soundEnabled?'fa-solid fa-volume-high':'fa-solid fa-volume-xmark';}"><i class="fa-solid fa-volume-high"></i></button>
+      <button id="btn-logout" class="btn-icon-hdr btn-logout-hdr" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></button>
+    </div>
+    <div class="lang-toggle" id="lang-toggle">
+      <button type="button" class="lang-btn" data-lang="lo">ລາວ</button>
+      <button type="button" class="lang-btn" data-lang="vi">VI</button>
+      <button type="button" class="lang-btn" data-lang="en">EN</button>
+    </div>
+    <button class="hdr-cart-btn" onclick="openLastBettingRoom()" title="Cart">
+      <i class="fa-solid fa-cart-shopping" style="font-size:.85rem;"></i>
+      <span id="cart-count" class="cart-badge is-zero">0</span>
+    </button>
+  </div>
+</header>
+
+<!-- LIVE TICKER -->
+<div class="live-ticker" id="ticker-container" style="display:none;">
+  <span class="ticker-label"><i class="fa-solid fa-diamond"></i> LIVE</span>
+  <div id="marquee-content" class="ticker-text"> ຍິນດີຕ້ອນຮັບສູ່ SOKLARP.ORG — ແພລດຟອມເກມດ້ວຍເຄຣດິດເສມືອນ ເພື່ອຄວາມບັນເທີງ. ບໍ່ມີການຝາກ ຫຼື ຖອນເງິນ.</div>
+</div>
+
+<!-- VIEW: AUTH -->
+<section id="view-auth" class="view-section auth-split" style="display:none;">
+  <!-- Auth Particles -->
+  <div class="auth-particles" id="auth-particles-container"></div>
+
+  <!-- LEFT PANEL: Brand -->
+  <div class="auth-left-panel" style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px 32px;min-height:100%;position:relative;">
+    <div class="auth-left-inner">
+      <span class="auth-big-dragon lux-crest"><i class="fa-solid fa-dragon"></i></span>
+      <div class="auth-brand-name">SOKLARP.ORG</div>
+      <div class="auth-brand-tagline" data-i18n="auth_tagline"> ແພລດຟອມເກມຄວາມບັນເທີງ ດ້ວຍເຄຣດິດເສມືອນ</div>
+      <div class="auth-feature-list">
+        <div class="auth-feat-item"><div class="auth-feat-check"><i class="fa-solid fa-check"></i></div> <span data-i18n="auth_feat1">ຫ້ອງຜົນຫວຍ ແລະ ຜົນເກມອັບເດດຕາມລະບົບ</span></div>
+        <div class="auth-feat-item"><div class="auth-feat-check"><i class="fa-solid fa-check"></i></div> <span data-i18n="auth_feat2">ມິນິເກມຫຼາຍຮູບແບບ ຫຼິ້ນເພື່ອຄວາມບັນເທີງ</span></div>
+        <div class="auth-feat-item"><div class="auth-feat-check"><i class="fa-solid fa-check"></i></div> <span data-i18n="auth_feat3">ລະບົບ VIP ແລະ ຄະແນນສະສົມ</span></div>
+        <div class="auth-feat-item"><div class="auth-feat-check"><i class="fa-solid fa-check"></i></div> <span data-i18n="auth_feat4">ໃຊ້ເຄຣດິດເສມືອນເທົ່ານັ້ນ — ບໍ່ຮັບຝາກ ຫຼື ຖອນເງິນ</span></div>
+        <div class="auth-feat-item"><div class="auth-feat-check"><i class="fa-solid fa-check"></i></div> <span data-i18n="auth_feat5">ບໍລິການ ແລະ ຊ່ອງທາງຊ່ວຍເຫຼືອສຳລັບສະມາຊິກ</span></div>
+        <div class="auth-feat-item"><div class="auth-feat-check"><i class="fa-solid fa-check"></i></div> <span data-i18n="auth_feat6">ລະບົບປອດໄພ ແລະ ການປົກປ້ອງຂໍ້ມູນ</span></div>
+      </div>
+      <hr class="auth-left-divider">
+      <div class="auth-trust-row">
+        <span class="auth-trust-badge"><i class="fa-solid fa-shield-halved"></i> SSL</span>
+        <span class="auth-trust-badge"><i class="fa-solid fa-lock"></i> Secure</span>
+        <span class="auth-trust-badge"><i class="fa-solid fa-certificate"></i> Fair Play</span>
+        <span class="auth-trust-badge"><i class="fa-solid fa-headset"></i> 24/7</span>
+      </div>
+      <div class="auth-stats-grid">
+        <div class="auth-stat-box">
+          <span class="auth-stat-num">50K+</span>
+          <span class="auth-stat-label" data-i18n="auth_members">Members</span>
+        </div>
+        <div class="auth-stat-box">
+          <span class="auth-stat-num">13</span>
+          <span class="auth-stat-label" data-i18n="auth_games">Games</span>
+        </div>
+        <div class="auth-stat-box">
+          <span class="auth-stat-num">CR</span>
+          <span class="auth-stat-label" data-i18n="auth_credits">Virtual credits</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: Form -->
+  <div class="auth-right-panel" style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px 28px;min-height:100%;">
+    <div style="width:100%;max-width:420px;">
+      <!-- Mobile brand (hidden on desktop) -->
+      <div class="auth-mobile-brand">
+        <span class="auth-mobile-dragon lux-crest"><i class="fa-solid fa-dragon"></i></span>
+        <div class="auth-mobile-title">SOKLARP.ORG</div>
+      </div>
+
+      <div class="auth-form-card">
+        <div class="lang-toggle" style="margin: 0 0 14px auto; width: fit-content;">
+          <button type="button" class="lang-btn" data-lang="lo" onclick="setSoklarpLang('lo')">ລາວ</button>
+          <button type="button" class="lang-btn" data-lang="vi" onclick="setSoklarpLang('vi')">VI</button>
+          <button type="button" class="lang-btn" data-lang="en" onclick="setSoklarpLang('en')">EN</button>
+        </div>
+        <!-- Tab row -->
+        <div class="auth-tab-row">
+          <button id="tab-btn-login" class="auth-tab active" onclick="switchAuthTab('login')">
+            <i class="fa-solid fa-right-to-bracket"></i> <span data-i18n="auth_login">ເຂົ້າສູ່ລະບົບ
+          </span></button>
+          <button id="tab-btn-register" class="auth-tab" onclick="switchAuthTab('register')">
+            <i class="fa-solid fa-user-plus"></i> <span data-i18n="auth_register">ສະໝັກບັນຊີ
+          </span></button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form id="form-login" class="auth-form" autocomplete="off">
+          <div class="auth-welcome">
+            <div class="auth-welcome-title" data-i18n="auth_welcome">ຍິນດີຕ້ອນຮັບ</div>
+            <div class="auth-welcome-sub" data-i18n="auth_welcome_sub">ເຂົ້າສູ່ລະບົບເພື່ອໃຊ້ງານເຄຣດິດເສມືອນຂອງທ່ານ</div>
+          </div>
+          <div class="form-field">
+            <label><i class="fa-solid fa-user"></i> <span data-i18n="auth_user">ຊື່ຜູ້ໃຊ້</span></label>
+            <input type="text" id="login-username" placeholder="ປ້ອນຊື່ຜູ້ໃຊ້" data-i18n-placeholder="auth_ph_user" autocomplete="username" required>
+          </div>
+          <div class="form-field">
+            <label><i class="fa-solid fa-lock"></i> <span data-i18n="auth_pass">ລະຫັດຜ່ານ</span></label>
+            <input type="password" id="login-password" placeholder="ປ້ອນລະຫັດຜ່ານ" data-i18n-placeholder="auth_ph_pass" autocomplete="current-password" required>
+          </div>
+          <button type="submit" class="btn-auth-submit">
+            <i class="fa-solid fa-right-to-bracket"></i> <span data-i18n="auth_login">ເຂົ້າສູ່ລະບົບ
+          </span></button>
+        </form>
+
+        <!-- REGISTER FORM -->
+        <form id="form-register" class="auth-form" style="display:none;" autocomplete="off">
+          <div class="auth-register-bonus">
+            <i class="fa-solid fa-gift"></i>
+            <span data-i18n="auth_bonus">ສະໝັກມື້ນີ້ ໄດ້ຮັບເຄຣດິດເສມືອນ </span> <span class="bonus-amount">+50,000 CR</span>
+          </div>
+          <div class="form-field">
+            <label><i class="fa-solid fa-user"></i> <span data-i18n="auth_user">ຊື່ຜູ້ໃຊ້</span></label>
+            <input type="text" id="reg-username" placeholder="3-32 ຕົວອັກສອນ a-z, 0-9 ຫຼື _" required>
+          </div>
+          <div class="form-field">
+            <label><i class="fa-solid fa-id-card"></i> <span data-i18n="auth_nick">ຊື່ສະແດງ</span></label>
+            <input type="text" id="reg-nickname" placeholder="ຊື່ທີ່ສະແດງໃນລະບົບ" required>
+          </div>
+          <div class="form-field">
+            <label><i class="fa-solid fa-lock"></i> <span data-i18n="auth_pass">ລະຫັດຜ່ານ</span></label>
+            <input type="password" id="reg-password" placeholder="ຢ່າງໜ້ອຍ 10 ຕົວອັກສອນ" required>
+          </div>
+          <button type="submit" class="btn-auth-submit">
+            <i class="fa-solid fa-user-plus"></i> <span data-i18n="auth_register">ສ້າງບັນຊີ
+          </span></button>
+        </form>
+        <p style="margin:16px 4px 0;text-align:center;font-size:.78rem;color:rgba(255,255,255,.55);">ເຄຣດິດທັງໝົດເປັນເຄຣດິດເສມືອນ ແລະ ບໍ່ສາມາດແລກເປັນເງິນໄດ້ · <a href="/lao-info.html" style="color:#f5c842;">ອ່ານຂໍ້ມູນການນຳໃຊ້</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VIEW: LOBBY -->
+<section id="view-lobby" class="view-section" style="display:none;">
+  <!-- Jackpot Banner — Premium -->
+  <div class="jackpot-banner">
+    <div class="jackpot-label"><i class="fa-solid fa-gem"></i> MEGA JACKPOT <i class="fa-solid fa-gem"></i></div>
+    <span id="mega-jackpot-counter" class="jackpot-number">CR 1,542,890.00</span>
+    <div class="jackpot-sub" data-i18n="jackpot_sub">ລາງວັນເຄຣດິດເສມືອນ · ອັບເດດຕາມລະບົບ</div>
+    <div class="jp-stats-row">
+      <div class="jp-stat"><i class="fa-solid fa-clock"></i> 24/7</div>
+      <div class="jp-stat"><i class="fa-solid fa-coins"></i> <span data-i18n="jp_credits">ເຄຣດິດເສມືອນ</span> CR</div>
+      <div class="jp-stat"><i class="fa-solid fa-shield-halved"></i> SSL 256-bit</div>
+    </div>
+  </div>
+  <div class="lobby-command" id="lobby-command">
+    <button type="button" class="cmd-card" onclick="openVipRankModal()">
+      <i class="fa-solid fa-crown"></i>
+      <b id="cmd-vip-name">BRONZE VIP</b>
+      <span id="cmd-vip-exp">0 EXP</span>
+    </button>
+    <button type="button" class="cmd-card" onclick="openDailyRewardModal()">
+      <i class="fa-solid fa-gift"></i>
+      <b data-i18n="daily">Daily</b>
+      <span data-i18n="cmd_daily">Claim free CR</span>
+    </button>
+    <button type="button" class="cmd-card" onclick="document.getElementById('lottery-lobby-grid')?.scrollIntoView({behavior:'smooth'})">
+      <i class="fa-solid fa-bolt"></i>
+      <b id="cmd-rooms">8</b>
+      <span data-i18n="cmd_rooms">Live rooms</span>
+    </button>
+    <button type="button" class="cmd-card" onclick="openModal('modal-calculator')">
+      <i class="fa-solid fa-calculator"></i>
+      <b data-i18n="calc_title">Calculator</b>
+      <span data-i18n="cmd_calc">Estimate prize</span>
+    </button>
+  </div>
+
+  <!-- Trust & Prize Showcase -->
+  <div class="trust-showcase lux-ribbon">
+    <div class="trust-inner">
+      <div class="trust-card">
+        <div class="trust-icon"><i class="fa-solid fa-medal"></i></div>
+        <h4 data-i18n="trust_payout">ອັດຕາຈ່າຍສູງສຸດ</h4>
+        <div class="trust-highlight">×900</div>
+        <p data-i18n="trust_payout_sub">3 ໂຕບົນ ຈ່າຍສູງສຸດ 900 ເທົ່າ (CR)</p>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon"><i class="fa-solid fa-bolt"></i></div>
+        <h4 data-i18n="trust_credit">ເຄຣດິດເສມືອນທັນທີ</h4>
+        <div class="trust-highlight">CR Instant</div>
+        <p data-i18n="trust_credit_sub">ຫຼິ້ນເພື່ອຄວາມບັນເທີງ — ບໍ່ມີເງິນຈິງ</p>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <h4 data-i18n="trust_safe">ປອດໄພ</h4>
+        <div class="trust-highlight">SSL 256-bit</div>
+        <p data-i18n="trust_safe_sub">ເຂົ້າລະຫັດ SSL · ເຄຣດິດເສມືອນເທົ່ານັ້ນ</p>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon"><i class="fa-solid fa-clock"></i></div>
+        <h4 data-i18n="trust_open">ເປີດບໍລິການ</h4>
+        <div class="trust-highlight">24/7</div>
+        <p data-i18n="trust_open_sub">ຫຼິ້ນໄດ້ 24 ຊົ່ວໂມງ ທຸກວັນ</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thai Lottery Section -->
+  <div class="lobby-heading"><span class="lux-mark"><i class="fa-solid fa-ticket-simple"></i></span> <span data-i18n="lobby_bet">ຫ້ອງຫວຍ</span></div>
+  <div id="lottery-lobby-grid" class="lottery-grid"></div>
+  <div id="vn-lotto-lobby" class="lottery-grid" style="display:none;"></div>
+
+  <!-- Mini Games Section -->
+  <div class="mini-games-section">
+    <div class="section-title"><span class="lux-mark"><i class="fa-solid fa-chess-knight"></i></span> <span data-i18n="minigames">ມິນິເກມ</span></div>
+    <div class="mini-games-grid">
+      <div class="mini-game-card" onclick="switchView('game-coinflip')">
+        <span class="mg-icon lux-seal"><i class="fa-solid fa-coins"></i></span>
+        <span class="mg-label" data-i18n="g_coinflip">ກັບກົ້ອຍ</span>
+        <span class="mg-odds">×1.92</span>
+        <span class="mg-how" data-i18n="how_coin">Pick heads or tails. Correct side pays ×1.92.</span>
+        <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+      </div>
+      <div class="mini-game-card" onclick="switchView('game-hilo')">
+        <span class="mg-icon lux-seal"><i class="fa-solid fa-dice"></i></span>
+        <span class="mg-label" data-i18n="g_hilo">ໄຮໂລ</span>
+        <span class="mg-odds">×1.95–40</span>
+        <span class="mg-how" data-i18n="how_hilo">High/Low ×1.95 · exactly 11 ×6 · triple ×40.</span>
+        <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+      </div>
+      <div class="mini-game-card" onclick="switchView('game-wheel')">
+        <span class="mg-icon lux-seal"><i class="fa-solid fa-dharmachakra"></i></span>
+        <span class="mg-label" data-i18n="g_wheel">ວົງລໍ້ນຳໂຊກ</span>
+        <span class="mg-odds">×0–15</span>
+        <span class="mg-how" data-i18n="how_wheel">Spin the wheel. Payout is the segment it lands on.</span>
+        <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+      </div>
+      <div class="mini-game-card" onclick="switchView('game-slot')">
+        <span class="mg-icon lux-seal"><i class="fa-solid fa-gem"></i></span>
+        <span class="mg-label" data-i18n="g_slot">ສະລັອດ 777</span>
+        <span class="mg-odds">×1.4–40</span>
+        <span class="mg-how" data-i18n="how_slot">777 ×40 · diamond triple ×20 · other triple ×6 · pair ×1.4.</span>
+        <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+      </div>
+      <div class="mini-game-card" onclick="switchView('game-mines')">
+        <span class="mg-icon lux-seal"><i class="fa-solid fa-bomb"></i></span>
+        <span class="mg-label" data-i18n="g_mines">ກູ້ລະເບີດ</span>
+        <span class="mg-odds">×1+</span>
+        <span class="mg-how" data-i18n="how_mines">Open safe tiles. Cash out before hitting a mine.</span>
+        <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+      </div>
+      <div class="mini-game-card" onclick="switchView('game-crash')">
+        <span class="mg-icon lux-seal"><i class="fa-solid fa-rocket"></i></span>
+        <span class="mg-label" data-i18n="g_crash">ຈະຫວະວັດໃຈ</span>
+        <span class="mg-odds">×1.1–50</span>
+        <span class="mg-how" data-i18n="how_crash">Set cash-out 1.1–50x before the rocket crashes.</span>
+        <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+      </div>
+      <div class="mini-game-card" onclick="switchView('game-plinko')">
+        <span class="mg-icon lux-seal"><i class="fa-solid fa-down-long"></i></span>
+        <span class="mg-label" data-i18n="g_plinko">ພລິນໂກ</span>
+        <span class="mg-odds">×0.3–8</span>
+        <span class="mg-how" data-i18n="how_plinko">Drop the ball. Edges pay ×8, center pays ×0.3.</span>
+        <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+      </div>
+      <div class="mini-game-card" onclick="switchView('game-pokdeng')">
+        <span class="mg-icon lux-seal"><i class="fa-solid fa-clover"></i></span>
+        <span class="mg-label" data-i18n="g_pokdeng">ປ໋ອກເດັງ</span>
+        <span class="mg-odds">×1.9–2</span>
+        <span class="mg-how" data-i18n="how_pd">Beat the dealer ×1.9. Score 8+ pays ×2.0.</span>
+        <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+      </div>
+      <div class="mini-game-card" onclick="switchView('game-dragontiger')">
+        <span class="mg-icon lux-seal"><i class="fa-solid fa-dragon"></i></span>
+        <span class="mg-label" data-i18n="g_dt">ເສືອມັງກອນ</span>
+        <span class="mg-odds">×1.95 / 8</span>
+        <span class="mg-how" data-i18n="how_dt">Higher card wins ×1.95. Tie pays ×8.</span>
+        <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+      </div>
+      <div class="mini-game-card" onclick="switchView('game-horseracing')">
+        <span class="mg-icon lux-seal"><i class="fa-solid fa-horse"></i></span>
+        <span class="mg-label" data-i18n="g_horse">ແຂ່ງມ້າ</span>
+        <span class="mg-odds">×2.8–14</span>
+        <span class="mg-how" data-i18n="how_horse">Pick 1 of 4 horses: ×2.8 · ×4.5 · ×7 · ×14.</span>
+        <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+      </div>
+      <div class="mini-game-card" onclick="switchView('game-coinpusher')">
+        <span class="mg-icon lux-seal"><i class="fa-solid fa-hand-holding-dollar"></i></span>
+        <span class="mg-label" data-i18n="g_pusher">ດັນເງິນ</span>
+        <span class="mg-odds">×0–12</span>
+        <span class="mg-how" data-i18n="how_pusher">Drop coins. Jackpot pays ×12.</span>
+        <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+      </div>
+      <div class="mini-game-card" onclick="switchView('game-duckshooter')">
+        <span class="mg-icon lux-seal"><i class="fa-solid fa-crosshairs"></i></span>
+        <span class="mg-label" data-i18n="g_duck">ຍິງເປັດ</span>
+        <span class="mg-odds">×0–10</span>
+        <span class="mg-how" data-i18n="how_duck">Hit ducks. Crystal duck pays ×10.</span>
+        <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+      </div>
+      <div class="mini-game-card" onclick="switchView('game-chest')">
+        <span class="mg-icon lux-seal"><i class="fa-solid fa-box-open"></i></span>
+        <span class="mg-label" data-i18n="g_chest">ກ່ອງລຶກລັບ</span>
+        <span class="mg-odds">FREE</span>
+        <span class="mg-how" data-i18n="how_chest">Open a free chest for random virtual credits.</span>
+        <button class="mg-play-btn" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VIEW: BETTING -->
+<section id="view-betting" class="view-section bet-room" style="display:none;">
+  <div class="bet-room-top">
+    <button class="action-btn" type="button" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <div class="bet-room-title">
+      <h2 id="room-name-display">SOKLARP</h2>
+      <span id="room-draw-id-display" class="bet-draw-chip"><span data-i18n="draw_id">ງວດ</span> #<span id="betting-draw-id-visible">000</span></span>
+    </div>
+    <div class="bet-room-clock">
+      <div id="stage-countdown-display">00:00:00</div>
+      <div class="bet-clock-sub"><span data-i18n="closes_in">ປິດຮັບໃນ</span></div>
+    </div>
+  </div>
+
+  <ol class="bet-steps">
+    <li class="bet-step is-current"><span class="step-dot">1</span><span data-i18n="step1">1. ເລືອກປະເພດ</span></li>
+    <li class="bet-step"><span class="step-dot">2</span><span data-i18n="step2">2. ໃສ່ເລກ</span></li>
+    <li class="bet-step"><span class="step-dot">3</span><span data-i18n="step3">3. Stake</span></li>
+    <li class="bet-step"><span class="step-dot">4</span><span data-i18n="step4">4. ເພີ່ມໃບ</span></li>
+    <li class="bet-step"><span class="step-dot">5</span><span data-i18n="step5">5. ສົ່ງໃບ</span></li>
+  </ol>
+
+  <div class="bet-last-row">
+    <div class="bet-last-card">
+      <span data-i18n="last_draw">ຜົນລ່າສຸດ</span>
+      <div class="bet-last-balls">
+        <b data-i18n="top3">3 ໂຕບົນ</b>
+        <span id="room-last-top3" class="gold-text">---</span>
+        <b data-i18n="bot2">2 ໂຕລຸ່ມ</b>
+        <span id="room-last-bottom2" class="win-text">--</span>
+      </div>
+    </div>
+    <div id="ai-predict-panel" class="bet-hint-card">
+      <h3><i class="fas fa-lightbulb"></i> <span data-i18n="how_play">ວິທີຫຼິ້ນ</span></h3>
+      <div id="bet-guide-text" class="bet-guide">ກົງ 3 ໂຕສຸດທ້າຍ ×900</div>
+      <div class="bet-hint-line">3-top: <span id="ai-top3-suggest">—</span> · 2-bot: <span id="ai-bot2-suggest">—</span></div>
+      <div class="bet-hint-line"><span data-i18n="lucky">ເລກໂຊກ</span>: <span id="ai-hot-digits">—</span></div>
+    </div>
+  </div>
+
+  <div class="betting-flex-wrap bet-room-grid">
+    <div class="betting-form-card">
+      <div id="bet-type-tabs" class="bet-type-tabs">
+        <button type="button" class="bet-cat-btn active" onclick="selectBetCategory('3top')"><span data-i18n="t3top">3 ໂຕບົນ</span><small>×900</small></button>
+        <button type="button" class="bet-cat-btn" onclick="selectBetCategory('3toad')"><span data-i18n="t3toad">3 ໂຕໂຕດ</span><small>×150</small></button>
+        <button type="button" class="bet-cat-btn" onclick="selectBetCategory('2top')"><span data-i18n="t2top">2 ໂຕບົນ</span><small>×92</small></button>
+        <button type="button" class="bet-cat-btn" onclick="selectBetCategory('2bottom')"><span data-i18n="t2bot">2 ໂຕລຸ່ມ</span><small>×92</small></button>
+        <button type="button" class="bet-cat-btn" onclick="selectBetCategory('run_top')"><span data-i18n="trun_top">ວິ່ງບົນ</span><small>×3.2</small></button>
+        <button type="button" class="bet-cat-btn" onclick="selectBetCategory('run_bottom')"><span data-i18n="trun_bot">ວິ່ງລຸ່ມ</span><small>×4.2</small></button>
+      </div>
+
+      <h3 id="bet-type-title" class="bet-type-title">3-top</h3>
+      <input type="text" id="bet-number-input" class="bet-num-input" placeholder="589" inputmode="numeric" maxlength="3" oninput="syncBetNumberInput(this)">
+
+      <div class="bet-keypad">
+        <button type="button" onclick="handleKeypadPress('1')">1</button>
+        <button type="button" onclick="handleKeypadPress('2')">2</button>
+        <button type="button" onclick="handleKeypadPress('3')">3</button>
+        <button type="button" onclick="handleKeypadPress('4')">4</button>
+        <button type="button" onclick="handleKeypadPress('5')">5</button>
+        <button type="button" onclick="handleKeypadPress('6')">6</button>
+        <button type="button" onclick="handleKeypadPress('7')">7</button>
+        <button type="button" onclick="handleKeypadPress('8')">8</button>
+        <button type="button" onclick="handleKeypadPress('9')">9</button>
+        <button type="button" class="kp-lucky" onclick="luckyBetNumber()"><i class="fa-solid fa-star"></i></button>
+        <button type="button" onclick="handleKeypadPress('0')">0</button>
+        <button type="button" class="kp-del" onclick="keypadDelete()">⌫</button>
+      </div>
+      <div class="bet-tools">
+        <button type="button" class="quick-btn" onclick="reverseBetNumber()" data-i18n="reverse">Reverse</button>
+        <button type="button" class="quick-btn" onclick="addToadPermutations()" data-i18n="toad_all">All shuffles</button>
+      </div>
+
+      <label class="bet-amt-label" data-i18n="stake">ຍອດເດີມພັນ (CR)</label>
+      <input type="number" id="bet-amount-input" value="10" min="10" oninput="updateBetPayoutPreview()">
+      <div class="bet-amt-chips">
+        <button type="button" class="quick-btn" onclick="addBetAmount(10)">+10</button>
+        <button type="button" class="quick-btn" onclick="addBetAmount(50)">+50</button>
+        <button type="button" class="quick-btn" onclick="addBetAmount(100)">+100</button>
+        <button type="button" class="quick-btn" onclick="addBetAmount(500)">+500</button>
+        <button type="button" class="quick-btn" onclick="setBetAmount(10)">10</button>
+      </div>
+      <div id="bet-payout-preview" class="bet-payout-preview"></div>
+      <div class="bet-action-row">
+        <button class="quick-btn" id="btn-add-to-cart-visible" type="button" onclick="addToCart()" data-i18n="add_slip">ເພີ່ມລົງໃບ</button>
+        <button class="btn-gold" id="btn-place-thai-now" type="button" onclick="placeThaiBetNow()" data-i18n="confirm_bet">ຢືນຢັນວາງເດີມພັນ</button>
+      </div>
+    </div>
+
+    <div class="cart-card">
+      <h3><i class="fas fa-list"></i> <span data-i18n="your_slip">ໃບເດີມພັນ</span></h3>
+      <div id="cart-items-list" class="slip-list"></div>
+      <div class="slip-total">
+        <span data-i18n="total">ລວມ</span>
+        <span class="gold-text">CR <span id="cart-total-amount">0.00</span></span>
+      </div>
+      <div class="slip-total"><span data-i18n="win_if">ຖ້າຖືກຈະໄດ້</span> <span id="cart-potential-win-visible" class="win-text">+0</span></div>
+      <button id="btn-submit-all-bets" class="btn-gold" type="button" onclick="submitBets()" data-i18n="send_slip">ສົ່ງໃບ</button>
+    </div>
+  </div>
+</section>
+
+<!-- VIEW: HISTORY -->
+<section id="view-history" class="view-section" style="display:none;">
+  <div class="hist-shell">
+    <div class="admin-title-row">
+      <h1 class="admin-title" data-i18n="hist_title">ປະຫວັດຫວຍ</h1>
+      <div class="admin-toolbar" style="margin:0;">
+        <button class="quick-btn" type="button" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+        <button class="quick-btn" type="button" onclick="openModal('modal-password')"><i class="fa-solid fa-key"></i> <span data-i18n="password">ປ່ຽນລະຫັດຜ່ານ</span></button>
+      </div>
+    </div>
+    <div class="hist-summary" id="hist-summary"></div>
+    <div class="hist-filters" id="hist-filters">
+      <button type="button" class="hist-filter active" data-hist-filter="all" onclick="setHistoryFilter('all')" data-i18n="hist_all">All</button>
+      <button type="button" class="hist-filter" data-hist-filter="won" onclick="setHistoryFilter('won')" data-i18n="hist_won">Won</button>
+      <button type="button" class="hist-filter" data-hist-filter="lost" onclick="setHistoryFilter('lost')" data-i18n="hist_lost">Lost</button>
+      <button type="button" class="hist-filter" data-hist-filter="pending" onclick="setHistoryFilter('pending')" data-i18n="hist_wait">Pending</button>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th data-i18n="hist_time">Time</th>
+            <th data-i18n="hist_room">Room</th>
+            <th data-i18n="hist_type">Type</th>
+            <th data-i18n="hist_num">Number</th>
+            <th data-i18n="hist_amt">Stake</th>
+            <th data-i18n="hist_rate">Rate</th>
+            <th data-i18n="hist_payout">Payout</th>
+            <th data-i18n="hist_status">Status</th>
+          </tr>
+        </thead>
+        <tbody id="my-bets-table-body"></tbody>
+      </table>
+    </div>
+    <h2 class="admin-subhead" data-i18n="hist_games">ປະຫວັດມິນິເກມ</h2>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th data-i18n="hist_time">Time</th>
+            <th data-i18n="hist_gname">Game</th>
+            <th data-i18n="hist_amt">Stake</th>
+            <th data-i18n="hist_result">Result</th>
+            <th data-i18n="hist_payout">Payout</th>
+          </tr>
+        </thead>
+        <tbody id="my-game-history-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="view-admin" class="view-section" style="display:none;">
+  <div class="admin-shell">
+  <div class="admin-title-row">
+    <h1 class="admin-title">
+      <span class="lux-mark"><i class="fa-solid fa-shield-halved"></i></span> Bảng quản trị
+    </h1>
+    <button class="quick-btn" type="button" onclick="switchView('lobby')"><i class="fa-solid fa-arrow-left"></i> Về sảnh</button>
+  </div>
+  
+  <!-- STATS CARDS -->
+  <div class="admin-stats-grid" style="gap: 14px; margin-bottom: 24px;">
+    <div class="admin-stat-card" style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border-left: 3px solid #3498db;">
+      <div style="font-size: .72rem; color: rgba(255,255,255,.4);">Thành viên</div>
+      <div id="admin-total-users" style="font-size: 1.8rem; font-weight: 800; color: #3498db;">0</div>
+    </div>
+    <div class="admin-stat-card" style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border-left: 3px solid #2ecc71;">
+      <div style="font-size: .72rem; color: rgba(255,255,255,.4);">Tổng cược</div>
+      <div id="admin-total-bets" style="font-size: 1.8rem; font-weight: 800; color: #2ecc71;">0 CR</div>
+    </div>
+    <div class="admin-stat-card" style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border-left: 3px solid #ffc107;">
+      <div style="font-size: .72rem; color: rgba(255,255,255,.4);">Tổng trả thưởng</div>
+      <div id="admin-total-payout" style="font-size: 1.8rem; font-weight: 800; color: #ffc107;">0 CR</div>
+    </div>
+    <div class="admin-stat-card" style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border-left: 3px solid #e74c3c;">
+      <div style="font-size: .72rem; color: rgba(255,255,255,.4);">Lãi / lỗ</div>
+      <div id="admin-total-revenue" style="font-size: 1.8rem; font-weight: 800; color: #e74c3c;">0 CR</div>
+    </div>
+    <div class="admin-stat-card" style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border-left: 3px solid #9b59b6;">
+      <div style="font-size: .72rem; color: rgba(255,255,255,.4);">Phòng đang mở</div>
+      <div id="admin-active-draws" style="font-size: 1.8rem; font-weight: 800; color: #9b59b6;">0</div>
+    </div>
+    <div class="admin-stat-card" style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border-left: 3px solid #e67e22;">
+      <div style="font-size: .72rem; color: rgba(255,255,255,.4);">Phiếu đang chờ</div>
+      <div id="admin-pending-bets" style="font-size: 1.8rem; font-weight: 800; color: #e67e22;">0</div>
+    </div>
+    <div class="admin-stat-card" style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border-left: 3px solid #95a5a6;">
+      <div style="font-size: .72rem; color: rgba(255,255,255,.4);">Tài khoản bị khóa</div>
+      <div id="admin-banned-users" style="font-size: 1.8rem; font-weight: 800; color: #95a5a6;">0</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div style="display: flex; gap: 6px; margin-bottom: 18px; overflow-x: auto; padding-bottom: 8px; flex-wrap: wrap;">
+    <button class="quick-btn active" onclick="switchAdminTab('draws')"><i class="fa-solid fa-dice"></i> Kỳ quay</button>
+    <button class="quick-btn" onclick="switchAdminTab('number-stats')"><i class="fa-solid fa-chart-bar"></i> Thống kê số</button>
+    <button class="quick-btn" onclick="switchAdminTab('users')"><i class="fa-solid fa-users"></i> Thành viên</button>
+    <button class="quick-btn" onclick="switchAdminTab('bets')"><i class="fa-solid fa-receipt"></i> Phiếu cược</button>
+    <button class="quick-btn" onclick="switchAdminTab('finance')"><i class="fa-solid fa-wallet"></i> Tín dụng</button>
+      <button class="quick-btn" onclick="switchAdminTab('games')"><i class="fa-solid fa-gamepad"></i> Trò chơi</button>
+      <button class="quick-btn" onclick="switchAdminTab('settings')"><i class="fa-solid fa-gear"></i> Cài đặt</button>
+  </div>
+
+  <!-- TAB: QUẢN LÝ PHIÊN XỔ SỐ -->
+  <div id="admin-tab-content-draws" class="admin-tab-panel" style="display: block;">
+    <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center;">
+      <button class="btn-gold" style="width: auto;" onclick="openManualDrawModal()"><i class="fa-solid fa-plus"></i> Mở kỳ quay tay</button>
+      <button class="quick-btn" onclick="loadAdminPanel()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+    </div>
+    <h3 style="color: #ffc107; font-size: .95rem;"><i class="fa-solid fa-clock"></i> Kỳ đang mở</h3>
+    <div id="admin-draws-list" class="admin-draw-grid"></div>
+    <h3 style="margin-top: 24px; color: #ffc107; font-size: .95rem;"><i class="fa-solid fa-check-circle"></i> Kết quả đã chốt</h3>
+    <div id="admin-draw-result-list" class="admin-draw-grid"></div>
+  </div>
+
+  <!-- TAB: THỐNG KÊ SỐ — MỚI -->
+  <div id="admin-tab-content-number-stats" class="admin-tab-panel" style="display: none;">
+    <div style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border: 1px solid rgba(255,193,7,.08); margin-bottom: 16px;">
+      <h3 style="margin-top: 0; color: #ffc107; font-size: .95rem;"><i class="fa-solid fa-chart-bar"></i> Cược theo số</h3>
+      <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+        <select id="admin-stats-lottery-select" onchange="loadNumberStats()" style="background: #241000; border: 1px solid rgba(255,193,7,.15); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: inherit;">
+          <option value="all">Tất cả phòng</option>
+          <option value="yeekee3">Yee Kee 3 phút</option>
+          <option value="yeekee30">Yee Kee 30 phút</option>
+          <option value="hanoi">Hà Nội</option>
+          <option value="laos">Lào</option>
+          <option value="vnfast">VN nhanh</option>
+          <option value="vnmb">Miền Bắc</option>
+          <option value="vnmn">Miền Nam</option>
+          <option value="vnmt">Miền Trung</option>
+        </select>
+        <select id="admin-stats-bet-type" onchange="loadNumberStats()" style="background: #241000; border: 1px solid rgba(255,193,7,.15); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: inherit;">
+          <option value="all">Mọi loại</option>
+          <option value="3top">3 trên</option>
+          <option value="2top">2 trên</option>
+          <option value="2bottom">2 dưới</option>
+          <option value="3toad">3 đảo</option>
+          <option value="run_top">Đá trên</option>
+          <option value="run_bottom">Đá dưới</option>
+          <option value="lo">Lô</option>
+          <option value="de">Đề</option>
+          <option value="3cang">3 càng</option>
+          <option value="dau">Đầu</option>
+          <option value="duoi">Đuôi</option>
+          <option value="xien2">Xiên 2</option>
+          <option value="xien3">Xiên 3</option>
+          <option value="xien4">Xiên 4</option>
+        </select>
+        <select id="admin-stats-status" onchange="loadNumberStats()" style="background: #241000; border: 1px solid rgba(255,193,7,.15); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: inherit;">
+          <option value="pending">Đang chờ</option>
+          <option value="all">Tất cả</option>
+          <option value="won">Trúng</option>
+          <option value="lost">Trượt</option>
+          <option value="cancelled">Đã hủy</option>
+        </select>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 14px;">
+        <div style="background: rgba(255,193,7,.04); padding: 12px; border-radius: 10px; text-align: center;">
+          <div style="font-size: .68rem; color: rgba(255,255,255,.35);">Số phiếu</div>
+          <div id="ns-total-tickets" style="font-size: 1.3rem; font-weight: 800; color: #ffc107;">0</div>
+        </div>
+        <div style="background: rgba(255,193,7,.04); padding: 12px; border-radius: 10px; text-align: center;">
+          <div style="font-size: .68rem; color: rgba(255,255,255,.35);">Tổng cược</div>
+          <div id="ns-total-amount" style="font-size: 1.3rem; font-weight: 800; color: #2ecc71;">0 CR</div>
+        </div>
+        <div style="background: rgba(255,193,7,.04); padding: 12px; border-radius: 10px; text-align: center;">
+          <div style="font-size: .68rem; color: rgba(255,255,255,.35);">Rủi ro tối đa</div>
+          <div id="ns-max-risk" style="font-size: 1.3rem; font-weight: 800; color: #e74c3c;">0 CR</div>
+        </div>
+      </div>
+    </div>
+    <div style="background: linear-gradient(135deg, #1a0800, #120400); padding: 18px; border-radius: 14px; border: 1px solid rgba(255,193,7,.08);">
+      <h4 style="color: #ffc107; font-size: .85rem; margin-top: 0;"><i class="fa-solid fa-list-ol"></i> Số được cược nhiều nhất</h4>
+      <div id="admin-number-stats-table" style="max-height: 500px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- TAB: THÀNH VIÊN -->
+  <div id="admin-tab-content-users" class="admin-tab-panel" style="display: none;">
+    <div class="admin-credit-form">
+      <h3>Tạo thành viên mới</h3>
+      <div class="admin-toolbar">
+        <input type="text" id="admin-new-username" placeholder="Tài khoản">
+        <input type="text" id="admin-new-nickname" placeholder="Biệt danh">
+        <input type="password" id="admin-new-password" placeholder="Mật khẩu (≥ 6)">
+        <input type="number" id="admin-new-balance" min="0" placeholder="Số dư CR" value="0">
+        <select id="admin-new-role">
+          <option value="user">Thành viên</option>
+          <option value="admin">Quản trị</option>
+        </select>
+        <button class="btn-gold" type="button" onclick="handleCreateUser()">Tạo tài khoản</button>
+      </div>
+    </div>
+    <div class="admin-toolbar">
+      <input type="search" id="admin-user-search" class="admin-search" placeholder="Tìm tài khoản hoặc biệt danh" oninput="loadAdminUsers()">
+    </div>
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Tài khoản</th>
+          <th>Số dư</th>
+          <th>VIP / EXP</th>
+          <th>Trạng thái</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody id="admin-users-table-body"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <div id="admin-tab-content-bets" class="admin-tab-panel" style="display: none;">
+    <div class="admin-toolbar">
+      <select id="admin-bets-room" onchange="loadAdminAllBets()">
+        <option value="all">Tất cả phòng</option>
+        <option value="yeekee3">Yee Kee 3 phút</option>
+        <option value="yeekee30">Yee Kee 30 phút</option>
+        <option value="hanoi">Hà Nội</option>
+        <option value="laos">Lào</option>
+        <option value="vnfast">VN nhanh</option>
+        <option value="vnmb">Miền Bắc</option>
+        <option value="vnmn">Miền Nam</option>
+        <option value="vnmt">Miền Trung</option>
+      </select>
+      <select id="admin-bets-status" onchange="loadAdminAllBets()">
+        <option value="all">Mọi trạng thái</option>
+        <option value="pending">Đang chờ</option>
+        <option value="won">Trúng</option>
+        <option value="lost">Trượt</option>
+        <option value="cancelled">Đã hủy</option>
+      </select>
+      <input type="search" id="admin-bets-search" class="admin-search" placeholder="Tìm số hoặc tài khoản" oninput="loadAdminAllBets()">
+    </div>
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Người chơi</th>
+          <th>Phòng</th>
+          <th>Loại / số</th>
+          <th>Mức cược</th>
+          <th>Trạng thái</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody id="admin-bets-table-body"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <div id="admin-tab-content-finance" class="admin-tab-panel" style="display: none;">
+    <div class="admin-credit-form">
+      <h3>Cộng / trừ tín dụng ảo</h3>
+      <div class="admin-toolbar">
+        <input type="text" id="finance-quick-username" placeholder="Tài khoản">
+        <select id="finance-quick-action">
+          <option value="add">Cộng CR</option>
+          <option value="deduct">Trừ CR</option>
+        </select>
+        <input type="number" id="finance-quick-amount" min="1" placeholder="Số CR">
+        <input type="text" id="finance-quick-note" placeholder="Ghi chú">
+        <button class="btn-gold" type="button" onclick="handleQuickCredit()">Xác nhận</button>
+      </div>
+      <p class="admin-hint">Nền tảng chỉ dùng tín dụng ảo — không có nạp/rút tiền mặt.</p>
+    </div>
+    <h3 class="admin-subhead">Lịch sử điều chỉnh CR</h3>
+    <div id="admin-finance-list" class="admin-finance-list"></div>
+  </div>
+
+  <div id="admin-tab-content-games" class="admin-tab-panel" style="display: none;">
+    <div class="admin-toolbar">
+      <button class="quick-btn" type="button" onclick="loadAdminGames()">Làm mới</button>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Người chơi</th>
+            <th>Trò chơi</th>
+            <th>Mức cược</th>
+            <th>Kết quả</th>
+            <th>Trả thưởng</th>
+          </tr>
+        </thead>
+        <tbody id="admin-games-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="admin-tab-content-settings" class="admin-tab-panel" style="display: none;">
+    <div class="admin-settings-card">
+      <h3>Tỷ lệ trả thưởng Thái</h3>
+      <div class="input-group"><label>3 trên</label><input type="number" id="rate-3top" value="900"></div>
+      <div class="input-group"><label>3 đảo</label><input type="number" id="rate-3toad" value="150"></div>
+      <div class="input-group"><label>2 trên</label><input type="number" id="rate-2top" value="92"></div>
+      <div class="input-group"><label>2 dưới</label><input type="number" id="rate-2bottom" value="92"></div>
+      <div class="input-group"><label>Đá trên</label><input type="number" id="rate-run-top" value="3.2" step="0.1"></div>
+      <div class="input-group"><label>Đá dưới</label><input type="number" id="rate-run-bottom" value="4.2" step="0.1"></div>
+
+      <h3>Tỷ lệ trả thưởng Việt Nam</h3>
+      <div class="input-group"><label>Lô</label><input type="number" id="rate-lo" value="3.8" step="0.1"></div>
+      <div class="input-group"><label>Đề</label><input type="number" id="rate-de" value="85"></div>
+      <div class="input-group"><label>3 càng</label><input type="number" id="rate-3cang" value="800"></div>
+      <div class="input-group"><label>Đầu</label><input type="number" id="rate-dau" value="6.5" step="0.1"></div>
+      <div class="input-group"><label>Đuôi</label><input type="number" id="rate-duoi" value="6.5" step="0.1"></div>
+      <div class="input-group"><label>Xiên 2</label><input type="number" id="rate-xien2" value="12"></div>
+      <div class="input-group"><label>Xiên 3</label><input type="number" id="rate-xien3" value="28"></div>
+      <div class="input-group"><label>Xiên 4</label><input type="number" id="rate-xien4" value="55"></div>
+
+      <h3>Giới hạn cược</h3>
+      <div class="input-group"><label>Cược tối thiểu (CR)</label><input type="number" id="limit-min-bet" value="10"></div>
+      <div class="input-group"><label>Cược tối đa (CR)</label><input type="number" id="limit-max-bet" value="50000"></div>
+
+      <h3>Giới hạn từng phòng</h3>
+      <div class="input-group">
+        <label>Phòng</label>
+        <select id="settings-room-select" onchange="loadAdminRoomSettings()">
+          <option value="yeekee3">Yee Kee 3 phút</option>
+          <option value="yeekee30">Yee Kee 30 phút</option>
+          <option value="hanoi">Hà Nội</option>
+          <option value="laos">Lào</option>
+          <option value="vnfast">VN nhanh</option>
+          <option value="vnmb">Miền Bắc</option>
+          <option value="vnmn">Miền Nam</option>
+          <option value="vnmt">Miền Trung</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Số chặn (cách nhau bằng dấu phẩy)</label>
+        <input type="text" id="blocked-numbers-input" placeholder="111,999">
+      </div>
+      <div class="input-group">
+        <label>Số trả nửa (cách nhau bằng dấu phẩy)</label>
+        <input type="text" id="half-pay-numbers-input" placeholder="00,55">
+      </div>
+      <div class="input-group">
+        <label>Giờ mở thưởng (HH:MM, phòng theo ngày)</label>
+        <input type="text" id="admin-draw-time" placeholder="18:30">
+      </div>
+      <div class="input-group">
+        <label style="display: flex; align-items: center; gap: 10px;">
+          <input type="checkbox" id="admin-auto-draw-toggle" style="width: auto;"> Tự quay khi hết giờ
+        </label>
+      </div>
+      <button class="btn-gold" type="button" onclick="saveAdminSettings()">Lưu cài đặt</button>
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- VIEW: VN LOTTO -->
+<section id="view-vnlotto" class="view-section bet-room" style="display:none;">
+  <div class="bet-room-top">
+    <button class="action-btn" type="button" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <div class="bet-room-title">
+      <h2 id="vn-room-name">Xổ số</h2>
+      <span class="bet-draw-chip"><span data-i18n="draw_id">ງວດ</span> <span id="vn-draw-id-display">—</span></span>
+    </div>
+    <div class="bet-room-clock">
+      <div id="vn-countdown-display">00:00:00</div>
+      <div class="bet-clock-sub"><span data-i18n="closes_in">ປິດຮັບໃນ</span></div>
+    </div>
+  </div>
+  <div id="vn-sim-note" class="vn-sim-note" style="display:none;" data-i18n="vn_sim_note">This room uses simulated results — not live XSMN/XSMT draws</div>
+
+  <ol class="bet-steps">
+    <li class="bet-step is-current"><span class="step-dot">1</span><span data-i18n="step1">1. ເລືອກປະເພດ</span></li>
+    <li class="bet-step"><span class="step-dot">2</span><span data-i18n="step2">2. ໃສ່ເລກ</span></li>
+    <li class="bet-step"><span class="step-dot">3</span><span data-i18n="step3">3. Stake</span></li>
+    <li class="bet-step"><span class="step-dot">4</span><span data-i18n="step4">4. ເພີ່ມໃບ</span></li>
+    <li class="bet-step"><span class="step-dot">5</span><span data-i18n="step5">5. ສົ່ງໃບ</span></li>
+  </ol>
+
+  <div class="bet-guide-banner">
+    <h3><i class="fas fa-lightbulb"></i> <span data-i18n="how_play">ວິທີຫຼິ້ນ</span></h3>
+    <p id="vn-bet-desc-text"></p>
+  </div>
+
+  <div class="betting-flex-wrap bet-room-grid">
+    <div class="betting-form-card">
+      <div class="bet-type-tabs vn-type-tabs">
+        <button type="button" class="vn-tab-btn active" id="vn-tab-lo" onclick="selectVNBetType('lo')"><span data-i18n="vn_lo">Lô</span><small>×3.8</small></button>
+        <button type="button" class="vn-tab-btn" id="vn-tab-de" onclick="selectVNBetType('de')"><span data-i18n="vn_de">Đề</span><small>×85</small></button>
+        <button type="button" class="vn-tab-btn" id="vn-tab-3cang" onclick="selectVNBetType('3cang')"><span data-i18n="vn_cang">3 Càng</span><small>×800</small></button>
+        <button type="button" class="vn-tab-btn" id="vn-tab-dau" onclick="selectVNBetType('dau')"><span data-i18n="vn_dau">Đầu</span><small>×6.5</small></button>
+        <button type="button" class="vn-tab-btn" id="vn-tab-duoi" onclick="selectVNBetType('duoi')"><span data-i18n="vn_duoi">Đuôi</span><small>×6.5</small></button>
+        <button type="button" class="vn-tab-btn" id="vn-tab-xien2" onclick="selectVNBetType('xien2')"><span data-i18n="vn_x2">Xiên 2</span><small>×12</small></button>
+        <button type="button" class="vn-tab-btn" id="vn-tab-xien3" onclick="selectVNBetType('xien3')"><span data-i18n="vn_x3">Xiên 3</span><small>×28</small></button>
+        <button type="button" class="vn-tab-btn" id="vn-tab-xien4" onclick="selectVNBetType('xien4')"><span data-i18n="vn_x4">Xiên 4</span><small>×55</small></button>
+      </div>
+
+      <input type="text" id="vn-bet-number" class="bet-num-input" inputmode="numeric" maxlength="11" placeholder="88" autocomplete="off" oninput="formatVNBetInput(this)">
+      <div class="bet-keypad" id="vn-keypad">
+        <button type="button" onclick="handleVNKeypad('1')">1</button>
+        <button type="button" onclick="handleVNKeypad('2')">2</button>
+        <button type="button" onclick="handleVNKeypad('3')">3</button>
+        <button type="button" onclick="handleVNKeypad('4')">4</button>
+        <button type="button" onclick="handleVNKeypad('5')">5</button>
+        <button type="button" onclick="handleVNKeypad('6')">6</button>
+        <button type="button" onclick="handleVNKeypad('7')">7</button>
+        <button type="button" onclick="handleVNKeypad('8')">8</button>
+        <button type="button" onclick="handleVNKeypad('9')">9</button>
+        <button type="button" class="kp-lucky" onclick="luckyVNNumber()"><i class="fa-solid fa-star"></i></button>
+        <button type="button" onclick="handleVNKeypad('0')">0</button>
+        <button type="button" class="kp-del" onclick="clearVNNumber()">⌫</button>
+      </div>
+      <button type="button" id="vn-xien-comma" class="quick-btn vn-comma-btn" onclick="handleVNKeypad(',')" style="display:none;">, Xiên</button>
+      <div id="vn-quick-numbers" class="bet-quick-nums"></div>
+      <button type="button" class="quick-btn vn-grid-toggle" id="vn-grid-toggle" onclick="toggleVNNumberGrid()" data-i18n="num_grid">00–99</button>
+      <div id="vn-number-grid" class="vn-grid-wrap" hidden></div>
+      <div class="bet-tools" id="vn-bulk-tools">
+        <button type="button" class="quick-btn" onclick="bulkRudHna()" data-i18n="bulk_head">ດ່ານໜ້າ</button>
+        <button type="button" class="quick-btn" onclick="bulkRudLang()" data-i18n="bulk_tail">ດ່ານຫຼັງ</button>
+        <button type="button" class="quick-btn" onclick="bulkGlabTua()" data-i18n="bulk_rev">ປີ້ນຄູ່</button>
+        <button type="button" class="quick-btn" onclick="bulk19Door()" data-i18n="bulk_19">19</button>
+      </div>
+
+      <label class="bet-amt-label" data-i18n="stake">ຍອດເດີມພັນ (CR)</label>
+      <input type="number" id="vn-bet-amount" value="10" min="10" oninput="updateVNPayoutPreview()">
+      <input type="hidden" id="vn-amount-input" value="10">
+      <input type="hidden" id="vn-number-input">
+      <div class="bet-amt-chips">
+        <button type="button" class="quick-btn" onclick="setVNAmount(10)">10</button>
+        <button type="button" class="quick-btn" onclick="setVNAmount(50)">50</button>
+        <button type="button" class="quick-btn" onclick="setVNAmount(100)">100</button>
+        <button type="button" class="quick-btn" onclick="setVNAmount(500)">500</button>
+      </div>
+      <div id="vn-payout-preview" class="bet-payout-preview"></div>
+      <div class="vn-preview-meta" style="display:none;">
+        <span id="vn-preview-type"></span>
+        <span id="vn-preview-num"></span>
+        <span id="vn-preview-amt"></span>
+        <span id="vn-preview-win"></span>
+      </div>
+      <div class="bet-action-row">
+        <button class="quick-btn" id="btn-add-vn-slip" type="button" onclick="addVNToSlip()" data-i18n="add_slip">ເພີ່ມລົງໃບ</button>
+        <button class="btn-gold" id="vn-submit-bet" type="button" onclick="placeVNBetNow()" data-i18n="confirm_bet">ຢືນຢັນວາງເດີມພັນ</button>
+      </div>
+    </div>
+
+    <div class="cart-card">
+      <h3><i class="fas fa-list"></i> <span data-i18n="your_slip">ໃບເດີມພັນ</span> <small id="vn-ticket-count">0</small></h3>
+      <div id="vn-current-tickets" class="slip-list"></div>
+      <div class="slip-total">
+        <span data-i18n="total">ລວມ</span>
+        <span class="gold-text">CR <span id="vn-slip-total">0</span></span>
+      </div>
+      <button class="btn-gold btn-slip-send" type="button" onclick="submitVNSlip()" data-i18n="send_slip">ສົ່ງໃບ</button>
+    </div>
+  </div>
+
+  <div class="bet-last-row vn-room-layout">
+    <div class="bet-last-card vn-prize-card">
+      <h3><i class="fas fa-trophy"></i> <span data-i18n="latest_prizes">ຕາຕະລາງລາງວັນ</span></h3>
+      <div id="vn-prize-table-container"></div>
+    </div>
+    <div class="bet-hint-card">
+      <h3 data-i18n="history_short">ປະຫວັດງວດ</h3>
+      <div id="vn-results-history" class="vn-hist-list"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MINIGAME VIEWS ================= -->
+
+<!-- GAME: COIN FLIP -->
+<section id="view-game-coinflip" class="view-section" style="display:none;">
+  <div class="game-header">
+    <button class="action-btn game-shell-back" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <h2 data-i18n="g_coinflip">Coin Flip</h2>
+  </div>
+  <div class="play-area">
+    <div id="coin-anim" class="coin-anim lux-stage-icon"><i class="fa-solid fa-coins"></i></div>
+    <div class="flex-row" style="margin-bottom: 20px;">
+      <button id="coin-btn-head" class="action-btn" style="background: #ffd700; color: #000; font-size: 1.2rem; padding: 10px 30px; font-weight: bold;" onclick="selectCoinSide('head')" data-i18n="coin_head">HEAD</button>
+      <button id="coin-btn-tail" class="action-btn" style="background: #c0c0c0; color: #000; font-size: 1.2rem; padding: 10px 30px; font-weight: bold;" onclick="selectCoinSide('tail')" data-i18n="coin_tail">TAIL</button>
+    </div>
+    <div class="input-group" style="width: 100%; max-width: 300px;">
+      <input type="number" id="coin-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
+      <div class="flex-row" style="margin-top: 10px;">
+        <button class="quick-btn" onclick="document.getElementById('coin-amount-input').value=10">10</button>
+        <button class="quick-btn" onclick="document.getElementById('coin-amount-input').value=50">50</button>
+        <button class="quick-btn" onclick="document.getElementById('coin-amount-input').value=100">100</button>
+        <button class="quick-btn" onclick="document.getElementById('coin-amount-input').value=500">500</button>
+      </div>
+    </div>
+    <p style="color: #aaa;"><span data-i18n="win_if">ຖ້າຖືກຈະໄດ້</span> 1.92x</p>
+    <button id="btn-spin-coin" class="btn-gold" style="max-width: 300px;" onclick="playCoinFlip()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+    <div id="coin-status-msg" class="status-msg"></div>
+    <div id="coin-history-container" class="history-box"></div>
+  </div>
+</section>
+
+<!-- GAME: HI-LO -->
+<section id="view-game-hilo" class="view-section" style="display:none;">
+  <div class="game-header">
+    <button class="action-btn game-shell-back" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <h2 data-i18n="g_hilo">Hi-Lo</h2>
+  </div>
+  <div class="play-area">
+    <div class="flex-row big-display">
+      <span id="hilo-d1" class="lux-die"><i class="fa-solid fa-dice"></i></span>
+      <span id="hilo-d2" class="lux-die"><i class="fa-solid fa-dice"></i></span>
+      <span id="hilo-d3" class="lux-die"><i class="fa-solid fa-dice"></i></span>
+    </div>
+    <div class="input-group" style="width: 100%; max-width: 300px;">
+      <select id="hilo-type-select">
+        <option value="high" data-i18n="hilo_high">High (12-18) — 1.95x</option>
+        <option value="low" data-i18n="hilo_low">Low (3-10) — 1.95x</option>
+        <option value="hilo11" data-i18n="hilo_11">Exactly 11 — 6x</option>
+        <option value="triple" data-i18n="hilo_triple">Triple (111-666) — 40x</option>
+      </select>
+    </div>
+    <div class="input-group" style="width: 100%; max-width: 300px;">
+      <input type="number" id="hilo-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
+      <div class="flex-row" style="margin-top: 10px;">
+        <button class="quick-btn" onclick="document.getElementById('hilo-amount-input').value=10">10</button>
+        <button class="quick-btn" onclick="document.getElementById('hilo-amount-input').value=50">50</button>
+        <button class="quick-btn" onclick="document.getElementById('hilo-amount-input').value=100">100</button>
+      </div>
+    </div>
+    <button id="btn-shake-hilo" class="btn-gold" style="max-width: 300px;" onclick="playHilo()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+    <div id="hilo-history-container" class="history-box"></div>
+  </div>
+</section>
+
+<!-- GAME: WHEEL -->
+<section id="view-game-wheel" class="view-section" style="display:none;">
+  <div class="game-header">
+    <button class="action-btn game-shell-back" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <h2 data-i18n="g_wheel">Lucky Wheel</h2>
+  </div>
+  <div class="play-area">
+    <div id="wheel-disc" class="big-display lux-stage-icon" style="transition: transform 3s cubic-bezier(0.17, 0.67, 0.12, 0.99);"><i class="fa-solid fa-dharmachakra"></i></div>
+    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;">
+      <span class="badge wheel-pay">×0</span>
+      <span class="badge wheel-pay">×0.5</span>
+      <span class="badge wheel-pay">×1</span>
+      <span class="badge wheel-pay">×1.5</span>
+      <span class="badge wheel-pay">×2.5</span>
+      <span class="badge wheel-pay">×5</span>
+      <span class="badge wheel-pay gold">×15</span>
+    </div>
+    <div class="input-group" style="width: 100%; max-width: 300px;">
+      <input type="number" id="wheel-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
+      <div class="flex-row" style="margin-top: 10px;">
+        <button class="quick-btn" onclick="document.getElementById('wheel-amount-input').value=10">10</button>
+        <button class="quick-btn" onclick="document.getElementById('wheel-amount-input').value=50">50</button>
+      </div>
+    </div>
+    <button id="btn-spin-wheel" class="btn-gold" style="max-width: 300px;" onclick="playLuckyWheel()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+    <div id="wheel-status-msg" class="status-msg"></div>
+    <div id="wheel-history-container" class="history-box"></div>
+  </div>
+</section>
+
+<!-- GAME: SLOT -->
+<section id="view-game-slot" class="view-section" style="display:none;">
+  <div class="game-header">
+    <button class="action-btn game-shell-back" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <h2 data-i18n="g_slot">Slot 777</h2>
+  </div>
+  <div class="play-area">
+    <div class="flex-row slot-reels">
+      <div id="slot-reel-1" class="slot-reel">🍒</div>
+      <div id="slot-reel-2" class="slot-reel">🍒</div>
+      <div id="slot-reel-3" class="slot-reel">🍒</div>
+    </div>
+    <div class="slot-paytable">
+      <span><b>777</b> ×40</span>
+      <span><b>💎💎💎</b> ×20</span>
+      <span><b>🍒🍒🍒</b> ×6</span>
+      <span><b>pair</b> ×1.4</span>
+    </div>
+    <div class="input-group" style="width: 100%; max-width: 300px;">
+      <input type="number" id="slot-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
+      <div class="flex-row" style="margin-top: 10px;">
+        <button class="quick-btn" onclick="document.getElementById('slot-amount-input').value=10">10</button>
+        <button class="quick-btn" onclick="document.getElementById('slot-amount-input').value=50">50</button>
+      </div>
+    </div>
+    <button id="btn-spin-slot" class="btn-gold" style="max-width: 300px;" onclick="playSlotMachine()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+    <div id="slot-status-msg" class="status-msg"></div>
+    <div id="slot-history-container" class="history-box"></div>
+  </div>
+</section>
+
+<!-- GAME: MINES -->
+<section id="view-game-mines" class="view-section" style="display:none;">
+  <div class="game-header">
+    <button class="action-btn game-shell-back" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <h2 data-i18n="g_mines">Mines</h2>
+  </div>
+  <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+    <div style="background: #222; padding: 20px; border-radius: 10px;">
+      <div id="mines-grid" class="mines-grid">
+        <!-- grid generated by JS -->
+      </div>
+    </div>
+    <div style="background: #222; padding: 20px; border-radius: 10px; min-width: 250px; display: flex; flex-direction: column; gap: 15px;">
+      <div class="input-group">
+        <label data-i18n="mines_count">Mines</label>
+        <select id="mines-count-select">
+          <option value="1">1</option>
+          <option value="3" selected>3</option>
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="15">15</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label data-i18n="stake">Stake (CR)</label>
+        <input type="number" id="mines-amount-input" placeholder="10">
+      </div>
+      <button id="btn-start-mines" class="btn-gold" onclick="startMinesGame()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+      
+      <div style="background: #111; padding: 15px; border-radius: 5px; text-align: center; margin-top: 10px;">
+        <div style="color: #aaa; margin-bottom: 5px;" data-i18n="mines_mult">Current multiplier</div>
+        <div id="mines-current-rate" style="font-size: 1.5rem; color: #ffd700; font-weight: bold;">1.00x</div>
+        <div style="color: #aaa; margin-top: 10px; margin-bottom: 5px;" data-i18n="mines_out">Cash-out (CR)</div>
+        <div style="font-size: 1.2rem; color: #2ecc71; font-weight: bold;">CR <span id="mines-cashout-amt">0.00</span></div>
+      </div>
+      
+      <button id="btn-cashout-mines" class="action-btn" style="background: #2ecc71; font-size: 1.1rem; padding: 10px; font-weight: bold;" onclick="cashoutMines()" disabled data-i18n="cashout">ແຄຊເອົາ</button>
+      <div id="mines-status-msg" class="status-msg" style="text-align: center;"></div>
+    </div>
+  </div>
+</section>
+
+<!-- GAME: CRASH -->
+<section id="view-game-crash" class="view-section" style="display:none;">
+  <div class="game-header">
+    <button class="action-btn game-shell-back" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <h2 data-i18n="g_crash">Crash</h2>
+  </div>
+  <div class="play-area">
+    <div style="background: #111; width: 100%; max-width: 600px; height: 300px; border-radius: 10px; position: relative; overflow: hidden; border: 1px solid #333; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+      <div id="crash-rocket-icon" class="crash-rocket lux-stage-icon"><i class="fa-solid fa-rocket"></i></div>
+      <div id="crash-multiplier-counter" class="crash-mult">x1.00</div>
+      <div id="crash-status-sub" style="color: #aaa; font-size: 1.2rem; z-index: 10;" data-i18n="crash_wait">ລໍຖ້າເລີ່ມເກມ...</div>
+    </div>
+    
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 600px; margin: 10px 0;">
+      <span class="badge" style="background: #3498db; padding: 5px;" data-i18n="crash_low">Low (1.1-2x)</span>
+      <span class="badge" style="background: #f1c40f; color:#000; padding: 5px;" data-i18n="crash_med">Med (2-5x)</span>
+      <span class="badge" style="background: #e67e22; padding: 5px;" data-i18n="crash_high">High (5-10x)</span>
+      <span class="badge" style="background: #e74c3c; padding: 5px;" data-i18n="crash_ext">Extreme (10x+)</span>
+    </div>
+
+    <div class="input-group" style="width: 100%; max-width: 300px;">
+      <label data-i18n="stake">ຍອດເດີມພັນ (CR)</label>
+      <input type="number" id="crash-amount-input" placeholder="10" min="10" value="10">
+    </div>
+    <button id="btn-launch-crash" class="btn-gold" style="max-width: 300px; font-size: 1.2rem; padding: 15px;" onclick="playCrashGame()" data-i18n="launch">ປ່ອຍຈະຫວະ</button>
+    <button id="btn-cashout-crash" class="btn-cashout" onclick="cashoutCrash()" disabled data-i18n="cashout">ແຄຊເອົາ</button>
+  </div>
+</section>
+
+<!-- GAME: PLINKO -->
+<section id="view-game-plinko" class="view-section" style="display:none;">
+  <div class="game-header">
+    <button class="action-btn game-shell-back" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <h2 data-i18n="g_plinko">Plinko</h2>
+  </div>
+  <div class="play-area">
+    <div style="position: relative; width: 300px; height: 350px; background: #111; border-radius: 10px; border: 1px solid #333;">
+      <div id="plinko-ball" class="plinko-ball">🎱</div>
+      <div style="position: absolute; bottom: 0; width: 100%; display: flex; border-top: 1px solid #333;">
+        <div style="flex:1; background:#e74c3c; text-align:center; padding: 5px 0; font-size: 0.75rem; font-weight:bold;">8x</div>
+        <div style="flex:1; background:#e67e22; text-align:center; padding: 5px 0; font-size: 0.75rem;">2x</div>
+        <div style="flex:1; background:#f1c40f; color:#000; text-align:center; padding: 5px 0; font-size: 0.75rem;">0.8x</div>
+        <div style="flex:1; background:#2ecc71; text-align:center; padding: 5px 0; font-size: 0.75rem;">0.3x</div>
+        <div style="flex:1; background:#f1c40f; color:#000; text-align:center; padding: 5px 0; font-size: 0.75rem;">0.8x</div>
+        <div style="flex:1; background:#e67e22; text-align:center; padding: 5px 0; font-size: 0.75rem;">2x</div>
+        <div style="flex:1; background:#e74c3c; text-align:center; padding: 5px 0; font-size: 0.75rem; font-weight:bold;">8x</div>
+      </div>
+    </div>
+    <div class="input-group" style="width: 100%; max-width: 300px; margin-top: 20px;">
+      <input type="number" id="plinko-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
+      <div class="flex-row" style="margin-top: 10px;">
+        <button class="quick-btn" onclick="document.getElementById('plinko-amount-input').value=10">10</button>
+        <button class="quick-btn" onclick="document.getElementById('plinko-amount-input').value=50">50</button>
+      </div>
+    </div>
+    <button id="btn-drop-plinko" class="btn-gold" style="max-width: 300px;" onclick="playPlinkoGame()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+    <div id="plinko-status-msg" class="status-msg"></div>
+  </div>
+</section>
+
+<!-- GAME: POK DENG -->
+<section id="view-game-pokdeng" class="view-section" style="display:none;">
+  <div class="game-header">
+    <button class="action-btn game-shell-back" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <h2 data-i18n="g_pokdeng">Pok Deng</h2>
+  </div>
+  <div class="play-area pokdeng-stage">
+    <div class="lux-card-table pokdeng-oval">
+      <div class="lux-seat lux-seat-dealer">
+        <h3 data-i18n="pd_dealer">Dealer</h3>
+        <div id="pokdeng-dealer-cards" class="lux-card-row">
+          <div class="lux-playing-card lux-card-back"></div>
+          <div class="lux-playing-card lux-card-back"></div>
+        </div>
+        <div id="pokdeng-dealer-score" class="lux-score">0</div>
+      </div>
+      <div class="pokdeng-pot" aria-hidden="true">
+        <b>POT</b>
+        <div class="pokdeng-odds-row">
+          <span>1.9×</span>
+          <span>Pok 2×</span>
+        </div>
+      </div>
+      <div class="lux-seat lux-seat-player">
+        <h3 data-i18n="pd_player">Player</h3>
+        <div id="pokdeng-player-cards" class="lux-card-row">
+          <div class="lux-playing-card lux-card-back"></div>
+          <div class="lux-playing-card lux-card-back"></div>
+        </div>
+        <div id="pokdeng-player-score" class="lux-score">0</div>
+      </div>
+    </div>
+    
+    <p class="pd-rules-line" data-i18n="pd_rules">Win = ×1.9 | Score 8+ = ×2.0</p>
+    
+    <div class="input-group" style="width: 100%; max-width: 300px;">
+      <input type="number" id="pokdeng-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
+    </div>
+    <button id="btn-deal-pokdeng" class="btn-gold" style="max-width: 300px;" onclick="playPokdengGame()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+    <div id="pokdeng-status-msg" class="status-msg"></div>
+  </div>
+</section>
+
+<!-- GAME: DRAGON TIGER -->
+<section id="view-game-dragontiger" class="view-section" style="display:none;">
+  <div class="game-header">
+    <button class="action-btn game-shell-back" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <h2 data-i18n="g_dt">Dragon Tiger</h2>
+  </div>
+  <div class="play-area">
+    <div class="lux-dt-table">
+      <div class="lux-seat">
+        <h3 class="lux-side-red" data-i18n="dt_dragon">Dragon (1.95x)</h3>
+        <div id="dt-dragon-card" class="lux-playing-card lux-card-back"></div>
+      </div>
+      <div class="lux-vs">VS</div>
+      <div class="lux-seat">
+        <h3 class="lux-side-blue" data-i18n="dt_tiger">Tiger (1.95x)</h3>
+        <div id="dt-tiger-card" class="lux-playing-card lux-card-back"></div>
+      </div>
+    </div>
+
+    <div id="dt-status-msg" class="status-msg" style="font-size: 1.5rem; margin-bottom: 20px;" data-i18n="pick_side">Pick a side first</div>
+
+    <div class="input-group" style="width: 100%; max-width: 400px;">
+      <input type="number" id="dt-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake" style="text-align: center; font-size: 1.2rem;">
+    </div>
+
+    <div class="flex-row" style="width: 100%; max-width: 500px; margin-bottom: 20px;">
+      <button class="action-btn" id="dt-btn-dragon" type="button" style="flex: 1; background: #e74c3c; font-size: 1.2rem; padding: 15px;" onclick="selectDragonTigerSide('dragon')" data-i18n="dt_dragon">Dragon (1.95x)</button>
+      <button class="action-btn" id="dt-btn-tie" type="button" style="flex: 1; background: #2ecc71; font-size: 1.2rem; padding: 15px;" onclick="selectDragonTigerSide('tie')" data-i18n="dt_tie">Tie (8x)</button>
+      <button class="action-btn" id="dt-btn-tiger" type="button" style="flex: 1; background: #3498db; font-size: 1.2rem; padding: 15px;" onclick="selectDragonTigerSide('tiger')" data-i18n="dt_tiger">Tiger (1.95x)</button>
+    </div>
+
+    <button id="btn-play-dt" class="btn-gold" style="max-width: 300px;" onclick="playDragonTiger()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+    <div id="dt-history-container" class="history-box"></div>
+  </div>
+</section>
+
+<!-- GAME: HORSE RACING -->
+<section id="view-game-horseracing" class="view-section" style="display:none;">
+  <div class="game-header">
+    <button class="action-btn game-shell-back" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <h2 data-i18n="g_horse">Horse Racing</h2>
+  </div>
+  <div class="play-area">
+    <div id="derby-result-display" class="lux-horse-board">
+      <i class="fa-solid fa-horse"></i>
+    </div>
+    <p style="color: #aaa; text-align: center;" data-i18n="pick_horse">Pick the horse you think will win</p>
+    <div class="lux-horse-grid">
+      <button class="horse-opt-btn" id="horse-btn-1" type="button" onclick="selectHorse(1)"><i class="fa-solid fa-horse"></i> 1 · 2.8x</button>
+      <button class="horse-opt-btn" id="horse-btn-2" type="button" onclick="selectHorse(2)"><i class="fa-solid fa-horse"></i> 2 · 4.5x</button>
+      <button class="horse-opt-btn" id="horse-btn-3" type="button" onclick="selectHorse(3)"><i class="fa-solid fa-horse"></i> 3 · 7x</button>
+      <button class="horse-opt-btn" id="horse-btn-4" type="button" onclick="selectHorse(4)"><i class="fa-solid fa-horse"></i> 4 · 14x</button>
+    </div>
+
+    <div class="input-group" style="width: 100%; max-width: 300px;">
+      <input type="number" id="derby-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
+    </div>
+    <button id="btn-start-derby" class="btn-gold" style="max-width: 300px;" onclick="playHorseRacingGame()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+    <div id="derby-status-msg" class="status-msg"></div>
+  </div>
+</section>
+
+<!-- GAME: COIN PUSHER -->
+<section id="view-game-coinpusher" class="view-section" style="display:none;">
+  <div class="game-header">
+    <button class="action-btn game-shell-back" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <h2 data-i18n="g_pusher">Coin Pusher</h2>
+  </div>
+  <div class="play-area">
+    <div id="pusher-display" class="lux-stage-icon" style="margin-bottom: 20px;"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+    <p style="color: #aaa;" data-i18n="pusher_rules">0–4x · Jackpot ×12</p>
+    <div class="input-group" style="width: 100%; max-width: 300px;">
+      <input type="number" id="pusher-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
+    </div>
+    <button id="btn-drop-coinpusher" class="btn-gold" style="max-width: 300px;" onclick="playCoinPusherGame()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+    <div id="pusher-status-msg" class="status-msg"></div>
+  </div>
+</section>
+
+<!-- GAME: DUCK SHOOTER -->
+<section id="view-game-duckshooter" class="view-section" style="display:none;">
+  <div class="game-header">
+    <button class="action-btn game-shell-back" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <h2 data-i18n="g_duck">Duck Shooter</h2>
+  </div>
+  <div class="play-area">
+    <div id="duck-display" class="lux-duck-stage">
+      <i class="fa-solid fa-feather"></i>
+      <i class="fa-solid fa-crosshairs"></i>
+      <i class="fa-solid fa-feather"></i>
+    </div>
+    <p style="color: #aaa;" data-i18n="duck_rules">Bronze ×0.5 · silver ×1.5 · gold ×3.5 · crystal ×10</p>
+    <div class="input-group" style="width: 100%; max-width: 300px;">
+      <input type="number" id="duck-amount-input" placeholder="Stake (CR)" data-i18n-placeholder="stake">
+    </div>
+    <button class="btn-gold" style="max-width: 300px; background: #e74c3c; color: white;" onclick="playDuckShooterGame()" data-i18n="play">ຫຼິ້ນເລີຍ</button>
+    <div id="duck-status-msg" class="status-msg"></div>
+  </div>
+</section>
+
+<!-- GAME: MYSTERY CHEST -->
+<section id="view-game-chest" class="view-section" style="display:none;">
+  <div class="game-header">
+    <button class="action-btn game-shell-back" onclick="switchView('lobby')"><i class="fas fa-arrow-left"></i> <span data-i18n="back">ກັບ</span></button>
+    <h2 data-i18n="g_chest">Mystery Chest</h2>
+  </div>
+  <div class="play-area">
+    <div id="mystery-chest-anim" class="chest-box-anim lux-stage-icon"><i class="fa-solid fa-box-open"></i></div>
+    <p style="color: #ffd700; font-size: 1.2rem;" data-i18n="chest_sub">Open a chest for free credits!</p>
+    <button id="btn-open-mystery-chest" class="btn-gold" style="max-width: 300px; padding: 15px; font-size: 1.2rem;" onclick="openDailyRewardModal()" data-i18n="chest_open">Open chest</button>
+  </div>
+</section>
+
+
+<!-- SITE FOOTER -->
+<footer class="site-footer">
+  <div class="footer-top">
+    <!-- Brand Column -->
+    <div class="footer-brand-col">
+      <div class="footer-logo"><i class="fa-solid fa-dragon"></i> SOKLARP.ORG</div>
+      <p class="footer-desc" data-i18n="foot_desc">ແພລດຟອມເກມເຄຣດິດເສມືອນເພື່ອຄວາມບັນເທີງ — ຫວຍ ແລະ ມິນິເກມ ບໍ່ມີການຝາກ ຫຼື ຖອນເງິນຈິງ · ບໍລິການ 24 ຊົ່ວໂມງ</p>
+      <div class="footer-trust-badges">
+        <span class="footer-trust-badge"><i class="fa-solid fa-shield-halved"></i> SSL Secured</span>
+        <span class="footer-trust-badge"><i class="fa-solid fa-lock"></i> Safe & Fair</span>
+        <span class="footer-trust-badge"><i class="fa-solid fa-certificate"></i> Fair Play</span>
+        <span class="footer-trust-badge"><i class="fa-solid fa-headset"></i> 24/7 Support</span>
+      </div>
+      <div class="footer-payment-row">
+        <span class="footer-payment-chip"><i class="fa-solid fa-coins"></i> Virtual Credits (CR)</span>
+        <span class="footer-payment-chip"><i class="fa-solid fa-gamepad"></i> Entertainment Only</span>
+        <span class="footer-payment-chip"><i class="fa-solid fa-shield-halved"></i> No Real Cashout</span>
+      </div>
+      <div class="footer-socials" style="margin-top:16px;">
+        <button class="footer-social-btn" title="LINE"><i class="fa-brands fa-line" style="color:#00c300;"></i></button>
+        <button class="footer-social-btn" title="Facebook"><i class="fa-brands fa-facebook"></i></button>
+        <button class="footer-social-btn" title="Telegram"><i class="fa-brands fa-telegram"></i></button>
+        <button class="footer-social-btn" title="YouTube"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i></button>
+      </div>
+    </div>
+    <!-- Games Column -->
+    <div>
+      <div class="footer-col-title"><i class="fa-solid fa-gamepad"></i> <span data-i18n="foot_games">All games</span></div>
+      <div class="footer-link-list">
+        <span class="footer-link" onclick="switchView('lobby')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="foot_thai">Thai lottery</span></span>
+        <span class="footer-link" onclick="openVNLotteryRoom('vnfast')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="foot_vn">VN lottery</span></span>
+        <span class="footer-link" onclick="switchView('game-coinflip')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_coinflip">Coin Flip</span></span>
+        <span class="footer-link" onclick="switchView('game-slot')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_slot">Slot 777</span></span>
+        <span class="footer-link" onclick="switchView('game-crash')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_crash">Crash</span></span>
+        <span class="footer-link" onclick="switchView('game-mines')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_mines">Mines</span></span>
+        <span class="footer-link" onclick="switchView('game-dragontiger')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_dt">Dragon Tiger</span></span>
+        <span class="footer-link" onclick="switchView('game-horseracing')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_horse">Horse Racing</span></span>
+        <span class="footer-link" onclick="switchView('game-pokdeng')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_pokdeng">Pok Deng</span></span>
+        <span class="footer-link" onclick="switchView('game-wheel')"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="g_wheel">Lucky Wheel</span></span>
+      </div>
+    </div>
+    <!-- Support Column -->
+    <div>
+      <div class="footer-col-title"><i class="fa-solid fa-headset"></i> <span data-i18n="foot_contact">Contact us</span></div>
+      <div class="footer-contact-item">
+        <div class="footer-contact-icon"><i class="fa-brands fa-line"></i></div>
+        <div class="footer-contact-info">
+          <div class="footer-contact-label">LINE Official</div>
+          <div class="footer-contact-value">@soklarp</div>
+        </div>
+      </div>
+      <div class="footer-contact-item">
+        <div class="footer-contact-icon"><i class="fa-solid fa-phone"></i></div>
+        <div class="footer-contact-info">
+          <div class="footer-contact-label" data-i18n="foot_phone">Phone</div>
+          <div class="footer-contact-value">098-xxx-xxxx</div>
+        </div>
+      </div>
+      <div class="footer-contact-item">
+        <div class="footer-contact-icon"><i class="fa-solid fa-envelope"></i></div>
+        <div class="footer-contact-info">
+          <div class="footer-contact-label" data-i18n="foot_email">Email</div>
+          <div class="footer-contact-value">support@soklarp.org</div>
+        </div>
+      </div>
+      <div class="footer-contact-item">
+        <div class="footer-contact-icon"><i class="fa-brands fa-telegram"></i></div>
+        <div class="footer-contact-info">
+          <div class="footer-contact-label">Telegram</div>
+          <div class="footer-contact-value">t.me/soklarp</div>
+        </div>
+      </div>
+      <div class="footer-live-badge">
+        <span class="footer-live-dot"></span>
+        <span data-i18n="foot_online">Online 24 hours</span>
+      </div>
+    </div>
+    <!-- About Column -->
+    <div>
+      <div class="footer-col-title"><i class="fa-solid fa-info-circle"></i> <span data-i18n="foot_about">About</span></div>
+      <div class="footer-link-list">
+        <span class="footer-link" onclick="openVipRankModal()"><i class="fa-solid fa-crown"></i> <span data-i18n="foot_vip">VIP program</span></span>
+        <span class="footer-link" onclick="openDailyRewardModal()"><i class="fa-solid fa-gift"></i> <span data-i18n="foot_daily">Daily bonus</span></span>
+        <span class="footer-link" onclick="openInfoModal('about')"><i class="fa-solid fa-landmark"></i> <span data-i18n="foot_about">About</span></span>
+        <span class="footer-link" onclick="openInfoModal('terms')"><i class="fa-solid fa-file-contract"></i> <span data-i18n="foot_terms">Terms of use</span></span>
+        <span class="footer-link" onclick="openInfoModal('privacy')"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="foot_privacy">Privacy policy</span></span>
+        <span class="footer-link" onclick="openInfoModal('faq')"><i class="fa-solid fa-circle-question"></i> <span data-i18n="foot_faq">FAQ</span></span>
+        <span class="footer-link" onclick="openInfoModal('responsible')"><i class="fa-solid fa-hand-holding-heart"></i> <span data-i18n="foot_responsible">Play responsibly</span></span>
+        <span class="footer-link" onclick="switchView('history')"><i class="fa-solid fa-rotate"></i> <span data-i18n="foot_tx">Transaction history</span></span>
+      </div>
+      <div class="footer-rate-box">
+        <div class="footer-rate-title" data-i18n="foot_rates">Payout rates</div>
+        <div class="footer-rate-list">
+          <span data-i18n="rate_3top">3-top</span>: <b>x900</b><br>
+          <span data-i18n="rate_3toad">3-toad</span>: <b>x150</b><br>
+          <span data-i18n="rate_2">2-top / 2-bottom</span>: <b>x92</b><br>
+          <span data-i18n="rate_run">Run top / bottom</span>: <b>x3–4</b>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <div class="footer-copy">© 2024–2026 <span>SOKLARP.ORG</span> — <span data-i18n="foot_copy">All rights reserved</span></div>
+      <div class="footer-bottom-links">
+        <span class="footer-bottom-link" onclick="openInfoModal('privacy')" data-i18n="foot_privacy">Privacy policy</span>
+        <span class="footer-bottom-link" onclick="openInfoModal('terms')" data-i18n="foot_terms">Terms of use</span>
+        <span class="footer-bottom-link" onclick="openInfoModal('about')" data-i18n="foot_about">About</span>
+        <span class="footer-bottom-link" onclick="openInfoModal('faq')" data-i18n="foot_faq">FAQ</span>
+      </div>
+      <div class="footer-18-badge">18+</div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ================= MODALS ================= -->
+
+<div id="modal-credit" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h2 style="color: #ffd700; margin-top: 0;">Điều chỉnh tín dụng</h2>
+    <div class="input-group">
+      <label>Tài khoản</label>
+      <input type="text" id="finance-credit-username" readonly>
+    </div>
+    <div class="input-group">
+      <label>Thao tác</label>
+      <select id="finance-credit-action">
+        <option value="add">Cộng CR</option>
+        <option value="deduct">Trừ CR</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>Số lượng</label>
+      <input type="number" id="finance-credit-amount" placeholder="0">
+    </div>
+    <div class="input-group">
+      <label>Ghi chú (nếu có)</label>
+      <input type="text" id="finance-credit-note" placeholder="Ví dụ: thưởng sự kiện">
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+      <button class="action-btn" style="flex: 1;" onclick="closeModal('modal-credit')">Hủy</button>
+      <button id="btn-submit-credit" class="btn-gold" style="flex: 1;" onclick="handleConfirmCredit()">Xác nhận</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-manual-draw" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h2 style="color: #ffd700; margin-top: 0;">Chốt kết quả thủ công</h2>
+    <div class="input-group">
+      <label>Phòng</label>
+      <select id="draw-modal-room" onchange="syncManualDrawModalFields()">
+        <option value="yeekee3">Yeekee 3 phút</option>
+        <option value="yeekee30">Yeekee 30 phút</option>
+        <option value="hanoi">Hà Nội</option>
+        <option value="laos">Lào</option>
+        <option value="vnfast">VN nhanh</option>
+        <option value="vnmb">Miền Bắc</option>
+        <option value="vnmn">Miền Nam</option>
+        <option value="vnmt">Miền Trung</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>Kỳ</label>
+      <input type="text" id="draw-modal-draw-id" readonly>
+    </div>
+    <div id="draw-modal-thai-fields">
+      <div class="input-group">
+        <label>3 số trên</label>
+        <input type="text" id="draw-modal-top3" maxlength="3" placeholder="xxx">
+      </div>
+      <div class="input-group">
+        <label>2 số dưới</label>
+        <input type="text" id="draw-modal-bottom2" maxlength="2" placeholder="xx">
+      </div>
+    </div>
+    <div id="draw-modal-vn-fields" style="display:none;">
+      <div class="input-group">
+        <label>Số đặc biệt (2–6 chữ số, để trống = tạo ngẫu nhiên)</label>
+        <input type="text" id="draw-modal-vndb" maxlength="6" placeholder="12345">
+      </div>
+      <p class="admin-hint">Các giải còn lại sẽ được tạo tự động rồi chốt phiếu đang chờ.</p>
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+      <button class="action-btn" style="flex: 1;" onclick="closeModal('modal-manual-draw')">Hủy</button>
+      <button id="btn-confirm-manual-draw" class="btn-gold" style="flex: 1;" onclick="handleConfirmManualDraw()">Chốt kỳ</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-reset-password" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h2 style="color: #ffd700; margin-top: 0;">Đặt lại mật khẩu</h2>
+    <div class="input-group">
+      <label>Tài khoản</label>
+      <input type="text" id="reset-password-username" readonly>
+    </div>
+    <div class="input-group">
+      <label>Mật khẩu mới</label>
+      <input type="password" id="reset-password-value" placeholder="Tối thiểu 6 ký tự">
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+      <button class="action-btn" style="flex: 1;" onclick="closeModal('modal-reset-password')">Hủy</button>
+      <button class="btn-gold" style="flex: 1;" onclick="handleResetPassword()">Lưu mật khẩu</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-finance" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h2 id="finance-modal-title" data-i18n="cash_off">Virtual credits only. Cash deposit and withdraw are disabled.</h2>
+    <div style="background: #111; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+      <span id="finance-type-badge" class="badge">CR</span>
+      <div style="margin-top: 10px;">
+        <span id="finance-type-label" style="color: #aaa;" data-i18n="slip_user">Player</span>
+        <div style="font-size: 1.2rem;" id="finance-account">---</div>
+      </div>
+      <div style="margin-top: 10px;">
+        <span style="color: #aaa;" data-i18n="hist_amt">Stake</span>
+        <div style="font-size: 1.5rem; color: #ffd700; font-weight: bold;" id="finance-amount">0.00 CR</div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+      <button class="btn-gold" style="flex: 1;" onclick="closeModal('modal-finance')" data-i18n="close">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-password" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width: 420px;">
+    <h2 style="color: #ffd700; margin-top: 0;" data-i18n="password">ປ່ຽນລະຫັດຜ່ານ</h2>
+    <form id="form-change-password" class="auth-form">
+      <div class="form-field">
+        <label data-i18n="pw_current">Current password</label>
+        <input type="password" id="pw-current" autocomplete="current-password" required>
+      </div>
+      <div class="form-field">
+        <label data-i18n="pw_new">New password (min 10)</label>
+        <input type="password" id="pw-new" autocomplete="new-password" required minlength="10">
+      </div>
+      <button type="submit" class="btn-gold" data-i18n="save">ບັນທຶກ</button>
+    </form>
+    <button class="action-btn" style="margin-top: 12px;" onclick="closeModal('modal-password')" data-i18n="close">ປິດ</button>
+  </div>
+</div>
+
+<div id="modal-draw-results" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h2 id="draw-results-heading" style="color: #ffd700; margin-top: 0; text-align: center;" data-i18n="draw_results">Draw results</h2>
+    <div id="modal-draw-results-content" style="text-align: center; margin-bottom: 20px;"></div>
+    <button class="btn-gold" onclick="closeModal('modal-draw-results')" data-i18n="close">ປິດ</button>
+  </div>
+</div>
+
+<div id="modal-daily-reward" class="modal" style="display:none;">
+  <div class="modal-content" style="text-align: center;">
+    <h2 style="color: #ffd700; margin-top: 0;">🎁 <span data-i18n="daily_title">Daily reward</span></h2>
+    <div id="chest-box-anim" class="chest-box-anim lux-stage-icon"><i class="fa-solid fa-gift"></i></div>
+    <p style="color: #aaa;" data-i18n="daily_sub">Log in every day for free virtual credits!</p>
+    <div id="reward-amount-display" style="font-size: 2rem; font-weight: bold; color: #2ecc71; margin-bottom: 20px;">+ ? CR</div>
+    <button id="btn-claim-chest" class="btn-gold" style="width: 100%; padding: 15px;" onclick="claimDailyReward()" data-i18n="daily_claim">Open chest / claim</button>
+    <div id="daily-claim-result" style="margin-top: 15px; color: #ffd700; font-weight: bold;"></div>
+    <button class="action-btn" style="margin-top: 15px;" onclick="closeModal('modal-daily-reward')" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<div id="modal-vip-rank" class="modal" style="display:none;">
+  <div class="modal-content" style="text-align: center;">
+    <h2 style="color: #ffd700; margin-top: 0;">💎 <span data-i18n="vip_title">Your VIP rank</span></h2>
+    <div style="font-size: 4rem; margin: 10px 0;" id="vip-modal-icon">🥇</div>
+    <div id="vip-modal-rank-name" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 20px;">VIP 1</div>
+    
+    <div style="text-align: left; margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <span style="color: #aaa;" data-i18n="vip_exp">Experience (EXP)</span>
+        <span id="vip-modal-exp-val">500 / 1000</span>
+      </div>
+      <div style="width: 100%; background: #111; height: 10px; border-radius: 5px; overflow: hidden;">
+        <div id="vip-progress-fill" style="width: 50%; height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00);"></div>
+      </div>
+    </div>
+    
+    <div style="background: #111; padding: 15px; border-radius: 5px; text-align: left; font-size: 0.9rem; margin-bottom: 20px;">
+      <h4 style="margin-top: 0; color: #ffd700;" data-i18n="vip_perks">VIP perks</h4>
+      <ul style="padding-left: 20px; color: #aaa; margin-bottom: 0;">
+        <li data-i18n="vip_perk1">Play bonus by VIP level</li>
+        <li data-i18n="vip_perk2">5% weekly credit rebate</li>
+        <li data-i18n="vip_perk3">1 free wheel spin per day</li>
+      </ul>
+    </div>
+    <button class="btn-gold" onclick="closeModal('modal-vip-rank')" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<div id="modal-thermal-ticket" class="modal" style="display:none;">
+  <div class="modal-content lux-slip">
+    <div class="lux-slip-head">
+      <h2>SOKLARP.ORG</h2>
+      <div data-i18n="slip_title">Bet slip</div>
+    </div>
+    <div class="lux-slip-meta">
+      <div><span data-i18n="slip_user">Player</span>: <span id="slip-username">User</span></div>
+      <div><span data-i18n="slip_lotto">Room</span>: <span id="slip-lottery-name">---</span></div>
+      <div><span data-i18n="slip_draw">Draw</span>: <span id="slip-draw-id">---</span></div>
+      <div><span data-i18n="slip_time">Time</span>: <span id="slip-timestamp">---</span></div>
+    </div>
+    <div class="lux-slip-list" id="slip-bets-list"></div>
+    <div class="lux-slip-total">
+      <span data-i18n="slip_total">Total</span>: <span id="slip-total-amt">0.00</span> CR
+    </div>
+    <div class="lux-slip-actions">
+      <button class="action-btn" type="button" onclick="closeModal('modal-thermal-ticket')" data-i18n="close">Close</button>
+      <button id="copyToClipboard" class="action-btn" type="button" onclick="openThermalTicketModal()" data-i18n="copy">Copy</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-calculator" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h2 data-i18n="calc_title">Payout calculator</h2>
+    <div class="input-group">
+      <label data-i18n="calc_type">Type</label>
+      <select id="calc-cat-select">
+        <option value="900">3-top ×900</option>
+        <option value="150">3-toad ×150</option>
+        <option value="92">2-top / 2-bottom ×92</option>
+        <option value="3.2">Run top ×3.2</option>
+        <option value="4.2">Run bottom ×4.2</option>
+        <option value="3.8">Lô ×3.8</option>
+        <option value="85">Đề ×85</option>
+        <option value="800">3 Càng ×800</option>
+        <option value="6.5">Đầu / Đuôi ×6.5</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label data-i18n="calc_amt">Amount (CR)</label>
+      <input type="number" id="calc-amount-input" placeholder="10">
+    </div>
+    <div class="lux-calc-box">
+      <div data-i18n="calc_est">Estimated credit prize</div>
+      <div id="calc-result-display">0.00 CR</div>
+    </div>
+    <div class="lux-slip-actions">
+      <button class="action-btn" type="button" onclick="updateCalcPreview()" data-i18n="calc_go">Calculate</button>
+      <button class="action-btn" type="button" onclick="closeModal('modal-calculator')" data-i18n="close">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-info" class="modal" style="display:none;">
+  <div class="modal-content lux-info">
+    <h2 id="info-modal-title">SOKLARP.ORG</h2>
+    <div id="info-modal-body" class="info-modal-body"></div>
+    <button class="btn-gold" type="button" onclick="closeModal('modal-info')" data-i18n="close">Close</button>
+  </div>
+</div>
+
+<!-- CHAT DRAWER -->
+<div id="chat-drawer" class="chat-drawer">
+  <div class="chat-drawer-hd">
+    <h3><i class="fa-solid fa-comments"></i> <span data-i18n="foot_chat">Salon chat</span></h3>
+    <button class="action-btn" type="button" onclick="toggleChatDrawer()"><i class="fa-solid fa-times"></i></button>
+  </div>
+  <div id="chat-messages-container" class="lux-chat-log">
+    <div class="lux-chat-bubble">
+      <div class="lux-chat-name">Admin SOKLARP</div>
+      <span data-i18n="foot_welcome">Welcome to the salon.</span>
+    </div>
+  </div>
+  <div class="lux-chat-compose">
+    <input type="text" id="chat-input-text" data-i18n-placeholder="foot_type" placeholder="Type a message">
+    <button id="btn-send-chat" class="btn-gold" type="button" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- Chat Toggle Button (Floating) -->
+<button class="lux-chat-fab" type="button" onclick="toggleChatDrawer()" title="Chat">
+  <i class="fa-solid fa-comments"></i>
+</button>
+
+<script src="i18n.js?v=1788648000"></script>
+<script src="main.js?v=1788648000"></script>
+
+<!-- ID Compatibility Layer - maps old IDs to keep main.js working -->
+<div id="cart-potential-win" style="display:none"></div>
+<div id="cart-total" style="display:none"></div>
+<button id="btn-submit-bets" style="display:none"></button>
+<div id="live-draw-waiting-box" style="display:none"></div>
+<span id="waiting-lottery-name" style="display:none"></span>
+<span id="waiting-draw-id" style="display:none"></span>
+<span id="waiting-ticket-summary" style="display:none"></span>
+<span id="spin-ball-1" class="live-ball spin-ball" style="display:none">?</span>
+<span id="spin-ball-2" class="live-ball spin-ball" style="display:none">?</span>
+<span id="spin-ball-3" class="live-ball spin-ball" style="display:none">?</span>
+<span id="waiting-timer-count" style="display:none"></span>
+<tbody id="user-history-tbody" style="display:none"></tbody>
+<span id="betting-lottery-name" style="display:none"></span>
+<span id="betting-draw-id" style="display:none"></span>
+<span id="betting-stage-draw-id" style="display:none"></span>
+<span id="betting-stage-countdown" style="display:none">00:00:00</span>
+<span id="betting-last-top3" style="display:none"></span>
+<span id="betting-last-bottom2" style="display:none"></span>
+<span id="room-ball-1" class="live-ball" style="display:none">?</span>
+<span id="room-ball-2" class="live-ball" style="display:none">?</span>
+<span id="room-ball-3" class="live-ball" style="display:none">?</span>
+<span id="room-ball-4" class="live-ball" style="display:none">?</span>
+<span id="room-ball-5" class="live-ball" style="display:none">?</span>
+<span id="admin-stat-revenue" style="display:none">0</span>
+<span id="admin-stat-payout" style="display:none">0</span>
+<span id="admin-stat-profit" style="display:none">0</span>
+<span id="admin-stat-users-count" style="display:none">0</span>
+<div id="admin-draw-control-grid" style="display:none"></div>
+<tbody id="admin-users-tbody" style="display:none"></tbody>
+<tbody id="admin-bets-tbody" style="display:none"></tbody>
+<tbody id="admin-finance-tbody" style="display:none"></tbody>
+<input id="sys-rate-3top" type="hidden">
+<input id="sys-rate-3toad" type="hidden">
+<input id="sys-rate-2top" type="hidden">
+<input id="sys-rate-2bottom" type="hidden">
+<input id="sys-rate-run-top" type="hidden">
+<input id="sys-rate-run-bottom" type="hidden">
+<input id="credit-modal-username" type="hidden">
+<input id="credit-modal-nickname" type="hidden">
+<input id="credit-amount" type="hidden">
+<div id="draw-results-title" style="display:none"></div>
+<tbody id="draw-results-tbody" style="display:none"></tbody>
+<button id="keypad-clear" style="display:none"></button>
+<button id="keypad-delete" style="display:none"></button>
+<button id="btn-add-to-cart" style="display:none"></button>
+<button id="btn-clear-cart" style="display:none"></button>
+<button id="btn-bet-back" style="display:none"></button>
+<button id="btn-confirm-credit" style="display:none"></button>
+<span id="ai-win-prob" style="display:none"></span>
+<button id="btn-shoot-duck" style="display:none" onclick="playDuckShooterGame()"></button>
+</body>
+</html>

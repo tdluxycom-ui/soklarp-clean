@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Build output
+dist/
+dist_public/
+build/
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+*.err.log
+*.out.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.vscode/settings.json
+.vscode/launch.json
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temp files
+temp_*
+*.tmp
+*.bak
+
+# Runtime
+pids/
+*.pid
+*.seed
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Misc
+.cache/
+.console/
+
+# VPS Deployment Credentials
+vps-config.json
+
+# Local runtime / screenshots / live DB
+tmp-shots/
+data/*.sqlite
+data/*.sqlite-*
+data/database.json
+data/database.backup-*.json
+.zcode/
