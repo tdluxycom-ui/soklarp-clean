@@ -1,14 +1,9 @@
 import { createDbProxy } from "../db-proxy.mjs";
 import { secureRandomInt } from "../../lib/secure-random.mjs";
+import { padLast, parseXienNumbers, XIEN_SIZES } from "../../lib/bet-numbers.mjs";
 
 function digitsOnly(value) {
   return String(value ?? "").replace(/\D/g, "");
-}
-
-function padLast(value, len) {
-  const d = digitsOnly(value);
-  if (!d) return "";
-  return d.padStart(len, "0").slice(-len);
 }
 
 function normalizeThaiBetNumber(betType, raw) {
@@ -185,13 +180,15 @@ export function registerUserRoutes(app, { authenticate, getDb, saveDb, vnPayoutR
     if ((betType === "dau" || betType === "duoi") && (num.length !== 1 || Number.isNaN(Number(num)))) {
       return res.status(400).json({ success: false, message: "Dau/Duoi can 1 chu so (0-9)" });
     }
-    if (["xien2", "xien3", "xien4"].includes(betType)) {
-      const parts = num.split(",").map((p) => padLast(p.trim(), 2));
-      const expectedCount = betType === "xien2" ? 2 : (betType === "xien3" ? 3 : 4);
-      if (parts.length !== expectedCount || parts.some((p) => p.length !== 2 || Number.isNaN(Number(p)))) {
-        return res.status(400).json({ success: false, message: `Xien ${expectedCount} can ${expectedCount} cap, moi cap 2 chu so` });
+    if (XIEN_SIZES[betType]) {
+      const parsed = parseXienNumbers(betType, num);
+      if (!parsed.ok) {
+        const message = parsed.reason === "duplicate"
+          ? `Xien ${parsed.expected} can ${parsed.expected} so khac nhau`
+          : `Xien ${parsed.expected} can ${parsed.expected} cap, moi cap 2 chu so`;
+        return res.status(400).json({ success: false, message });
       }
-      num = parts.join(",");
+      num = parsed.numbers.join(",");
     }
 
     const minBet = db.systemSettings?.limits?.minBet ?? 10;
