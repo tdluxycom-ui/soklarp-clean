@@ -186,8 +186,21 @@ window.refreshGameGuides = function refreshGameGuides() {
   });
 }
 
+/**
+ * Escapes text for element content and for quoted attribute values.
+ *
+ * Not sufficient for an inline handler such as onclick="fn('...')": the browser
+ * decodes entities in the attribute before the JavaScript parser reads it, so
+ * &#39; turns back into a quote that closes the string. Pass untrusted values
+ * through data attributes and addEventListener instead.
+ */
 function escapeHtml(s) {
-  return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /** Shared stake reader for mini-games (min 10 CR). */
@@ -2494,24 +2507,39 @@ async function loadAdminUsers(more) {
   shown.forEach(u => {
     const isMe = (u.username === state.user.username);
     const safeUser = escapeHtml(u.username);
-    const safeNick = escapeHtml(displayNickname(u));
+    const nick = displayNickname(u);
     const status = u.status || "active";
     const roleVi = u.role === "admin" ? "Quản trị" : "Thành viên";
     const statusVi = status === "banned" ? "Đã khóa" : "Hoạt động";
     const vip = u.vip || adminVipRank(u.exp);
     const tr = document.createElement("tr");
+    // The action buttons carry the nickname in data attributes and are wired up
+    // below rather than through onclick. A nickname is free text, and the
+    // browser decodes entities in an attribute before handing the value to the
+    // JavaScript parser, so an escaped quote inside onclick="fn('...')" still
+    // closes the string and runs whatever follows it — in an admin's session.
     tr.innerHTML = `
-      <td data-label="Tài khoản"><b>${safeUser}</b><div class="text-muted">${safeNick} · ${roleVi}</div></td>
+      <td data-label="Tài khoản"><b>${safeUser}</b><div class="text-muted">${escapeHtml(nick)} · ${roleVi}</div></td>
       <td data-label="Số dư" class="gold-text">${Number(u.balance).toLocaleString()} CR</td>
       <td data-label="VIP">${escapeHtml(vip)} · ${Number(u.exp || 0).toLocaleString()} EXP</td>
       <td data-label="Trạng thái">${statusVi}</td>
       <td data-label="Thao tác">
-        <button class="btn-action-table" type="button" onclick="openCreditModal('${safeUser}', '${safeNick}')">Tín dụng</button>
-        <button class="btn-action-table" type="button" onclick="openResetPasswordModal('${safeUser}')">Mật khẩu</button>
-        <button class="btn-action-table" type="button" onclick="toggleUserStatus('${safeUser}', '${status}')" ${isMe ? "disabled" : ""}>${status === "banned" ? "Mở khóa" : "Khóa"}</button>
-        <button class="btn-action-table" type="button" onclick="deleteUserAccount('${safeUser}')" ${isMe ? "disabled" : ""}>Xóa</button>
+        <button class="btn-action-table" type="button" data-user-action="credit">Tín dụng</button>
+        <button class="btn-action-table" type="button" data-user-action="password">Mật khẩu</button>
+        <button class="btn-action-table" type="button" data-user-action="status" ${isMe ? "disabled" : ""}>${status === "banned" ? "Mở khóa" : "Khóa"}</button>
+        <button class="btn-action-table" type="button" data-user-action="delete" ${isMe ? "disabled" : ""}>Xóa</button>
       </td>
     `;
+    tr.querySelectorAll("[data-user-action]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        switch (btn.dataset.userAction) {
+          case "credit": openCreditModal(u.username, nick); break;
+          case "password": openResetPasswordModal(u.username); break;
+          case "status": toggleUserStatus(u.username, status); break;
+          case "delete": deleteUserAccount(u.username); break;
+        }
+      });
+    });
     tbody.appendChild(tr);
   });
 }
