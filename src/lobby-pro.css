@@ -7221,83 +7221,250 @@ body.in-app-page .pwa-install-bar { display: none !important; }
   border-color: rgba(255, 213, 106, .7) !important;
 }
 
-/* —— Clarity: one story — live strip, then rooms —— */
-#view-lobby .rooms-clock-head,
+/* —— Home: one clear story — hero → rooms → mini-games —— */
+html body #view-lobby #rooms-clock,
+html body #view-lobby #lobby-command,
+html body #view-lobby .trust-showcase,
+html body #view-lobby #rooms-clock[hidden],
+html body #view-lobby #lobby-command[hidden],
+html body #view-lobby .trust-showcase[hidden] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+#view-lobby .salon-hero {
+  margin: 10px 16px 14px !important;
+}
+#view-lobby .lobby-lotto-block {
+  margin: 0 16px 16px !important;
+  padding: 4px 0 8px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+#view-lobby .lobby-heading {
+  justify-content: flex-start !important;
+  margin: 0 0 10px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+#view-lobby .lobby-heading-pro {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
 #view-lobby .lobby-heading-sub {
   display: none !important;
 }
-#view-lobby #rooms-clock {
-  border: 0 !important;
-  background: transparent !important;
-  padding: 0 14px 8px !important;
-  margin-bottom: 8px !important;
+#view-lobby .section-title {
+  justify-content: flex-start !important;
+  margin: 0 0 12px !important;
 }
-#view-lobby .room-chip-last { display: none !important; }
-#view-lobby .room-chip {
-  padding: 7px 8px !important;
-}
-#view-lobby .room-chip-name { font-size: .64rem !important; }
-#view-lobby .room-chip .countdown-text { font-size: .86rem !important; }
-#view-lobby #lobby-command {
+#view-lobby .lobby-tabs {
   display: flex !important;
-  justify-content: center;
-  align-items: center;
-  gap: 10px !important;
-  padding: 0 14px 12px !important;
-  margin-bottom: 8px !important;
-  background: transparent !important;
-  border: 0 !important;
+  flex-wrap: nowrap !important;
+  gap: 0 !important;
+  margin: 0 0 14px !important;
+  overflow-x: auto;
+  border-bottom: 1px solid rgba(255, 213, 106, .22);
 }
-#view-lobby .cmd-card {
-  width: 54px !important;
-  min-width: 54px !important;
-  height: 54px !important;
+#view-lobby .lobby-tabs .tab-filter-btn {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+#view-lobby .lottery-grid,
+#lottery-lobby-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  width: 100% !important;
   padding: 0 !important;
-  border-radius: 50% !important;
-  justify-content: center !important;
-  align-items: center !important;
-  flex-direction: column !important;
-  gap: 2px !important;
+  box-sizing: border-box !important;
 }
-#view-lobby .cmd-card span { display: none !important; }
-#view-lobby .cmd-card b {
-  font-size: .62rem !important;
-  line-height: 1 !important;
+#view-lobby .vn-section-full {
+  grid-column: 1 / -1 !important;
+  margin: 8px 0 0 !important;
 }
-#view-lobby .cmd-card:nth-child(1) b,
-#view-lobby .cmd-card:nth-child(2) b,
-#view-lobby .cmd-card:nth-child(4) b {
-  display: none !important;
+#view-lobby .vn-section-divider {
+  padding: 10px 0 4px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
-#view-lobby .lobby-lotto-block {
-  border-color: rgba(255, 213, 106, .28) !important;
-}
+#view-lobby .vn-divider-sub,
 #view-lobby .vn-divider-rates {
   display: none !important;
 }
 
-@media (min-width: 769px) {
-  #view-lobby .rooms-clock-track {
-    display: grid !important;
-    grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
-    gap: 8px !important;
-  }
+#view-lobby .lottery-card.lc-pro,
+#lottery-lobby-grid > .lottery-card,
+#view-lobby .vn-card {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+  padding: 14px 14px 12px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+#view-lobby .lottery-card-header,
+#view-lobby .vn-card-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+#view-lobby .lc-card-title,
+#view-lobby .vn-card-title,
+#view-lobby .lc-pro h3 {
+  margin: 10px 0 0 !important;
+  padding: 0 !important;
+  font-size: 1.05rem !important;
+  line-height: 1.25 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+#view-lobby .lottery-badge,
+#view-lobby .vn-type-badge {
+  flex: 0 0 auto !important;
+  position: static !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  font-size: .62rem !important;
+  padding: 3px 8px !important;
+}
+#view-lobby .lottery-card-body {
+  flex: 1 !important;
+  padding: 8px 0 0 !important;
+  margin: 0 !important;
+}
+#view-lobby .time-display-box,
+#view-lobby .vn-card-time {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: baseline !important;
+  gap: 4px 8px !important;
+  margin: 0 !important;
+  font-size: .78rem !important;
+  white-space: normal !important;
+  overflow: visible !important;
+}
+#view-lobby .lottery-card .countdown-text {
+  font-size: 1.2rem !important;
+  white-space: nowrap !important;
+}
+#view-lobby .card-rate-line,
+#view-lobby .card-rate-pills,
+#view-lobby .card-live-result-board,
+#view-lobby .vn-prize-mini {
+  display: none !important;
+}
+#view-lobby .lottery-card-footer {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-top: 12px !important;
+  padding: 0 !important;
+}
+#view-lobby .card-enter {
+  flex: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 40px !important;
+  padding: 0 12px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(180deg, #ffe082, #d4a017) !important;
+  color: #1a1008 !important;
+  font-weight: 800 !important;
+  font-size: .82rem !important;
+}
+#view-lobby .btn-history-draw {
+  width: 40px !important;
+  height: 40px !important;
+  flex: 0 0 40px !important;
+}
+
+#view-lobby .mini-games-section {
+  margin: 0 16px 28px !important;
+  padding: 0 !important;
+}
+#view-lobby .mini-games-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+#view-lobby .mini-game-card,
+#view-lobby .mini-game-card[onclick] {
+  min-height: 0 !important;
+  padding: 14px 10px 12px !important;
+  gap: 6px !important;
+}
+#view-lobby .mg-how {
+  display: none !important;
+}
+#view-lobby .mg-label {
+  display: block !important;
+  font-size: .82rem !important;
+  color: #fff6e0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+}
+#view-lobby .mg-odds {
+  display: inline-flex !important;
+  background: linear-gradient(180deg, #ffe082, #d4a017) !important;
+  color: #1a1008 !important;
+}
+#view-lobby .mg-play-btn {
+  display: block !important;
 }
 
 @media (max-width: 768px) {
-  #view-lobby #lobby-command {
-    display: flex !important;
-    grid-template-columns: none !important;
+  #view-lobby .salon-hero,
+  #view-lobby .lobby-lotto-block,
+  #view-lobby .mini-games-section {
+    margin-left: 10px !important;
+    margin-right: 10px !important;
   }
-  #view-lobby .lobby-tabs {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    overflow: visible !important;
-    gap: 8px !important;
+  #view-lobby .lottery-grid,
+  #lottery-lobby-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
   }
-  #view-lobby .lobby-tabs .tab-filter-btn {
-    flex: 1 1 calc(50% - 8px);
-    text-align: center;
+  #view-lobby .lux-mark {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  #view-lobby .lux-mark i { font-size: .85rem !important; }
+  #view-lobby .lc-card-title,
+  #view-lobby .vn-card-title,
+  #view-lobby .lc-pro h3 {
+    font-size: .92rem !important;
+  }
+  #view-lobby .mini-games-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  #view-lobby .mg-play-btn { display: none !important; }
+  #view-lobby .pwa-install-bar,
+  .pwa-install-bar {
+    left: auto !important;
+    right: 10px !important;
+    width: min(180px, calc(100vw - 20px));
   }
 }
 

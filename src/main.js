@@ -1694,36 +1694,15 @@ function renderLobby() {
     const timeDisplay = l.type === "yeekee"
       ? `<i class="fa-solid fa-bolt"></i> ${t("closes_in")} <b class="countdown-text${urgent ? " is-urgent" : ""}" id="cd-${l.id}">${formatTime(secs)}</b>`
       : `<i class="fa-regular fa-clock"></i> ${t("next_draw")} <b>${escapeHtml(l.drawTimeOfDay || "--:--")}</b> · <b class="countdown-text${urgent ? " is-urgent" : ""}" id="cd-${l.id}">${formatTime(secs)}</b>`;
-    const lastResults = l.lastResults || [];
-    const latestDraw = lastResults[0];
-    let resultHTML = `<div class="card-live-result-board"><div class="result-board-header"><i class="fa-solid fa-square-poll-vertical"></i> ${t("last_result")}</div>`;
-    if (latestDraw?.numbers?.top3) {
-      resultHTML += `
-        <div class="result-balls-display">
-          <div class="digit-box-group">
-            <span class="digit-type-tag">${t("top3")}</span>
-            <div class="digit-spheres gold-spheres">${latestDraw.numbers.top3.split("").map(n => `<span class="sphere-digit">${escapeHtml(n)}</span>`).join("")}</div>
-          </div>
-          <div class="digit-box-group">
-            <span class="digit-type-tag">${t("bot2")}</span>
-            <div class="digit-spheres green-spheres">${String(latestDraw.numbers.bottom2 || "").split("").map(n => `<span class="sphere-digit">${escapeHtml(n)}</span>`).join("")}</div>
-          </div>
-        </div>`;
-    } else {
-      resultHTML += `<div class="result-empty">${escapeHtml(t("no_hist"))}</div>`;
-    }
-    resultHTML += "</div>";
-    const thaiRates = `×${THAI_RATES["3top"] ?? 900} · ×${THAI_RATES["3toad"] ?? 150} · ×${THAI_RATES["2top"] ?? 92} · ×${THAI_RATES.run_top ?? 3.2}–${THAI_RATES.run_bottom ?? 4.2}`;
+    // Home cards stay lean: name, timer, enter. Draw detail lives inside the room.
     card.innerHTML = `
       <div class="lottery-card-header">
         <span class="lux-mark">${l.type === "yeekee" ? '<i class="fa-solid fa-bolt"></i>' : '<i class="fa-solid fa-landmark"></i>'}</span>
-        <h3>${escapeHtml(roomLabel(l.id))}</h3>
         <span class="lottery-badge">${l.type === "yeekee" ? t("yeekee") : t("scheduled")}</span>
       </div>
+      <h3 class="lc-card-title">${escapeHtml(roomLabel(l.id))}</h3>
       <div class="lottery-card-body">
         <div class="time-display-box">${timeDisplay}</div>
-        <div class="card-rate-line">${escapeHtml(thaiRates)}</div>
-        ${resultHTML}
       </div>
       <div class="lottery-card-footer">
         <span class="card-enter">${t("bet_now")}</span>
@@ -1742,16 +1721,7 @@ function renderLobby() {
       <div class="vn-section-divider">
         <div class="vn-divider-left">
           <span class="vn-divider-flag"><i class="fa-solid fa-star"></i></span>
-          <div>
-            <div class="vn-divider-title">${t("vn_title")}</div>
-            <div class="vn-divider-sub">${t("vn_sub")}</div>
-          </div>
-        </div>
-        <div class="vn-divider-rates">
-          <span class="vn-rate-badge">Lô ×${VN_RATES.lo ?? 3.8}</span>
-          <span class="vn-rate-badge">Đề ×${VN_RATES.de ?? 85}</span>
-          <span class="vn-rate-badge">3 Càng ×${VN_RATES["3cang"] ?? 800}</span>
-          <span class="vn-rate-badge">Đầu/Đuôi ×${VN_RATES.dau ?? 6.5}</span>
+          <div class="vn-divider-title">${t("vn_title")}</div>
         </div>
       </div>`;
     grid.appendChild(vnDivider);
@@ -1764,48 +1734,18 @@ function renderLobby() {
       card.className = `lottery-card lc-pro vn-card is-clickable ${isFast ? "vn-card-fast is-live" : "vn-card-daily"}`
         + (urgent ? " is-urgent" : "")
         + (secs <= 0 ? " is-drawing" : "");
-      const lastRes = l.lastResults && l.lastResults[0];
-      const prizes = lastRes && lastRes.prizes;
-      const livePrizes = isVnLiveDrawing(l) ? (l.liveDraw.prizes || {}) : null;
       const timeHtml = isVnLiveDrawing(l)
         ? `<span class="vn-time-fast"><i class="fa-solid fa-bolt"></i> ${t("vn_drawing")} <b class="countdown-text is-drawing" id="cd-${l.id}">${formatTime(liveDrawRemainingSecs(l.liveDraw))}</b></span>`
         : (isFast
         ? `<span class="vn-time-fast"><i class="fa-solid fa-bolt"></i> ${t("closes_in")} <b class="countdown-text${urgent ? " is-urgent" : ""}" id="cd-${l.id}">${formatTime(secs)}</b></span>`
         : `<span class="vn-time-sched"><i class="fa-regular fa-clock"></i> ${t("next_draw")} <b>${escapeHtml(l.drawTimeOfDay || "--:--")}</b> · <b class="countdown-text${urgent ? " is-urgent" : ""}" id="cd-${l.id}">${formatTime(secs)}</b></span>`);
-      let prizeHtml = "";
-      if (livePrizes) {
-        prizeHtml = `
-          <div class="vn-prize-mini">
-            <div class="vn-prize-row vn-db-row">
-              <span class="vn-prize-label">ĐB</span>
-              <span class="vn-prize-nums">${livePrizes.db ? numToBalls(livePrizes.db, "num-ball-red") : `<span class="vn-prize-pending">${escapeHtml(t("vn_wait_num"))}</span>`}</span>
-            </div>
-            <div class="vn-prize-row">
-              <span class="vn-prize-label">G1</span>
-              <span class="vn-prize-nums">${livePrizes.nhat ? numToBalls(livePrizes.nhat, "num-ball-gold") : `<span class="vn-prize-pending">${escapeHtml(t("vn_wait_num"))}</span>`}</span>
-            </div>
-          </div>`;
-      } else if (prizes) {
-        prizeHtml = `
-          <div class="vn-prize-mini">
-            <div class="vn-prize-row vn-db-row">
-              <span class="vn-prize-label">ĐB</span>
-              <span class="vn-prize-nums">${numToBalls(prizes.db, "num-ball-red")}</span>
-            </div>
-            <div class="vn-prize-row">
-              <span class="vn-prize-label">G1</span>
-              <span class="vn-prize-nums">${numToBalls(prizes.nhat, "num-ball-gold")}</span>
-            </div>
-          </div>`;
-      }
       card.innerHTML = `
         <div class="vn-card-header">
           <span class="lux-mark"><i class="fa-solid fa-star"></i></span>
-          <span class="vn-type-badge">${isFast ? "5 min" : ((l.id === "vnmn" || l.id === "vnmt") ? t("sim_room") : t("scheduled"))}</span>
+          <span class="vn-type-badge">${isFast ? "5 phút" : ((l.id === "vnmn" || l.id === "vnmt") ? t("sim_room") : t("scheduled"))}</span>
         </div>
         <h3 class="vn-card-title">${escapeHtml(roomLabel(l.id))}</h3>
         <div class="vn-card-time">${timeHtml}</div>
-        ${prizeHtml}
         <div class="lottery-card-footer">
         <span class="card-enter">${t("vn_enter")}</span>
         <button class="btn-history-draw" type="button" onclick="event.stopPropagation(); showDrawResultsHistory('${l.id}')" title="History">

@@ -3,9 +3,9 @@
    Advanced caching for PWA & offline support
    ======================================== */
 
-const CACHE_NAME = 'soklarp-cache-v7';
-const STATIC_CACHE = 'soklarp-static-v7';
-const IMAGE_CACHE = 'soklarp-images-v7';
+const CACHE_NAME = 'soklarp-cache-v10';
+const STATIC_CACHE = 'soklarp-static-v10';
+const IMAGE_CACHE = 'soklarp-images-v10';
 
 const PRECACHE_URLS = [
   '/assets/icon-192.png',
