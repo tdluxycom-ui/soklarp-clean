@@ -17,8 +17,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;family=Noto+Sans+Lao:wght@400;600;700&amp;family=Be+Vietnam+Pro:wght@500;700&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="libs/fontawesome/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=1788681000">
-  <link rel="stylesheet" href="lobby-pro.css?v=1788681000">
+  <link rel="stylesheet" href="style.css?v=1788717600">
+  <link rel="stylesheet" href="lobby-pro.css?v=1788717600">
   <link rel="manifest" href="manifest.json?v=7">
 </head>
 <body>
@@ -198,11 +198,15 @@
 
 <!-- VIEW: LOBBY -->
 <section id="view-lobby" class="view-section" style="display:none;">
-  <div class="lobby-hero">
+  <div class="lobby-hero salon-hero">
     <div class="hero-beam"></div>
-    <div class="hero-crest"><i class="fa-solid fa-dragon"></i></div>
-    <p class="hero-kicker" data-i18n="hero_kicker">Virtual credit hall</p>
-    <h1 class="hero-brand">SOKLARP.ORG</h1>
+    <div class="salon-hero-brand">
+      <div class="hero-crest"><i class="fa-solid fa-dragon"></i></div>
+      <div>
+        <p class="hero-kicker" data-i18n="hero_kicker">Virtual credit hall</p>
+        <h1 class="hero-brand">SOKLARP.ORG</h1>
+      </div>
+    </div>
     <p class="hero-tag" data-i18n="auth_tagline">Virtual-credit entertainment hall</p>
     <div class="jackpot-banner">
       <div class="jp-orb jp-orb-a"></div>
@@ -252,7 +256,7 @@
     <button type="button" class="cmd-card" onclick="enterSoonestLotteryRoom()">
       <i class="fa-solid fa-bolt"></i>
       <b id="cmd-rooms">8</b>
-      <span data-i18n="cmd_rooms">Live rooms</span>
+      <span id="cmd-rooms-hint" data-i18n="cmd_rooms">Live rooms</span>
     </button>
     <button type="button" class="cmd-card" onclick="openModal('modal-calculator')">
       <i class="fa-solid fa-calculator"></i>
@@ -267,7 +271,7 @@
       <div class="trust-card">
         <div class="trust-icon"><i class="fa-solid fa-medal"></i></div>
         <h4 data-i18n="trust_payout">ອັດຕາຈ່າຍສູງສຸດ</h4>
-        <div class="trust-highlight">×900</div>
+        <div class="trust-highlight" id="trust-payout-num">×900</div>
         <p data-i18n="trust_payout_sub">3 ໂຕບົນ ຈ່າຍສູງສຸດ 900 ເທົ່າ (CR)</p>
       </div>
       <div class="trust-card">
@@ -1508,7 +1512,7 @@
       </div>
       <div class="footer-live-badge">
         <span class="footer-live-dot"></span>
-        <span data-i18n="foot_online">Online 24 hours</span>
+        <span id="footer-live-line" data-i18n="foot_online">Online 24 hours</span>
       </div>
     </div>
     <!-- About Column -->
@@ -1526,7 +1530,7 @@
       </div>
       <div class="footer-rate-box">
         <div class="footer-rate-title" data-i18n="foot_rates">Payout rates</div>
-        <div class="footer-rate-list">
+        <div class="footer-rate-list" id="footer-rate-list">
           <span data-i18n="rate_3top">3-top</span>: <b>x900</b><br>
           <span data-i18n="rate_3toad">3-toad</span>: <b>x150</b><br>
           <span data-i18n="rate_2">2-top / 2-bottom</span>: <b>x92</b><br>
@@ -1822,8 +1826,8 @@
   <i class="fa-solid fa-comments"></i>
 </button>
 
-<script src="i18n.js?v=1788681000"></script>
-<script src="main.js?v=1788681000"></script>
+<script src="i18n.js?v=1788717600"></script>
+<script src="main.js?v=1788717600"></script>
 
 <!-- ID Compatibility Layer - maps old IDs to keep main.js working -->
 <div id="cart-potential-win" style="display:none"></div>

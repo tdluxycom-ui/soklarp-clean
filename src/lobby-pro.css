@@ -6525,3 +6525,675 @@ section[id^="view-game-"] .play-area {
   font-size: 1.4rem;
   line-height: 1;
 }
+.btn-admin-draw:disabled {
+  opacity: .45;
+  pointer-events: none;
+}
+.cmd-card.is-hot b {
+  color: #ff8a80 !important;
+}
+.room-chip-last {
+  letter-spacing: .04em !important;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* —— Salon hall: clocks and rooms own the first fold —— */
+#view-lobby.active {
+  display: flex;
+  flex-direction: column;
+}
+#view-lobby .salon-hero { order: 1; }
+#view-lobby #rooms-clock { order: 2; }
+#view-lobby #lobby-command { order: 3; }
+#view-lobby #lobby-site-note { order: 4; }
+#view-lobby .lobby-lotto-block { order: 5; }
+#view-lobby #vn-lotto-lobby { order: 6; }
+#view-lobby .trust-showcase { order: 7; display: none !important; }
+#view-lobby .mini-games-section { order: 8; }
+#view-lobby .lobby-top { order: 9; }
+
+.salon-hero {
+  display: grid !important;
+  grid-template-columns: minmax(200px, 1fr) auto minmax(240px, 1.1fr);
+  align-items: center;
+  gap: 14px 18px;
+  margin: 8px 16px 10px !important;
+  padding: 12px 16px !important;
+  text-align: left !important;
+  border-radius: 18px !important;
+}
+.salon-hero .hero-tag,
+.salon-hero .jp-orb,
+.salon-hero .jackpot-sub,
+.salon-hero .jp-stats-row,
+.salon-hero .hero-ghost,
+.salon-hero .hero-beam,
+#view-lobby .salon-hero .jp-stats-row,
+#view-lobby .salon-hero .jackpot-sub,
+#view-lobby .salon-hero .jp-orb {
+  display: none !important;
+}
+.salon-hero-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.salon-hero .hero-crest {
+  width: 46px !important;
+  height: 46px !important;
+  margin: 0 !important;
+  font-size: 1.15rem !important;
+  flex: 0 0 auto;
+}
+.salon-hero .hero-kicker {
+  margin: 0 0 2px !important;
+  letter-spacing: .22em !important;
+  font-size: .58rem !important;
+}
+.salon-hero .hero-brand {
+  margin: 0 !important;
+  font-size: clamp(1.15rem, 2.2vw, 1.7rem) !important;
+  letter-spacing: .08em !important;
+}
+.salon-hero .jackpot-banner,
+#view-lobby .salon-hero .jackpot-banner,
+#view-lobby .salon-hero > .jackpot-banner {
+  grid-column: 2;
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: none !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-align: center;
+}
+.salon-hero .jackpot-label {
+  margin: 0 !important;
+  font-size: .62rem !important;
+  letter-spacing: .18em;
+  color: #e4c36a;
+}
+#view-lobby .salon-hero .jackpot-number {
+  display: block;
+  font-size: clamp(1.35rem, 2.6vw, 1.9rem) !important;
+  line-height: 1.1;
+  text-shadow: 0 0 16px rgba(255, 210, 90, .35);
+}
+.salon-hero .hero-cta-row {
+  grid-column: 3;
+  grid-row: 1;
+  justify-content: flex-end;
+  margin: 0 !important;
+}
+.salon-hero .hero-cta {
+  min-width: 0 !important;
+  padding: 9px 16px !important;
+  font-size: .86rem !important;
+}
+.salon-hero .hero-live {
+  grid-column: 1 / -1;
+  max-width: none;
+  justify-content: space-between;
+  margin: 0 !important;
+  padding: 8px 12px !important;
+  border-radius: 12px !important;
+  background: rgba(8, 6, 4, .45);
+}
+.salon-hero .hero-live.is-urgent {
+  border-color: rgba(255, 138, 128, .55) !important;
+}
+
+#view-lobby .lc-how,
+#view-lobby .card-rate-pills { display: none !important; }
+#view-lobby .card-rate-line {
+  margin: 4px 0 8px;
+  color: rgba(240, 212, 138, .72);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+#view-lobby .btn-play-lottery {
+  min-height: 40px !important;
+  font-size: .86rem !important;
+  box-shadow: none !important;
+}
+
+body:not(.in-lobby) .pwa-install-bar { display: none !important; }
+.pwa-install-bar {
+  left: auto !important;
+  right: 16px !important;
+  width: min(360px, calc(100vw - 28px));
+  padding: 8px 10px !important;
+  border-radius: 12px !important;
+  background: rgba(12, 8, 6, .88) !important;
+}
+.pwa-install-btn {
+  padding: 8px 10px !important;
+  font-size: .82rem !important;
+}
+
+body.in-play .bet-steps,
+body.in-play .bet-guide-banner {
+  display: none !important;
+}
+body.in-play .bet-room-top {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  backdrop-filter: blur(16px);
+  background: rgba(12, 8, 6, .88);
+  border-bottom: 1px solid rgba(228, 195, 106, .22);
+  padding: 8px 12px;
+}
+body.in-play .bet-last-row {
+  margin-top: 8px;
+}
+
+.hist-ticket.hist-lost {
+  background: rgba(18, 10, 10, .55);
+  border-color: rgba(255, 138, 128, .16) !important;
+}
+body.in-app-page .pwa-install-bar { display: none !important; }
+
+#view-vnlotto.is-vn-revealing .bet-steps,
+#view-vnlotto.is-vn-revealing .bet-guide-banner,
+#view-vnlotto.is-vn-revealing .bet-room-grid {
+  display: none !important;
+}
+#view-vnlotto.is-vn-revealing .vn-room-layout {
+  grid-template-columns: 1fr !important;
+}
+
+@media (max-width: 768px) {
+  .salon-hero {
+    grid-template-columns: 1fr !important;
+    justify-items: center;
+    text-align: center !important;
+    margin: 8px 10px 10px !important;
+    padding: 10px 12px 8px !important;
+  }
+  .salon-hero-brand { justify-content: center; }
+  .salon-hero .hero-crest { display: none !important; }
+  .salon-hero .hero-cta-row { display: none !important; }
+  .salon-hero .jackpot-banner,
+  .salon-hero .hero-live {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    justify-self: stretch;
+  }
+  .salon-hero .hero-live { justify-content: center; }
+  #view-lobby .salon-hero .jackpot-number { font-size: 1.25rem !important; }
+  #view-lobby .trust-showcase { display: none !important; }
+}
+
+.luxury-header .btn-hdr-pill span,
+.luxury-header .btn-daily-pill span,
+.luxury-header .btn-admin-pill span {
+  display: none !important;
+}
+.luxury-header .btn-hdr-pill,
+.luxury-header .btn-daily-pill,
+.luxury-header .btn-admin-pill {
+  width: 38px !important;
+  min-width: 38px !important;
+  height: 38px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  gap: 0 !important;
+  background: rgba(228, 195, 106, .14) !important;
+  color: #ffe082 !important;
+  border: 1px solid rgba(228, 195, 106, .28) !important;
+  box-shadow: none !important;
+}
+.luxury-header .btn-hdr-pill i,
+.luxury-header .btn-daily-pill i,
+.luxury-header .btn-admin-pill i {
+  color: #ffe082 !important;
+  -webkit-text-fill-color: #ffe082 !important;
+}
+
+.salon-hero .hero-cta-row { display: none !important; }
+.salon-hero .hero-live {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  max-width: none;
+  margin: 0 !important;
+  justify-content: flex-end;
+}
+
+#view-lobby .btn-play-lottery { display: none !important; }
+#view-lobby .card-enter {
+  color: #ffe082;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+}
+#view-lobby .lottery-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px 12px !important;
+}
+
+#view-lobby .trust-card p { display: none !important; }
+#view-lobby .trust-card h4 { font-size: .72rem !important; }
+#view-lobby .trust-highlight { font-size: 1.15rem !important; margin: 4px 0 0 !important; }
+
+#view-lobby .cmd-card {
+  padding: 10px 12px !important;
+  min-height: 0 !important;
+}
+
+.admin-control-card.is-drawing {
+  border-color: rgba(255, 213, 106, .55) !important;
+  box-shadow: 0 0 22px rgba(255, 200, 70, .22);
+}
+.admin-control-card.is-urgent {
+  border-color: rgba(255, 138, 128, .5) !important;
+}
+
+#view-history .hist-ticket.hist-lost {
+  background: rgba(16, 10, 10, .4) !important;
+  border-color: rgba(255, 138, 128, .14) !important;
+}
+#view-history .hist-ticket.hist-pending {
+  order: -1;
+}
+
+@media (max-width: 768px) {
+  .salon-hero .hero-live {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    justify-content: center;
+  }
+}
+
+/* —— One salon rail: hero / clocks / rooms / tools share the same column —— */
+#view-lobby.active {
+  max-width: 1280px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+#view-lobby .salon-hero,
+#view-lobby #rooms-clock,
+#view-lobby .lobby-lotto-block,
+#view-lobby #lobby-command,
+#view-lobby .trust-showcase,
+#view-lobby .mini-games-section {
+  margin-left: 16px !important;
+  margin-right: 16px !important;
+}
+#view-lobby .lottery-grid {
+  padding: 0 0 10px !important;
+  gap: 12px !important;
+}
+#view-lobby .lobby-lotto-block {
+  padding: 14px 14px 8px !important;
+}
+
+@media (min-width: 1101px) {
+  #view-lobby .rooms-clock-track {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    overflow: visible;
+  }
+}
+
+#view-lobby .lottery-card.lc-pro,
+#view-lobby .vn-card {
+  min-height: 0 !important;
+  height: 100%;
+  display: flex !important;
+  flex-direction: column;
+}
+#view-lobby .lottery-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+#view-lobby .card-live-result-board,
+#view-lobby .vn-prize-mini {
+  margin-top: auto;
+}
+#view-lobby .vn-prize-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+#view-lobby .vn-prize-nums {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  overflow: hidden;
+}
+
+#view-lobby #lobby-command {
+  margin-top: 4px !important;
+  margin-bottom: 14px !important;
+  gap: 10px !important;
+}
+#view-lobby .cmd-card {
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 12px !important;
+}
+#view-lobby .cmd-card i { font-size: 1rem !important; }
+#view-lobby .cmd-card b { font-size: .82rem !important; }
+#view-lobby .cmd-card span { font-size: .68rem !important; }
+
+#view-lobby .trust-inner {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  padding: 0 !important;
+  gap: 10px !important;
+  max-width: none !important;
+}
+#view-lobby .trust-card {
+  padding: 12px 12px 10px !important;
+  border-radius: 14px !important;
+}
+
+#view-betting.bet-room,
+#view-vnlotto.bet-room {
+  max-width: 1280px !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+}
+#view-betting .bet-last-row,
+#view-vnlotto .bet-last-row {
+  grid-template-columns: 1.15fr .85fr;
+  align-items: start;
+}
+#view-history .hist-shell,
+#view-admin .admin-shell {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+#view-history .hist-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+#view-admin .admin-draw-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+@media (max-width: 768px) {
+  #view-lobby .salon-hero,
+  #view-lobby #rooms-clock,
+  #view-lobby .lobby-lotto-block,
+  #view-lobby #lobby-command,
+  #view-lobby .trust-showcase,
+  #view-lobby .mini-games-section {
+    margin-left: 10px !important;
+    margin-right: 10px !important;
+  }
+  #view-lobby #lobby-command {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  #view-lobby .trust-inner {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  #view-history .hist-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #view-admin .admin-draw-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+#view-betting.bet-room,
+#view-vnlotto.bet-room {
+  display: flex;
+  flex-direction: column;
+}
+#view-betting .bet-room-top,
+#view-vnlotto .bet-room-top { order: 1; }
+#view-betting .draw-state-banner,
+#view-vnlotto .draw-state-banner { order: 2; }
+#view-betting .room-pending-strip,
+#view-vnlotto .room-pending-strip,
+#view-vnlotto #vn-live-board,
+#view-vnlotto #vn-sim-note { order: 3; }
+#view-betting .bet-room-grid,
+#view-vnlotto .bet-room-grid { order: 4; }
+#view-betting .bet-last-row { order: 5; }
+#view-vnlotto .vn-last-db-card { order: 5; }
+#view-vnlotto .vn-room-layout { order: 6; }
+#view-betting .bet-steps,
+#view-vnlotto .bet-steps,
+#view-vnlotto .bet-guide-banner { order: 9; }
+#view-vnlotto.is-vn-revealing #vn-live-board { order: 2; }
+#view-vnlotto.is-vn-revealing .vn-last-db-card { display: none !important; }
+#view-vnlotto.is-vn-revealing .vn-room-layout { order: 4; }
+
+#view-history .admin-title {
+  padding-bottom: 8px !important;
+  font-size: 1.15rem !important;
+}
+#view-history .hist-stat small { display: none; }
+#view-history .admin-title-row {
+  margin-bottom: 8px !important;
+  align-items: center;
+}
+
+#view-betting .bet-hint-card { display: none !important; }
+#view-betting .bet-last-row { margin-top: 10px !important; }
+.room-pending-strip:empty,
+.draw-state-banner:empty { display: none !important; }
+
+@media (min-width: 769px) {
+  .pwa-install-bar { display: none !important; }
+}
+@media (max-width: 768px) {
+  #view-betting .bet-action-row,
+  #view-vnlotto .bet-action-row {
+    position: static !important;
+    background: none !important;
+    margin: 8px 0 0 !important;
+    padding: 0 !important;
+  }
+  #view-betting .betting-form-card,
+  #view-vnlotto .betting-form-card {
+    padding-bottom: 12px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  #view-lobby .salon-hero .jackpot-banner,
+  .salon-hero .jackpot-banner {
+    display: none !important;
+  }
+  #view-betting .bet-hint-card,
+  #view-betting .recent-draws-head,
+  #view-betting .recent-draws-strip {
+    display: none !important;
+  }
+}
+
+/* —— Restore: separate salon cards, same gutter, no glued frame —— */
+#view-lobby .salon-hero {
+  margin: 10px 16px 12px !important;
+  border-radius: 18px !important;
+  border: 1.5px solid rgba(255, 213, 106, .42);
+}
+#view-lobby #rooms-clock {
+  margin: 0 16px 12px !important;
+  padding: 10px 14px !important;
+  border: 1.5px solid rgba(255, 213, 106, .32);
+  border-radius: 16px;
+  background: rgba(18, 8, 6, .72);
+}
+#view-lobby #lobby-command {
+  margin: 0 16px 14px !important;
+  padding: 0 14px !important;
+  border: 0 !important;
+  background: transparent !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+#view-lobby .lobby-lotto-block {
+  margin: 0 16px 16px !important;
+  padding: 14px !important;
+  border-radius: 18px !important;
+  border: 1.5px solid rgba(255, 213, 106, .32);
+}
+#view-lobby .rooms-clock-track {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  width: 100%;
+}
+#view-lobby .room-chip {
+  width: 100%;
+  min-width: 0;
+}
+#view-lobby .lottery-grid,
+#lottery-lobby-grid,
+#vn-lotto-lobby {
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 8px 0 4px !important;
+  gap: 12px !important;
+}
+#view-lobby .lobby-heading,
+#view-lobby .lobby-heading-pro,
+#view-lobby .section-title {
+  padding-top: 2px !important;
+  padding-bottom: 8px !important;
+}
+#view-lobby .mini-games-section {
+  margin: 0 16px 24px !important;
+}
+
+.room-pending-strip[hidden],
+.draw-state-banner[hidden] {
+  display: none !important;
+}
+
+#view-betting.bet-room .betting-flex-wrap.bet-room-grid,
+#view-vnlotto.bet-room .betting-flex-wrap.bet-room-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.35fr) minmax(240px, .65fr) !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+  gap: 12px !important;
+}
+#view-betting.bet-room .betting-form-card,
+#view-vnlotto.bet-room .betting-form-card,
+#view-betting.bet-room .cart-card,
+#view-vnlotto.bet-room .vn-slip-card {
+  display: flex !important;
+  flex-direction: column;
+  align-self: stretch !important;
+  min-width: 0 !important;
+}
+#view-betting .slip-list,
+#view-vnlotto .slip-list {
+  flex: 1;
+  max-height: none;
+  min-height: 160px;
+}
+#view-betting .bet-last-row {
+  grid-template-columns: 1fr !important;
+}
+
+@media (min-width: 769px) {
+  html body .pwa-install-bar { display: none !important; }
+  #view-lobby #lottery-lobby-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  #view-lobby .salon-hero,
+  #view-lobby #rooms-clock,
+  #view-lobby #lobby-command,
+  #view-lobby .lobby-lotto-block,
+  #view-lobby .mini-games-section {
+    margin-left: 10px !important;
+    margin-right: 10px !important;
+  }
+  #view-lobby #rooms-clock,
+  #view-lobby #lobby-command,
+  #view-lobby .lobby-lotto-block {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+  #view-lobby .rooms-clock-track {
+    display: flex !important;
+    overflow-x: auto;
+    gap: 8px !important;
+  }
+  #view-lobby .room-chip {
+    width: auto !important;
+    flex: 0 0 132px !important;
+  }
+  #view-lobby #lobby-command {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  #view-lobby .cmd-card {
+    min-width: 0 !important;
+  }
+  #view-lobby .cmd-card span { display: none !important; }
+  #view-lobby .cmd-card b {
+    white-space: normal;
+    line-height: 1.15;
+    font-size: .72rem !important;
+  }
+  #view-lobby .rooms-clock-track {
+    scrollbar-width: none;
+  }
+  #view-lobby .rooms-clock-track::-webkit-scrollbar { display: none; }
+  #view-lobby .card-live-result-board,
+  #view-lobby .vn-prize-mini {
+    display: none !important;
+  }
+  #view-lobby .time-display-box,
+  #view-lobby .vn-time-fast,
+  #view-lobby .vn-time-sched {
+    font-size: .74rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #view-lobby .lottery-badge { font-size: .58rem !important; }
+  #view-lobby .lottery-grid,
+  #lottery-lobby-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  #view-lobby .lottery-card,
+  #view-lobby .lc-pro {
+    min-width: 0 !important;
+    overflow: hidden;
+  }
+  #view-lobby .countdown-text,
+  #view-lobby .card-rate-line {
+    font-size: .72rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #view-lobby .lobby-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  #view-betting.bet-room .betting-flex-wrap.bet-room-grid,
+  #view-vnlotto.bet-room .betting-flex-wrap.bet-room-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: 1fr !important;
+  }
+}
+

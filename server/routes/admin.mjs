@@ -411,6 +411,9 @@ export function registerAdminRoutes(app, {
     if (!lottery || lottery.type !== "vietlottery") {
       return res.status(404).json({ success: false, message: "Không tìm thấy phòng Việt Nam" });
     }
+    if (lottery.liveDraw) {
+      return res.status(409).json({ success: false, message: "Đang quay trực tiếp — chờ hết reveal" });
+    }
     if (drawingLocks.has(lotteryType)) {
       return res.status(409).json({ success: false, message: "Kỳ này đang được chốt" });
     }

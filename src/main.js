@@ -96,6 +96,9 @@ function applyI18n() {
   if (typeof refreshBetGuides === "function") refreshBetGuides();
   if (typeof refreshGameGuides === "function") refreshGameGuides();
   if (typeof updateVipRankUI === "function") updateVipRankUI();
+  if (typeof refreshRateTabLabels === "function") refreshRateTabLabels();
+  if (typeof syncHeroLive === "function") syncHeroLive();
+  if (typeof paintLobbyPressure === "function") paintLobbyPressure();
   if (state.activeView === "betting" && state.selectedLottery) {
     applyRoomClockState("thai", state.selectedLottery.countdown || 0);
   }
@@ -116,6 +119,7 @@ window.setSoklarpLang = function(lang) {
   if (state.activeView === "history") loadHistory();
   if (state.activeView === "admin") renderAdminDrawControls();
   if (typeof refreshRateTabLabels === "function") refreshRateTabLabels();
+  if (typeof refreshPwaInstallLabels === "function") refreshPwaInstallLabels();
 };
 
 function upgradeGameShells() {
@@ -419,9 +423,10 @@ window.switchView = function(viewName) {
   });
   const view = document.getElementById(`view-${viewName}`);
   if (view) {
-    view.style.display = view.classList.contains("auth-split") ? "flex" : "block";
+    view.style.display = view.classList.contains("auth-split") || viewName === "lobby" || viewName === "betting" || viewName === "vnlotto" ? "flex" : "block";
     view.classList.add("active");
   }
+  try { window.scrollTo(0, 0); } catch (_) {}
   state.activeView = viewName;
   document.body.dataset.view = viewName || "";
   const play = String(viewName || "").startsWith("game-") || viewName === "betting" || viewName === "vnlotto";
@@ -433,7 +438,7 @@ window.switchView = function(viewName) {
   const ticker = document.getElementById("ticker-container");
   if (ticker) ticker.style.display = viewName === "lobby" ? "flex" : "none";
   if (viewName !== "betting" && viewName !== "vnlotto") {
-    syncCartBadge(state.cart.length || 0);
+    syncCartBadge(headerCartCount());
   }
   try {
     const hash = viewName === "lobby" ? "#lobby" : `#${viewName}`;
@@ -668,6 +673,11 @@ function removeCartItem(index) {
   updateCartUI();
 }
 window.removeCartItem = removeCartItem;
+
+function headerCartCount() {
+  if (state.vnCurrentTickets?.length) return state.vnCurrentTickets.length;
+  return state.cart?.length || 0;
+}
 
 function syncCartBadge(n) {
   const badge = document.getElementById("cart-count");
@@ -1067,9 +1077,14 @@ function renderHistoryTables() {
   const pass = (b) => filter === "all" || (b.status || "pending") === filter;
   const allLotto = bets.filter((b) => !String(b.lotteryType || "").startsWith("game_"));
   const allGames = bets.filter((b) => String(b.lotteryType || "").startsWith("game_"));
-  const lotteryBets = allLotto.filter(pass);
+  const pendingFirst = (a, b) => {
+    const pa = (!a.status || a.status === "pending") ? 0 : 1;
+    const pb = (!b.status || b.status === "pending") ? 0 : 1;
+    return pa - pb;
+  };
+  const lotteryBets = allLotto.filter(pass).sort(filter === "all" ? pendingFirst : () => 0);
   const gameBets = allGames.filter(pass);
-  renderHistorySummary(allLotto);
+  renderHistorySummary(filter === "all" ? allLotto : lotteryBets);
   const setN = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n ? String(n) : ""; };
   setN("hist-n-all", allLotto.length);
   setN("hist-n-won", allLotto.filter((b) => b.status === "won").length);
@@ -1145,6 +1160,12 @@ async function loadHistory() {
   if (data && data.success) {
     state.userBets = data.bets || [];
     renderHistoryTables();
+  } else {
+    const msg = escapeHtml(t("no_hist"));
+    if (list) list.innerHTML = `<div class="admin-empty">${msg}</div>`;
+    if (gameList) gameList.innerHTML = `<div class="admin-empty">${msg}</div>`;
+    if (lotteryBody) lotteryBody.innerHTML = "";
+    if (gameBody) gameBody.innerHTML = "";
   }
 }
 
@@ -1236,6 +1257,15 @@ function refreshRateTabLabels() {
     const small = btn.querySelector("small");
     if (small && VN_RATES[key] != null) small.textContent = `×${VN_RATES[key]}`;
   });
+  const trust = document.getElementById("trust-payout-num");
+  if (trust) trust.textContent = `×${THAI_RATES["3top"] ?? 900}`;
+  const foot = document.getElementById("footer-rate-list");
+  if (foot) {
+    foot.innerHTML = `${escapeHtml(t("rate_3top"))}: <b>x${THAI_RATES["3top"] ?? 900}</b><br>
+      ${escapeHtml(t("rate_3toad"))}: <b>x${THAI_RATES["3toad"] ?? 150}</b><br>
+      ${escapeHtml(t("rate_2"))}: <b>x${THAI_RATES["2top"] ?? 92}</b><br>
+      ${escapeHtml(t("rate_run"))}: <b>x${THAI_RATES.run_top ?? 3.2}–${THAI_RATES.run_bottom ?? 4.2}</b>`;
+  }
 }
 
 // Filter Lobby by Category
@@ -1311,6 +1341,14 @@ function guardRoomOpen(kind) {
 }
 
 function roomLastCompact(lottery) {
+  if (isVnLiveDrawing(lottery)) {
+    const key = lottery.liveDraw.current || "nhat";
+    const raw = lottery.liveDraw.prizes?.[key];
+    const short = { db: "ĐB", nhat: "G1", nhi: "G2", ba: "G3", tu: "G4", nam: "G5", sau: "G6", bay: "G7" };
+    if (raw == null) return `${short[key] || "G1"} ${t("vn_wait_num")}`;
+    const shown = Array.isArray(raw) ? raw[0] : raw;
+    return `${short[key] || "G1"} ${String(shown).slice(-5)}`;
+  }
   const last = (lottery?.lastResults || [])[0];
   if (!last) return "";
   if (last.numbers?.top3) return String(last.numbers.top3);
@@ -1412,8 +1450,13 @@ function paintLotteryCountdown(lottery) {
       strip.textContent = formatTimeCompact(left);
       applyCountdownClass(strip, 0);
     }
+    const chip = document.getElementById(`room-chip-${lottery.id}`);
     document.getElementById(`lotto-card-${lottery.id}`)?.classList.add("is-drawing");
-    document.getElementById(`room-chip-${lottery.id}`)?.classList.add("is-drawing");
+    chip?.classList.add("is-drawing");
+    const last = roomLastCompact(lottery);
+    const lastEl = chip?.querySelector(".room-chip-last");
+    if (lastEl) lastEl.textContent = last;
+    else if (chip && last) chip.insertAdjacentHTML("beforeend", `<span class="room-chip-last">${escapeHtml(last)}</span>`);
     return;
   }
   const secs = countdownSeconds(lottery);
@@ -1486,8 +1529,40 @@ function renderRoomsClockStrip() {
       ${last ? `<span class="room-chip-last">${escapeHtml(last)}</span>` : ""}
     </button>`;
   }).join("");
+  paintLobbyPressure();
+}
+
+function hotLotteryRooms() {
+  return (state.lotteries || []).filter((l) => {
+    if (isVnLiveDrawing(l)) return true;
+    const secs = countdownSeconds(l);
+    return secs > 0 && secs <= 180;
+  });
+}
+
+function paintLobbyPressure() {
+  const list = state.lotteries || [];
+  const hot = hotLotteryRooms();
   const countEl = document.getElementById("cmd-rooms");
-  if (countEl) countEl.textContent = String((state.lotteries || []).length);
+  if (countEl) {
+    countEl.textContent = String(hot.length || list.length);
+    countEl.closest(".cmd-card")?.classList.toggle("is-hot", hot.length > 0);
+  }
+  const cmdHint = document.getElementById("cmd-rooms-hint");
+  if (cmdHint) cmdHint.textContent = hot.length ? t("cmd_hot") : t("cmd_rooms");
+  const foot = document.getElementById("footer-live-line");
+  if (foot) {
+    const live = pickSoonestLiveRoom();
+    if (!live) {
+      foot.textContent = t("foot_online");
+      return;
+    }
+    const drawing = isVnLiveDrawing(live);
+    const secs = drawing ? liveDrawRemainingSecs(live.liveDraw) : countdownSeconds(live);
+    foot.textContent = drawing
+      ? `${roomLabel(live.id)} · ${t("vn_drawing")} ${formatTimeCompact(secs)}`
+      : `${roomLabel(live.id)} · ${formatTimeCompact(secs)}`;
+  }
 }
 
 function roomLabel(id) {
@@ -1538,13 +1613,19 @@ function syncHeroLive() {
     cd.textContent = secs > 0 ? formatTime(secs) : t("drawing");
     applyCountdownClass(cd, drawing ? 0 : secs);
   }
-  if (go) go.setAttribute("onclick", `enterLotteryRoom('${live.id}')`);
+  if (go) {
+    go.setAttribute("onclick", `enterLotteryRoom('${live.id}')`);
+    go.textContent = drawing || !(secs > 0) ? t("watch_draw") : t("bet_now");
+  }
+  const cta = document.querySelector(".hero-cta");
+  if (cta) cta.textContent = drawing || !(secs > 0) ? t("watch_draw") : t("hero_enter");
   if (box) {
     box.classList.toggle("is-urgent", !drawing && isUrgentCountdown(secs));
     box.classList.toggle("is-drawing", drawing || !(secs > 0));
     const tag = box.querySelector(".hero-live-tag");
     if (tag) tag.textContent = drawing ? t("vn_drawing") : (secs > 0 ? (isUrgentCountdown(secs) ? t("closing_soon") : "LIVE") : t("drawing"));
   }
+  paintLobbyPressure();
 }
 
 function bindLotteryCardClick(card, lotteryId) {
@@ -1614,12 +1695,7 @@ function renderLobby() {
       resultHTML += `<div class="result-empty">${escapeHtml(t("no_hist"))}</div>`;
     }
     resultHTML += "</div>";
-    const thaiRates = [
-      `${t("rate_3top")} ×${THAI_RATES["3top"] ?? 900}`,
-      `${t("rate_3toad")} ×${THAI_RATES["3toad"] ?? 150}`,
-      `${t("rate_2")} ×${THAI_RATES["2top"] ?? 92}`,
-      `${t("rate_run")} ×${THAI_RATES.run_top ?? 3.2}–${THAI_RATES.run_bottom ?? 4.2}`
-    ];
+    const thaiRates = `×${THAI_RATES["3top"] ?? 900} · ×${THAI_RATES["3toad"] ?? 150} · ×${THAI_RATES["2top"] ?? 92} · ×${THAI_RATES.run_top ?? 3.2}–${THAI_RATES.run_bottom ?? 4.2}`;
     card.innerHTML = `
       <div class="lottery-card-header">
         <span class="lux-mark">${l.type === "yeekee" ? '<i class="fa-solid fa-bolt"></i>' : '<i class="fa-solid fa-landmark"></i>'}</span>
@@ -1628,14 +1704,11 @@ function renderLobby() {
       </div>
       <div class="lottery-card-body">
         <div class="time-display-box">${timeDisplay}</div>
-        <div class="card-rate-pills">${thaiRates.map(r => `<span class="rate-pill">${escapeHtml(r)}</span>`).join("")}</div>
-        <p class="lc-how">${escapeHtml(t("lc_how_thai"))}</p>
+        <div class="card-rate-line">${escapeHtml(thaiRates)}</div>
         ${resultHTML}
       </div>
       <div class="lottery-card-footer">
-        <button class="btn-play-lottery" type="button" onclick="openBettingRoom('${l.id}')">
-          <span>${t("bet_now")}</span> <i class="fa-solid fa-arrow-right"></i>
-        </button>
+        <span class="card-enter">${t("bet_now")}</span>
         <button class="btn-history-draw" type="button" onclick="event.stopPropagation(); showDrawResultsHistory('${l.id}')" title="History">
           <i class="fa-solid fa-clock-rotate-left"></i>
         </button>
@@ -1715,18 +1788,9 @@ function renderLobby() {
         </div>
         <h3 class="vn-card-title">${escapeHtml(roomLabel(l.id))}</h3>
         <div class="vn-card-time">${timeHtml}</div>
-        <div class="card-rate-pills">
-          <span class="rate-pill">Lô ×${VN_RATES.lo ?? 3.8}</span>
-          <span class="rate-pill">Đề ×${VN_RATES.de ?? 85}</span>
-          <span class="rate-pill">3 Càng ×${VN_RATES["3cang"] ?? 800}</span>
-          <span class="rate-pill">Đầu/Đuôi ×${VN_RATES.dau ?? 6.5}</span>
-        </div>
-        <p class="lc-how">${escapeHtml(t("lc_how_vn"))}</p>
         ${prizeHtml}
         <div class="lottery-card-footer">
-        <button class="btn-play-lottery vn-play-btn" type="button" onclick="openVNLotteryRoom('${l.id}')">
-          <span>${t("vn_enter")}</span> <i class="fa-solid fa-arrow-right"></i>
-        </button>
+        <span class="card-enter">${t("vn_enter")}</span>
         <button class="btn-history-draw" type="button" onclick="event.stopPropagation(); showDrawResultsHistory('${l.id}')" title="History">
           <i class="fa-solid fa-clock-rotate-left"></i>
         </button>
@@ -1749,6 +1813,15 @@ window.openLastBettingRoom = function() {
   }
   if (inVn) {
     document.querySelector("#view-vnlotto .cart-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  const last = state.lastLotteryRoom;
+  if (last?.kind === "vn") {
+    openVNLotteryRoom(last.id);
+    return;
+  }
+  if (last?.kind === "thai") {
+    openBettingRoom(last.id);
     return;
   }
   if (state.selectedLottery) {
@@ -1783,6 +1856,7 @@ window.openBettingRoom = function(lotteryId) {
   if (!l) return;
 
   state.selectedLottery = l;
+  state.lastLotteryRoom = { kind: "thai", id: lotteryId };
   state.cart = [];
   state.currentBetInput = "";
 
@@ -2031,7 +2105,20 @@ function startTimers() {
         });
       }
     });
-    if (state.activeView === "lobby") syncHeroLive();
+    paintLobbyPressure();
+    if (state.activeView === "lobby") {
+      syncHeroLive();
+      if ((state.lotteries || []).some(isVnLiveDrawing)) {
+        if (!state._lobbyRevealPoll || Date.now() - state._lobbyRevealPoll > 2000) {
+          state._lobbyRevealPoll = Date.now();
+          Promise.all(
+            state.lotteries.filter(isVnLiveDrawing).map((room) => syncLotteryById(room.id))
+          ).then(() => {
+            if (state.activeView === "lobby") renderLobby();
+          });
+        }
+      }
+    }
     if (state.activeView === "admin") {
       (state.lotteries || []).forEach((room) => {
         const el = document.getElementById(`admin-cd-${room.id}`);
@@ -2208,7 +2295,7 @@ function adminMiniStats(items) {
 function renderAdminDrawControls() {
   const container = document.getElementById("admin-draws-list") || document.getElementById("admin-draw-control-grid");
   if (!container) return;
-  const rooms = state.lotteries || [];
+  const rooms = [...(state.lotteries || [])].sort((a, b) => roomUrgencyRank(a) - roomUrgencyRank(b));
   if (!rooms.length) {
     container.innerHTML = `<div class="admin-empty">Chưa có phòng xổ số để điều khiển.</div>`;
     return;
@@ -2217,7 +2304,10 @@ function renderAdminDrawControls() {
 
   rooms.forEach(l => {
     const card = document.createElement("div");
-    card.className = "admin-control-card";
+    const secs = countdownSeconds(l);
+    card.className = "admin-control-card"
+      + (isVnLiveDrawing(l) ? " is-drawing" : "")
+      + (!isVnLiveDrawing(l) && secs > 0 && secs < 30 ? " is-urgent" : "");
     const last = (l.lastResults || [])[0];
     const lastLine = adminLastResultLine(last, l.id);
     const sim = isSimVnRoom(l.id) ? `<span class="admin-pill is-sim">Mô phỏng</span>` : "";
@@ -2246,8 +2336,8 @@ function renderAdminDrawControls() {
       </div>
       <div class="admin-mini-results">${last3}</div>
       <div class="admin-control-actions">
-        <button class="btn-admin-draw" type="button" onclick="openManualDrawModal('${l.id}', '${l.nextDrawId || ""}')">
-          ${l.type === "vietlottery" ? "Chốt kỳ Việt Nam" : "Chốt kỳ thủ công"}
+        <button class="btn-admin-draw" type="button" ${isVnLiveDrawing(l) ? "disabled" : ""} onclick="openManualDrawModal('${l.id}', '${l.nextDrawId || ""}')">
+          ${isVnLiveDrawing(l) ? "Đang sổ — chờ hết 1:30" : (l.type === "vietlottery" ? "Chốt kỳ Việt Nam" : "Chốt kỳ thủ công")}
         </button>
         <button class="quick-btn" type="button" onclick="openAdminRoomBets('${l.id}')">Xem phiếu chờ</button>
       </div>
@@ -3949,8 +4039,7 @@ function updateVipRankUI() {
   const cmdExp = document.getElementById("cmd-vip-exp");
   if (cmdName) cmdName.textContent = rank;
   if (cmdExp) cmdExp.textContent = `${exp.toLocaleString()} EXP`;
-  const cmdRooms = document.getElementById("cmd-rooms");
-  if (cmdRooms) cmdRooms.textContent = String((state.lotteries || []).length || 8);
+  if (typeof paintLobbyPressure === "function") paintLobbyPressure();
 }
 
 window.openInfoModal = function(page) {
@@ -4776,9 +4865,11 @@ state.vnRefreshInterval = null;
 window.openVNLotteryRoom = async function(lotteryId) {
   if (!state.token) {
     showToast(t("vn_login"), t("vn_bet_title"), "danger");
+    switchView("auth");
     return;
   }
   sound.playClick();
+  state.lastLotteryRoom = { kind: "vn", id: lotteryId };
   state.vnCurrentLotteryId = lotteryId;
   state.vnCurrentTickets = [];
   state.vnCurrentBetType = "lo";
@@ -5430,6 +5521,13 @@ window.loadNumberStats = async function() {
   container.innerHTML = html;
 };
 
+function refreshPwaInstallLabels() {
+  const bar = document.getElementById("pwa-install-bar");
+  const btn = document.getElementById("pwa-install-btn");
+  if (!bar || bar.hidden || !btn) return;
+  btn.textContent = state._pwaDeferred ? t("install_app") : t("install_ios");
+}
+
 function setupPwaInstall() {
   const bar = document.getElementById("pwa-install-bar");
   const btn = document.getElementById("pwa-install-btn");
@@ -5438,22 +5536,23 @@ function setupPwaInstall() {
   const standalone = window.matchMedia("(display-mode: standalone)").matches
     || window.navigator.standalone === true;
   if (standalone || localStorage.getItem("soklarp-hide-install") === "1") return;
+  const desktopInstall = () => window.matchMedia("(min-width: 769px)").matches;
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  let deferred = null;
   window.addEventListener("beforeinstallprompt", (ev) => {
     ev.preventDefault();
-    deferred = ev;
+    state._pwaDeferred = ev;
+    if (desktopInstall()) return;
     bar.hidden = false;
-    btn.textContent = t("install_app");
+    refreshPwaInstallLabels();
   });
-  if (ios && window.innerWidth < 820) {
+  if (ios && window.innerWidth < 820 && !desktopInstall()) {
     bar.hidden = false;
-    btn.textContent = t("install_ios");
+    refreshPwaInstallLabels();
   }
   btn.onclick = async () => {
-    if (deferred) {
-      deferred.prompt();
-      deferred = null;
+    if (state._pwaDeferred) {
+      state._pwaDeferred.prompt();
+      state._pwaDeferred = null;
       bar.hidden = true;
       return;
     }
