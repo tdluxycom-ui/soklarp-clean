@@ -18,6 +18,7 @@ jobs:
       - run: npm run test:odds
       - run: npm run test:security
       - run: npm run test:persistence
+      - run: npm run test:scheduler
       - run: npm run build
       - name: Start server
         run: |
