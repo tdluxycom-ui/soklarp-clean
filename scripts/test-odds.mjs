@@ -31,6 +31,7 @@ import {
 } from "../lib/game-odds.mjs";
 import { generateCrashPoint } from "../lib/crash-math.mjs";
 import { parseXienNumbers } from "../lib/bet-numbers.mjs";
+import { createLotteryEngine } from "../lib/lottery-settle.mjs";
 
 const FLOAT_SLACK = 1e-9;
 
@@ -219,6 +220,74 @@ assert("xien4 rejects a repeated number", !parseXienNumbers("xien4", "12,12,12,1
 assert("xien2 accepts two distinct numbers", parseXienNumbers("xien2", "12,34").ok);
 assert("xien4 accepts four distinct numbers", parseXienNumbers("xien4", "12,34,56,78").ok);
 assert("xien3 rejects too few numbers", !parseXienNumbers("xien3", "12,34").ok);
+
+// ── Settling a xiên slip that an older build would have accepted ─────────────
+console.log("\nSettling malformed xiên slips");
+{
+  // Special prize 12345 puts "45" in the prize set, so a slip of repeated 45s
+  // would have won at the xiên rate under the old settle logic.
+  const prizes = {
+    db: "12345", nhat: "54321",
+    nhi: ["11111", "22222"],
+    ba: ["33333", "44444", "55555", "66666", "77777", "88888"],
+    tu: ["1234", "2345", "3456", "4567"],
+    nam: ["5678", "6789", "7890", "8901", "9012", "0123"],
+    sau: ["123", "234", "345"],
+    bay: ["45", "56", "67", "78"]
+  };
+  const db = {
+    users: [{ username: "p", balance: 1000 }],
+    lotteries: {
+      vnfast: {
+        id: "vnfast", type: "vietlottery", interval: 300, drawCounter: 1,
+        nextDrawId: "VNFAST-TEST", lastResults: [], settings: { autoDraw: true }
+      }
+    },
+    bets: [
+      { id: "repeat", username: "p", lotteryType: "vnfast", drawId: "VNFAST-TEST", betType: "xien4", numbers: "45,45,45,45", amount: 100, rate: 55, status: "pending", payout: 0 },
+      { id: "valid", username: "p", lotteryType: "vnfast", drawId: "VNFAST-TEST", betType: "xien2", numbers: "45,56", amount: 100, rate: 12, status: "pending", payout: 0 },
+      { id: "losing", username: "p", lotteryType: "vnfast", drawId: "VNFAST-TEST", betType: "xien2", numbers: "45,99", amount: 100, rate: 12, status: "pending", payout: 0 }
+    ]
+  };
+
+  const engine = createLotteryEngine({
+    getDb: () => db,
+    drawingLocks: new Set(),
+    saveDb: async () => {},
+    calculateSecondsUntil: () => 300,
+    didDrawToday: () => false,
+    generateVNPrizes: () => prizes,
+    generateNextDrawId: () => {},
+    fetchXSMBResults: async () => null,
+    fetchLaosResults: async () => null
+  });
+
+  await engine.resolveVNDraw("vnfast", prizes);
+
+  const bet = (id) => db.bets.find((b) => b.id === id);
+  assert(
+    "a repeated-number slip is voided rather than paid",
+    bet("repeat").status === "cancelled" && bet("repeat").payout === 0,
+    `status ${bet("repeat").status}, payout ${bet("repeat").payout}`
+  );
+  assert(
+    "a valid xien2 on two drawn endings wins",
+    bet("valid").status === "won" && bet("valid").payout === 1200,
+    `status ${bet("valid").status}, payout ${bet("valid").payout}`
+  );
+  assert(
+    "a xien2 with one missed ending loses",
+    bet("losing").status === "lost" && bet("losing").payout === 0,
+    `status ${bet("losing").status}, payout ${bet("losing").payout}`
+  );
+  // Stakes were already deducted when the slips were placed, so settling adds
+  // back the 100 voided stake and the 1200 payout: 1000 + 100 + 1200.
+  assert(
+    "the voided stake is returned and the winner is paid",
+    db.users[0].balance === 2300,
+    `balance ${db.users[0].balance}`
+  );
+}
 
 // ── Report ───────────────────────────────────────────────────────────────────
 console.log("\nReturn to player per bet (must stay below 1.0)");
